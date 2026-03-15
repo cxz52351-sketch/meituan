@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { University, PriceRange, Category } from '../types'
 import { ChatMessage, APIMessage, GuideOption } from '../types/chat'
-import { sendMessageStream, getMealPeriod, getGuideRecommendation, getAvailableCategories } from '../services/ai'
+import { sendMessageStream, getMealPeriod, getGuideRecommendation, getAvailableCategories, DiningMode } from '../services/ai'
 import RestaurantListItem from './RestaurantListItem'
 
 interface Props {
@@ -20,27 +20,60 @@ function parseQuickReplies(content: string): { text: string; quickReplies: strin
 
 // ========== 引导流配置 ==========
 
-type GuideStep = 'scene' | 'budget' | 'taste' | 'result' | 'chat'
+type GuideStep = 'mode' | 'mealTime' | 'scene' | 'budget' | 'taste' | 'result' | 'chat'
 
 interface GuideState {
   step: GuideStep
+  mode?: DiningMode
+  mealTime?: string
   scene?: string
   budget?: PriceRange | PriceRange[]
   taste?: Category
   excludeIds?: string[]
 }
 
+const modeOptions: GuideOption[] = [
+  { id: 'delivery', emoji: '🛵', label: '外卖到宿舍', description: '送到楼下不用动' },
+  { id: 'dinein', emoji: '🏠', label: '去店里吃', description: '堂食环境好' },
+  { id: 'pickup', emoji: '🥡', label: '自取带走', description: '顺路带走最快' },
+  { id: 'any', emoji: '🤷', label: '无所谓', description: '都可以' },
+]
+
+function getMealTimeOptions(): GuideOption[] {
+  const hour = new Date().getHours()
+  const minute = new Date().getMinutes()
+  const currentMin = hour * 60 + minute
+
+  const periods: { id: string; emoji: string; label: string; start: number; end: number }[] = [
+    { id: 'breakfast', emoji: '🌅', label: '早餐', start: 360, end: 570 },
+    { id: 'brunch', emoji: '🥞', label: '早午餐/Brunch', start: 570, end: 690 },
+    { id: 'lunch', emoji: '☀️', label: '午餐', start: 660, end: 840 },
+    { id: 'afternoon', emoji: '🍵', label: '下午茶', start: 840, end: 1020 },
+    { id: 'dinner', emoji: '🌆', label: '晚餐', start: 1020, end: 1260 },
+    { id: 'latenight', emoji: '🌙', label: '宵夜', start: 1260, end: 1560 },
+  ]
+
+  return periods.map(p => {
+    const isCurrent = currentMin >= p.start && currentMin < p.end
+    return {
+      id: p.id,
+      emoji: p.emoji,
+      label: isCurrent ? `${p.label}(现在)` : p.label,
+      description: isCurrent ? '当前时段' : undefined,
+    }
+  })
+}
+
 const sceneOptions: GuideOption[] = [
   { id: 'alone', emoji: '🍚', label: '一个人随便吃', description: '简单快捷填饱肚子' },
-  { id: 'friends', emoji: '👫', label: '和朋友一起', description: '适合多人的餐厅' },
+  { id: 'friends', emoji: '👫', label: '和朋友2-3人', description: '适合多人的餐厅' },
   { id: 'date', emoji: '💕', label: '约会', description: '环境好有氛围感' },
   { id: 'party', emoji: '🎉', label: '聚餐请客', description: '大桌聚餐有面子' },
-  { id: 'night', emoji: '🌙', label: '深夜觅食', description: '夜猫子也能吃到' },
-  { id: 'random', emoji: '🎲', label: '别问了帮我选', description: '直接给我推荐！' },
+  { id: 'random', emoji: '🎲', label: '别问了随便', description: '跳过后续直接推荐！' },
 ]
 
 const budgetOptions: GuideOption[] = [
-  { id: 'budget', emoji: '💰', label: '越便宜越好', description: '人均20以下' },
+  { id: 'budget', emoji: '💰', label: '穷鬼模式', description: '人均20以下' },
   { id: 'affordable', emoji: '👍', label: '正常水平', description: '人均20-40' },
   { id: 'splurge', emoji: '🎉', label: '奢侈一把', description: '人均40+' },
   { id: 'any', emoji: '🤷', label: '无所谓', description: '好吃就行' },
@@ -51,20 +84,34 @@ const sceneMapping: Record<string, string> = {
   friends: '和室友',
   date: '约会',
   party: '聚餐',
-  night: '深夜',
+}
+
+const modeLabelMapping: Record<string, string> = {
+  delivery: '🛵 外卖到宿舍',
+  dinein: '🏠 去店里吃',
+  pickup: '🥡 自取带走',
+  any: '🤷 无所谓',
+}
+
+const mealTimeLabelMapping: Record<string, string> = {
+  breakfast: '🌅 早餐',
+  brunch: '🥞 早午餐/Brunch',
+  lunch: '☀️ 午餐',
+  afternoon: '🍵 下午茶',
+  dinner: '🌆 晚餐',
+  latenight: '🌙 宵夜',
 }
 
 const sceneLabelMapping: Record<string, string> = {
   alone: '🍚 一个人随便吃',
-  friends: '👫 和朋友一起',
+  friends: '👫 和朋友2-3人',
   date: '💕 约会',
   party: '🎉 聚餐请客',
-  night: '🌙 深夜觅食',
-  random: '🎲 别问了帮我选',
+  random: '🎲 别问了随便',
 }
 
 const budgetLabelMapping: Record<string, string> = {
-  budget: '💰 越便宜越好',
+  budget: '💰 穷鬼模式',
   affordable: '👍 正常水平',
   splurge: '🎉 奢侈一把',
   any: '🤷 无所谓',
@@ -88,7 +135,7 @@ export default function ChatAgent({ university }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [guideState, setGuideState] = useState<GuideState>({ step: 'scene' })
+  const [guideState, setGuideState] = useState<GuideState>({ step: 'mode' })
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const conversationRef = useRef<APIMessage[]>([])
@@ -110,14 +157,14 @@ export default function ChatAgent({ university }: Props) {
 
   // 初始化引导流第一步消息
   useEffect(() => {
-    if (messages.length === 0 && guideState.step === 'scene') {
+    if (messages.length === 0 && guideState.step === 'mode') {
       const welcomeMsg: ChatMessage = {
         id: nextMsgId(),
         role: 'assistant',
-        content: `${greeting} 不知道吃啥？我来帮你一步步选！\n\n今天什么情况？`,
+        content: `${greeting} 不知道吃啥？我来帮你一步步选！\n\n今天怎么吃？`,
         timestamp: Date.now(),
         status: 'done',
-        guideOptions: sceneOptions,
+        guideOptions: modeOptions,
       }
       setMessages([welcomeMsg])
     }
@@ -138,7 +185,46 @@ export default function ChatAgent({ university }: Props) {
 
   // 处理引导选项点击
   const handleGuideSelect = useCallback((step: GuideStep, optionId: string) => {
-    if (step === 'scene') {
+    if (step === 'mode') {
+      const label = modeLabelMapping[optionId] || optionId
+      const userMsg: ChatMessage = {
+        id: nextMsgId(),
+        role: 'user',
+        content: label,
+        timestamp: Date.now(),
+      }
+      const mode = optionId === 'any' ? undefined : optionId as DiningMode
+      setGuideState({ step: 'mealTime', mode })
+
+      const nextMsg: ChatMessage = {
+        id: nextMsgId(),
+        role: 'assistant',
+        content: '吃哪一顿？',
+        timestamp: Date.now(),
+        status: 'done',
+        guideOptions: getMealTimeOptions(),
+      }
+      setMessages(prev => [...prev, userMsg, nextMsg])
+    } else if (step === 'mealTime') {
+      const label = mealTimeLabelMapping[optionId] || optionId
+      const userMsg: ChatMessage = {
+        id: nextMsgId(),
+        role: 'user',
+        content: label,
+        timestamp: Date.now(),
+      }
+      setGuideState(prev => ({ ...prev, step: 'scene', mealTime: optionId }))
+
+      const nextMsg: ChatMessage = {
+        id: nextMsgId(),
+        role: 'assistant',
+        content: '几个人？什么场合？',
+        timestamp: Date.now(),
+        status: 'done',
+        guideOptions: sceneOptions,
+      }
+      setMessages(prev => [...prev, userMsg, nextMsg])
+    } else if (step === 'scene') {
       const label = sceneLabelMapping[optionId] || optionId
       const userMsg: ChatMessage = {
         id: nextMsgId(),
@@ -149,7 +235,11 @@ export default function ChatAgent({ university }: Props) {
 
       if (optionId === 'random') {
         // 跳过后续步骤，直接出结果
-        const result = getGuideRecommendation({ university })
+        const result = getGuideRecommendation({
+          mode: guideState.mode,
+          mealTime: guideState.mealTime,
+          university,
+        })
         const resultMsg: ChatMessage = {
           id: nextMsgId(),
           role: 'assistant',
@@ -169,14 +259,17 @@ export default function ChatAgent({ university }: Props) {
             { id: 'restart', emoji: '🔙', label: '重新选', description: '回到第一步' },
           ],
         }
-        setGuideState({ step: 'result', excludeIds: result.restaurants.map(r => r.id) })
+        setGuideState(prev => ({
+          ...prev,
+          step: 'result',
+          excludeIds: result.restaurants.map(r => r.id),
+        }))
         setMessages(prev => [...prev, userMsg, resultMsg, actionMsg])
         return
       }
 
       const scene = sceneMapping[optionId]
-      const newState: GuideState = { step: 'budget', scene }
-      setGuideState(newState)
+      setGuideState(prev => ({ ...prev, step: 'budget', scene }))
 
       const nextMsg: ChatMessage = {
         id: nextMsgId(),
@@ -202,6 +295,8 @@ export default function ChatAgent({ university }: Props) {
 
       // 动态生成可选品类
       const categories = getAvailableCategories({
+        mode: guideState.mode,
+        mealTime: guideState.mealTime,
         scene: guideState.scene,
         priceRange: budget,
         university,
@@ -233,6 +328,8 @@ export default function ChatAgent({ university }: Props) {
 
       const taste = optionId === 'any' ? undefined : optionId as Category
       const filters = {
+        mode: guideState.mode,
+        mealTime: guideState.mealTime,
         scene: guideState.scene,
         priceRange: guideState.budget,
         category: taste,
@@ -277,6 +374,8 @@ export default function ChatAgent({ university }: Props) {
           timestamp: Date.now(),
         }
         const result = getGuideRecommendation({
+          mode: guideState.mode,
+          mealTime: guideState.mealTime,
           scene: guideState.scene,
           priceRange: guideState.budget,
           category: guideState.taste,
@@ -316,17 +415,16 @@ export default function ChatAgent({ university }: Props) {
           content: '🔙 重新选',
           timestamp: Date.now(),
         }
-        const newState: GuideState = { step: 'scene' }
-        setGuideState(newState)
-        const sceneMsg: ChatMessage = {
+        setGuideState({ step: 'mode' })
+        const modeMsg: ChatMessage = {
           id: nextMsgId(),
           role: 'assistant',
-          content: '好的，重新来！今天什么情况？',
+          content: '好的，重新来！今天怎么吃？',
           timestamp: Date.now(),
           status: 'done',
-          guideOptions: sceneOptions,
+          guideOptions: modeOptions,
         }
-        setMessages(prev => [...prev, userMsg, sceneMsg])
+        setMessages(prev => [...prev, userMsg, modeMsg])
       }
     }
   }, [guideState, university])

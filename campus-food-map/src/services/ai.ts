@@ -386,12 +386,41 @@ function getToolDisplayName(name: string): string {
 
 // ========== Guide Decision Flow ==========
 
+export type DiningMode = 'delivery' | 'dinein' | 'pickup'
+
 export interface GuideFilters {
+  mode?: DiningMode
+  mealTime?: string
   scene?: string
   priceRange?: PriceRange | PriceRange[]
   category?: Category
   university: University | 'all'
   excludeIds?: string[]
+}
+
+// 判断餐厅在指定时段是否营业
+function isOpenDuringPeriod(r: Restaurant, mealTime: string): boolean {
+  const periods: Record<string, [number, number]> = {
+    breakfast:  [360, 570],   // 6:00-9:30
+    brunch:     [570, 690],   // 9:30-11:30
+    lunch:      [660, 840],   // 11:00-14:00
+    afternoon:  [840, 1020],  // 14:00-17:00
+    dinner:     [1020, 1260], // 17:00-21:00
+    latenight:  [1260, 1560], // 21:00-26:00 (次日2:00)
+  }
+  const range = periods[mealTime]
+  if (!range) return true
+
+  const [openH, openM] = r.openTime.split(':').map(Number)
+  const [closeH, closeM] = r.closeTime.split(':').map(Number)
+  let openMin = openH * 60 + openM
+  let closeMin = closeH * 60 + closeM
+  // 跨午夜情况：closeTime 在 openTime 之前
+  if (closeMin < openMin) closeMin += 1440
+
+  const [periodStart, periodEnd] = range
+  // 餐厅营业区间与时段有交集即可
+  return openMin < periodEnd && closeMin > periodStart
 }
 
 export interface GuideRecommendation {
@@ -402,9 +431,31 @@ export interface GuideRecommendation {
 export function getGuideRecommendation(filters: GuideFilters): GuideRecommendation {
   let candidates = getFilteredRestaurants(filters.university)
 
-  // 优先在营业的
-  const openCandidates = candidates.filter(isOpenNow)
-  if (openCandidates.length > 0) candidates = openCandidates
+  // 按时段筛选
+  if (filters.mealTime) {
+    const timeFiltered = candidates.filter(r => isOpenDuringPeriod(r, filters.mealTime!))
+    if (timeFiltered.length > 0) candidates = timeFiltered
+  } else {
+    // 没有指定时段时，优先在营业的
+    const openCandidates = candidates.filter(isOpenNow)
+    if (openCandidates.length > 0) candidates = openCandidates
+  }
+
+  // 按用餐方式筛选/加权
+  if (filters.mode === 'delivery' || filters.mode === 'pickup') {
+    const takeaway = candidates.filter(r => r.features.includes('可外带'))
+    if (takeaway.length > 0) candidates = takeaway
+  }
+  if (filters.mode === 'dinein') {
+    const nice = candidates.filter(r => r.features.includes('环境好'))
+    if (nice.length > 0) candidates = nice
+  }
+
+  // 下午茶时段优先饮品/甜点
+  if (filters.mealTime === 'afternoon') {
+    const teaFiltered = candidates.filter(r => r.category === '饮品' || r.category === '甜点')
+    if (teaFiltered.length > 0) candidates = teaFiltered
+  }
 
   // 按场景筛选
   if (filters.scene) {
@@ -431,13 +482,27 @@ export function getGuideRecommendation(filters: GuideFilters): GuideRecommendati
     if (excluded.length > 0) candidates = excluded
   }
 
-  // 加权随机选 2 家
+  // 按 mode 排序加权
+  if (filters.mode === 'delivery') {
+    candidates.sort((a, b) => a.avgDeliveryMinutes - b.avgDeliveryMinutes)
+  } else if (filters.mode === 'dinein') {
+    candidates.sort((a, b) => a.walkTime - b.walkTime)
+  } else if (filters.mode === 'pickup') {
+    candidates.sort((a, b) => a.distance - b.distance)
+  }
+
+  // 加权随机选 2 家（排序靠前的权重更高）
   const count = Math.min(2, candidates.length)
   const selected: Restaurant[] = []
   const pool = [...candidates]
 
   for (let i = 0; i < count && pool.length > 0; i++) {
-    const weights = pool.map(r => r.rating * r.rating * (1 + r.repurchaseRate))
+    const weights = pool.map((r, idx) => {
+      let w = r.rating * r.rating * (1 + r.repurchaseRate)
+      // mode 排序后，位置靠前的额外加权
+      if (filters.mode) w *= (1 + 0.5 / (idx + 1))
+      return w
+    })
     const totalWeight = weights.reduce((a, b) => a + b, 0)
     let random = Math.random() * totalWeight
     let idx = 0
@@ -470,8 +535,25 @@ export function getGuideRecommendation(filters: GuideFilters): GuideRecommendati
 
 export function getAvailableCategories(filters: Omit<GuideFilters, 'category'>): Category[] {
   let candidates = getFilteredRestaurants(filters.university)
-  const openCandidates = candidates.filter(isOpenNow)
-  if (openCandidates.length > 0) candidates = openCandidates
+
+  // 按时段筛选
+  if (filters.mealTime) {
+    const timeFiltered = candidates.filter(r => isOpenDuringPeriod(r, filters.mealTime!))
+    if (timeFiltered.length > 0) candidates = timeFiltered
+  } else {
+    const openCandidates = candidates.filter(isOpenNow)
+    if (openCandidates.length > 0) candidates = openCandidates
+  }
+
+  // 按用餐方式筛选
+  if (filters.mode === 'delivery' || filters.mode === 'pickup') {
+    const takeaway = candidates.filter(r => r.features.includes('可外带'))
+    if (takeaway.length > 0) candidates = takeaway
+  }
+  if (filters.mode === 'dinein') {
+    const nice = candidates.filter(r => r.features.includes('环境好'))
+    if (nice.length > 0) candidates = nice
+  }
 
   if (filters.scene) {
     const sceneFiltered = candidates.filter(r => r.scenes.includes(filters.scene as Restaurant['scenes'][number]))
