@@ -100,10 +100,10 @@ export default function HomePage({ university }: Props) {
       .map(s => s.restaurant)
   }, [filteredRestaurants])
 
-  // 3秒答案：今天就吃这个！基于时段+评分+营业状态的 top1
-  const heroPick = useMemo(() => {
-    return smartPicks[0] || filteredRestaurants[0]
-  }, [smartPicks, filteredRestaurants])
+  // 今日翻牌餐厅的图片
+  const flipRestaurant = useMemo(() => {
+    return restaurants.find(r => r.id === todayFlip.restaurantId)
+  }, [todayFlip])
 
   const nearbyRestaurants = [...filteredRestaurants]
     .sort((a, b) => a.distance - b.distance)
@@ -127,28 +127,85 @@ export default function HomePage({ university }: Props) {
 
   return (
     <div className="page">
-      {/* 3秒答案：今天就吃这个 */}
-      {heroPick && (
-        <div className="hero-pick" onClick={() => navigate(`/restaurant/${heroPick.id}`)}>
-          <div className="hero-pick-badge">🍜 今天就吃这个</div>
-          <div className="hero-pick-card">
-            <img className="hero-pick-img" src={heroPick.images[0]} alt={heroPick.name} loading="lazy" />
-            <div className="hero-pick-overlay">
-              <div className="hero-pick-name">{heroPick.name}</div>
-              <div className="hero-pick-meta">
-                <span>{heroPick.rating}分</span>
-                <span>¥{heroPick.avgPrice}/人</span>
-                <span>{heroPick.walkTime}分钟</span>
-              </div>
-              <div className="hero-pick-reason">{getRecommendReason(heroPick)}</div>
-            </div>
+      {/* 今日翻牌 - 顶部视觉焦点 */}
+      <div
+        className="flip-card-hero"
+        onClick={() => navigate(`/restaurant/${todayFlip.restaurantId}`)}
+        style={{
+          backgroundImage: flipRestaurant
+            ? `linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, rgba(0,0,0,0.65) 100%), url(${flipRestaurant.images[0]})`
+            : undefined
+        }}
+      >
+        <div className="flip-hero-top">
+          <span className="flip-badge">今日翻牌</span>
+          <span className="flip-hero-participants">{flipParticipants}人参与</span>
+        </div>
+        <div className="flip-hero-body">
+          <div className="flip-hero-info">
+            <div className="flip-hero-name">{todayFlip.restaurantName}</div>
+            <div className="flip-hero-dish">{todayFlip.dealDish}</div>
           </div>
-          <div className="hero-pick-action">
-            <span>不想吃？</span>
-            <span className="hero-pick-change" onClick={(e) => { e.stopPropagation(); navigate('/ai') }}>告诉 AI 你想吃啥 &gt;</span>
+          <div className="flip-hero-price">
+            <span className="flip-price-original">¥{todayFlip.originalPrice}</span>
+            <span className="flip-price-deal">¥{todayFlip.flipPrice}</span>
           </div>
         </div>
-      )}
+        <div className="flip-hero-bottom" onClick={e => e.stopPropagation()}>
+          <div className="flip-avatars">
+            {'👦👧🧑👩🧑‍💻'.split(/(?=[\u{1F466}\u{1F467}\u{1F9D1}\u{1F469}])/u).slice(0, 5).map((a, i) => (
+              <span key={i} className="flip-avatar">{a}</span>
+            ))}
+            <span className="flip-avatar more">+{flipParticipants - 5}</span>
+          </div>
+          <div className="flip-hero-actions">
+            <button
+              className={`flip-btn-join ${hasJoined ? 'joined' : ''}`}
+              onClick={() => {
+                if (!hasJoined) {
+                  setHasJoined(true)
+                  setFlipParticipants(p => p + 1)
+                }
+              }}
+            >
+              {hasJoined ? '已参与 ✓' : '我也去'}
+            </button>
+            <button
+              className="flip-btn-share"
+              onClick={() => {
+                setShowShareToast(true)
+                setTimeout(() => setShowShareToast(false), 2000)
+              }}
+            >
+              分享
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 明天翻牌投票 */}
+      <div className="flip-vote">
+        <div className="flip-vote-title">明天翻牌哪家？投票选出来</div>
+        <div className="flip-vote-list">
+          {tomorrowCandidates.map(c => (
+            <div
+              key={c.restaurantId}
+              className={`flip-vote-item ${votedId === c.restaurantId ? 'voted' : ''}`}
+              onClick={() => setVotedId(c.restaurantId)}
+            >
+              <span className="flip-vote-name">{c.restaurantName}</span>
+              <span className="flip-vote-dish">{c.dealDish} ¥{c.flipPrice}</span>
+              <div className="flip-vote-bar-wrap">
+                <div
+                  className="flip-vote-bar"
+                  style={{ width: `${Math.min((c.votes + (votedId === c.restaurantId ? 1 : 0)) / 2.5, 100)}%` }}
+                />
+              </div>
+              <span className="flip-vote-count">{c.votes + (votedId === c.restaurantId ? 1 : 0)}票</span>
+            </div>
+          ))}
+        </div>
+      </div>
 
       {/* AI 决策区域 */}
       <div className="ai-hero">
@@ -227,85 +284,6 @@ export default function HomePage({ university }: Props) {
             <span className="quick-decision-icon">💕</span>
             <span>约会推荐</span>
           </button>
-        </div>
-      </section>
-
-      {/* 今日翻牌 - 校园版疯狂星期四 */}
-      <section className="section">
-        <div className="section-header">
-          <h2 className="section-title">🎯 今日翻牌</h2>
-          <span className="section-tag">每日特价</span>
-        </div>
-        <div className="flip-card" onClick={() => navigate(`/restaurant/${todayFlip.restaurantId}`)}>
-          <div className="flip-header">
-            <span className="flip-badge">今天全校都在吃</span>
-          </div>
-          <div className="flip-main">
-            <span className="flip-icon">{todayFlip.icon}</span>
-            <div className="flip-info">
-              <div className="flip-name">{todayFlip.restaurantName}</div>
-              <div className="flip-dish">{todayFlip.dealDish}</div>
-            </div>
-            <div className="flip-price">
-              <span className="flip-price-original">¥{todayFlip.originalPrice}</span>
-              <span className="flip-price-deal">¥{todayFlip.flipPrice}</span>
-            </div>
-          </div>
-          <div className="flip-participants">
-            <div className="flip-avatars">
-              {'👦👧🧑👩🧑‍💻'.split(/(?=[\u{1F466}\u{1F467}\u{1F9D1}\u{1F469}])/u).slice(0, 5).map((a, i) => (
-                <span key={i} className="flip-avatar">{a}</span>
-              ))}
-              <span className="flip-avatar more">+{flipParticipants - 5}</span>
-            </div>
-            <span className="flip-count">已有 <strong>{flipParticipants}</strong> 位同学参与</span>
-          </div>
-          <div className="flip-actions" onClick={e => e.stopPropagation()}>
-            <button
-              className={`flip-btn-join ${hasJoined ? 'joined' : ''}`}
-              onClick={() => {
-                if (!hasJoined) {
-                  setHasJoined(true)
-                  setFlipParticipants(p => p + 1)
-                }
-              }}
-            >
-              {hasJoined ? '已参与 ✓' : '我也去'}
-            </button>
-            <button
-              className="flip-btn-share"
-              onClick={() => {
-                setShowShareToast(true)
-                setTimeout(() => setShowShareToast(false), 2000)
-              }}
-            >
-              分享到宿舍群
-            </button>
-          </div>
-        </div>
-
-        {/* 明天翻牌投票 */}
-        <div className="flip-vote">
-          <div className="flip-vote-title">明天翻牌哪家？投票选出来</div>
-          <div className="flip-vote-list">
-            {tomorrowCandidates.map(c => (
-              <div
-                key={c.restaurantId}
-                className={`flip-vote-item ${votedId === c.restaurantId ? 'voted' : ''}`}
-                onClick={() => setVotedId(c.restaurantId)}
-              >
-                <span className="flip-vote-name">{c.restaurantName}</span>
-                <span className="flip-vote-dish">{c.dealDish} ¥{c.flipPrice}</span>
-                <div className="flip-vote-bar-wrap">
-                  <div
-                    className="flip-vote-bar"
-                    style={{ width: `${Math.min((c.votes + (votedId === c.restaurantId ? 1 : 0)) / 2.5, 100)}%` }}
-                  />
-                </div>
-                <span className="flip-vote-count">{c.votes + (votedId === c.restaurantId ? 1 : 0)}票</span>
-              </div>
-            ))}
-          </div>
         </div>
       </section>
 
