@@ -17,12 +17,21 @@ npm run preview    # 预览生产构建
 
 无lint/test/format命令。TypeScript严格模式开启（`noUnusedLocals`, `noUnusedParameters`），构建时会检查类型错误。
 
+## Setup
+
+AI聊天功能需要 DeepSeek API Key。参考 `.env.example`，创建 `.env.local`：
+```
+VITE_DEEPSEEK_API_KEY=your_actual_key
+```
+Vite dev proxy 仅开发环境生效，生产部署需额外处理 `/api/deepseek` 代理。
+
 ## Tech Stack
 
 - React 19 + TypeScript (strict mode)
 - Vite 5 + @vitejs/plugin-react
 - React Router DOM 7 (BrowserRouter)
-- 纯CSS样式，无UI框架，单文件 `src/styles/index.css`
+- 纯CSS样式，无UI框架，单文件 `src/styles/index.css`（~3300行）
+- 品牌色：美团黄 `#FFD100`、黑 `#111111`、绿 `#06C167`；CSS变量定义在 `:root`
 
 ## Architecture
 
@@ -76,3 +85,11 @@ npm run preview    # 预览生产构建
 - `RestaurantListItem` — 纵向列表场景中的列表项
 - `FilterModal` — 筛选弹窗，多个页面共用
 - `ChatAgent` — AI聊天组件，也作为 `/ai` 路由的页面
+
+### 已知重复代码
+
+`isOpenNow()` 函数在 `HomePage.tsx`、`RandomPage.tsx`、`ai.ts` 三处重复定义，逻辑一致（解析 openTime/closeTime，处理跨午夜情况）。修改营业判断逻辑时需同步更新。
+
+## 参考文档
+
+`project-specification.md` 包含完整的项目规格说明（页面交互细节、CSS设计系统、数据结构等），适合需要了解具体实现细节时查阅。

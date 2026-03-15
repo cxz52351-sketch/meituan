@@ -1,7 +1,7 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { University, Restaurant } from '../types'
-import { restaurants, rankLists } from '../data/restaurants'
+import { restaurants, rankLists, universities } from '../data/restaurants'
 import { getLatestReviews, formatTimeAgo } from '../data/reviews'
 import { getTodayFlip, getTomorrowCandidates } from '../data/deals'
 import { getMealPeriod } from '../services/ai'
@@ -24,9 +24,29 @@ function isOpenNow(r: Restaurant): boolean {
   return currentMinutes >= openMinutes && currentMinutes <= closeMinutes
 }
 
+const getCategoryLabel = (category: string) => {
+  const labelMap: Record<string, string> = {
+    '中餐': '中', '西餐': '西', '日料': '日', '韩餐': '韩',
+    '火锅': '锅', '烧烤': '烤', '小吃': '吃', '快餐': '快',
+    '饮品': '饮', '甜点': '甜', '面食': '面', '粥店': '粥', '东南亚': '东',
+  }
+  return labelMap[category] || '食'
+}
+
+const getMiniMarkerPosition = (_restaurant: Restaurant, index: number) => {
+  const baseX = 25 + (index % 3) * 25
+  const baseY = 20 + Math.floor(index / 3) * 30
+  const offsetX = Math.sin(index * 1.5) * 10
+  const offsetY = Math.cos(index * 1.3) * 8
+  return {
+    left: `${Math.min(Math.max(baseX + offsetX, 8), 88)}%`,
+    top: `${Math.min(Math.max(baseY + offsetY, 10), 65)}%`
+  }
+}
+
 export default function HomePage({ university }: Props) {
   const navigate = useNavigate()
-  const { greeting, period } = getMealPeriod()
+  const { period } = getMealPeriod()
 
   const filteredRestaurants = university === 'all'
     ? restaurants
@@ -66,6 +86,11 @@ export default function HomePage({ university }: Props) {
   const [hasJoined, setHasJoined] = useState(false)
   const [votedId, setVotedId] = useState<string | null>(null)
   const [showShareToast, setShowShareToast] = useState(false)
+  const [showNominate, setShowNominate] = useState(false)
+  const [nominateId, setNominateId] = useState('')
+  const [userCandidates, setUserCandidates] = useState<Array<{ restaurantId: string; restaurantName: string; dealDish: string; flipPrice: number; votes: number }>>([])
+  const [nominatePrice, setNominatePrice] = useState('')
+  const [nominateDish, setNominateDish] = useState('')
 
   // 模拟参与人数缓慢增长
   useEffect(() => {
@@ -81,7 +106,7 @@ export default function HomePage({ university }: Props) {
     const pool = open.length >= 3 ? open : filteredRestaurants
 
     // 按场景加权
-    const scored = pool.map(r => {
+    const scored = pool.map((r, index) => {
       let score = r.rating * 10
       if (isOpenNow(r)) score += 20
       const hour = new Date().getHours()
@@ -90,7 +115,7 @@ export default function HomePage({ university }: Props) {
       if (hour >= 14 && hour < 17 && (r.category === '饮品' || r.category === '甜点')) score += 20
       if (hour >= 17 && hour < 21) score += 5
       if ((hour >= 21 || hour < 5) && r.scenes.includes('深夜')) score += 25
-      score += Math.random() * 10 // 加点随机性
+      score += (index % 7) // 稳定的微小区分度
       return { restaurant: r, score }
     })
 
@@ -108,6 +133,11 @@ export default function HomePage({ university }: Props) {
   const nearbyRestaurants = [...filteredRestaurants]
     .sort((a, b) => a.distance - b.distance)
     .slice(0, 6)
+
+  const currentUniversity = useMemo(() => {
+    if (university === 'all') return universities[0]
+    return universities.find((u) => u.name === university) || universities[0]
+  }, [university])
 
   // 同学说：最新 UGC 评论
   const latestReviews = useMemo(() => {
@@ -185,9 +215,16 @@ export default function HomePage({ university }: Props) {
 
       {/* 明天翻牌投票 */}
       <div className="flip-vote">
-        <div className="flip-vote-title">明天翻牌哪家？投票选出来</div>
+        <div className="flip-vote-header">
+          <span className="flip-vote-title">明天翻牌哪家？投票选出来</span>
+          {tomorrowCandidates.length + userCandidates.length >= 5 ? (
+            <span className="flip-vote-nominate-btn nominate-full">名额已满</span>
+          ) : (
+            <span className="flip-vote-nominate-btn" onClick={() => setShowNominate(true)}>+ 我来提名</span>
+          )}
+        </div>
         <div className="flip-vote-list">
-          {tomorrowCandidates.map(c => (
+          {[...tomorrowCandidates, ...userCandidates].slice(0, 5).map(c => (
             <div
               key={c.restaurantId}
               className={`flip-vote-item ${votedId === c.restaurantId ? 'voted' : ''}`}
@@ -207,17 +244,80 @@ export default function HomePage({ university }: Props) {
         </div>
       </div>
 
-      {/* AI 决策区域 */}
-      <div className="ai-hero">
-        <div className="ai-hero-greeting">{greeting}</div>
-        <div
-          className="ai-hero-input"
-          onClick={() => navigate('/ai')}
-        >
-          <span className="ai-hero-input-icon">🍜</span>
-          <span className="ai-hero-input-text">想吃什么？问我就对了…</span>
-          <span className="ai-hero-input-arrow">&gt;</span>
+      {/* 提名弹窗 */}
+      {showNominate && (
+        <div className="group-order-create-overlay" onClick={() => setShowNominate(false)}>
+          <div className="group-order-create-modal flip-nominate-modal" onClick={e => e.stopPropagation()}>
+            <div className="group-order-create-top">
+              <h3>提名明日翻牌餐厅</h3>
+              <span className="group-order-create-close" onClick={() => setShowNominate(false)}>✕</span>
+            </div>
+            <p className="group-order-create-hint">票数最高的餐厅将成为明日翻牌特价</p>
+            <div className="group-order-create-fields">
+              <div className="group-order-create-field">
+                <label>选择餐厅</label>
+                <select value={nominateId} onChange={e => setNominateId(e.target.value)}>
+                  <option value="">选择你想提名的餐厅...</option>
+                  {restaurants.map(r => (
+                    <option key={r.id} value={r.id}>{r.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div className="group-order-create-field">
+                <label>推荐特价菜品</label>
+                <input
+                  type="text"
+                  placeholder="如：招牌炸鸡套餐"
+                  value={nominateDish}
+                  onChange={e => setNominateDish(e.target.value)}
+                />
+              </div>
+              <div className="group-order-create-field">
+                <label>期望翻牌价</label>
+                <input
+                  type="text"
+                  placeholder="如：9.9"
+                  value={nominatePrice}
+                  onChange={e => setNominatePrice(e.target.value)}
+                />
+              </div>
+            </div>
+            <button
+              className={`group-order-create-btn ${!nominateId || !nominateDish || !nominatePrice ? 'btn-disabled' : ''}`}
+              disabled={!nominateId || !nominateDish || !nominatePrice}
+              onClick={() => {
+                const r = restaurants.find(r => r.id === nominateId)
+                if (!r) return
+                setUserCandidates(prev => [...prev, {
+                  restaurantId: r.id,
+                  restaurantName: r.name,
+                  dealDish: nominateDish,
+                  flipPrice: Number(nominatePrice) || 9.9,
+                  votes: 1
+                }])
+                setVotedId(r.id)
+                setShowNominate(false)
+                setNominateId('')
+                setNominateDish('')
+                setNominatePrice('')
+              }}
+            >
+              提名并投票
+            </button>
+          </div>
         </div>
+      )}
+
+      {/* AI 搜索入口 */}
+      <div className="ai-search-card" onClick={() => navigate('/ai')}>
+        <div className="ai-search-card-left">
+          <div className="ai-search-card-icon">AI</div>
+          <div className="ai-search-card-content">
+            <div className="ai-search-card-title">不知道吃什么？问 AI</div>
+            <div className="ai-search-card-desc">告诉我你的口味，帮你秒选</div>
+          </div>
+        </div>
+        <span className="ai-search-card-btn">试一试</span>
       </div>
 
       {/* 同学在点 - 实时订单动态 */}
@@ -235,7 +335,7 @@ export default function HomePage({ university }: Props) {
         </div>
       )}
 
-      {/* 猜你想要 - AI 智能推荐 */}
+      {/* 猜你想要 - 个性化推荐 */}
       <section className="section">
         <div className="section-header">
           <h2 className="section-title">猜你想要</h2>
@@ -292,6 +392,58 @@ export default function HomePage({ university }: Props) {
         <div className="toast">已复制分享链接，快去宿舍群粘贴吧！</div>
       )}
 
+      {/* 📍 大学城美食地图 */}
+      <section className="section">
+        <div className="section-header">
+          <h2 className="section-title">📍 大学城美食地图</h2>
+          <button className="section-more" onClick={() => navigate('/map')}>
+            查看完整地图 &gt;
+          </button>
+        </div>
+        <div className="mini-map" onClick={() => navigate('/map')}>
+          <div className="mini-map-bg">
+            <svg className="mini-map-grid" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <pattern id="mini-grid" width="30" height="30" patternUnits="userSpaceOnUse">
+                  <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(0,0,0,0.04)" strokeWidth="1"/>
+                </pattern>
+              </defs>
+              <rect width="100%" height="100%" fill="url(#mini-grid)" />
+              <line x1="0" y1="50%" x2="100%" y2="50%" stroke="rgba(255,255,255,0.7)" strokeWidth="5" />
+              <line x1="50%" y1="0" x2="50%" y2="100%" stroke="rgba(255,255,255,0.7)" strokeWidth="5" />
+            </svg>
+
+            {/* 大学标记 */}
+            <div className="mini-map-university">
+              <div className="mini-map-uni-dot">校</div>
+              <div className="mini-map-uni-name">
+                {university === 'all' ? '大学城' : currentUniversity.shortName}
+              </div>
+            </div>
+
+            {/* 餐厅 markers */}
+            {nearbyRestaurants.map((r, index) => {
+              const pos = getMiniMarkerPosition(r, index)
+              return (
+                <div
+                  key={r.id}
+                  className="mini-map-marker"
+                  style={pos}
+                >
+                  <span className="mini-map-marker-icon">{getCategoryLabel(r.category)}</span>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* 底部统计条 */}
+          <div className="mini-map-footer">
+            <span>周边 {filteredRestaurants.length} 家好店 · 最近 {nearbyRestaurants[0]?.distance || 0}m</span>
+            <span className="mini-map-footer-action">去看看 →</span>
+          </div>
+        </div>
+      </section>
+
       {/* 特色榜单 */}
       <section className="section">
         <div className="section-header">
@@ -318,6 +470,21 @@ export default function HomePage({ university }: Props) {
                 <div className="desc">{rank.description}</div>
               </div>
             </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 附近好店 */}
+      <section className="section">
+        <div className="section-header">
+          <h2 className="section-title">附近好店</h2>
+          <button className="section-more" onClick={() => navigate('/list')}>
+            更多 &gt;
+          </button>
+        </div>
+        <div className="scroll-x">
+          {nearbyRestaurants.map((restaurant) => (
+            <RestaurantCard key={restaurant.id} restaurant={restaurant} />
           ))}
         </div>
       </section>
@@ -362,21 +529,6 @@ export default function HomePage({ university }: Props) {
               </div>
             )
           })}
-        </div>
-      </section>
-
-      {/* 附近好店 */}
-      <section className="section">
-        <div className="section-header">
-          <h2 className="section-title">附近好店</h2>
-          <button className="section-more" onClick={() => navigate('/list')}>
-            更多 &gt;
-          </button>
-        </div>
-        <div className="scroll-x">
-          {nearbyRestaurants.map((restaurant) => (
-            <RestaurantCard key={restaurant.id} restaurant={restaurant} />
-          ))}
         </div>
       </section>
     </div>

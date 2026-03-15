@@ -959,6 +959,108 @@ ul, ol {
   box-shadow: 0 -2px 16px rgba(0, 0, 0, 0.08);
 }
 
+/* Mini Map - 首页迷你地图卡片 */
+.mini-map {
+  position: relative;
+  height: 180px;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+}
+
+.mini-map-bg {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(135deg, #E8F5E9 0%, #E3F2FD 50%, #FFF3E0 100%);
+}
+
+.mini-map-grid {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.mini-map-university {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 3;
+}
+
+.mini-map-uni-dot {
+  width: 28px;
+  height: 28px;
+  background: var(--meituan-yellow);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 4px;
+  font-weight: 700;
+  font-size: 0.75rem;
+  color: var(--gray-900);
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.mini-map-uni-name {
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  white-space: nowrap;
+  background: rgba(255,255,255,0.85);
+  padding: 1px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.mini-map-marker {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  background: #FF6B35;
+  border-radius: 50% 50% 50% 0;
+  transform: rotate(-45deg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  z-index: 2;
+  transition: transform 0.2s;
+}
+
+.mini-map-marker-icon {
+  transform: rotate(45deg);
+  font-size: 0.6rem;
+  font-weight: 700;
+  color: white;
+}
+
+.mini-map-footer {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  padding: 8px 14px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.8rem;
+  color: var(--gray-700);
+  z-index: 4;
+}
+
+.mini-map-footer-action {
+  color: #FF6B35;
+  font-weight: 600;
+}
+
 /* Restaurant Detail Page - 美团风格 */
 .detail-page {
   padding: 0;
@@ -1608,48 +1710,64 @@ ul, ol {
 
 /* ========== 首页 AI 决策区域 ========== */
 
-.ai-hero {
-  background: linear-gradient(135deg, var(--meituan-yellow) 0%, #FFE566 100%);
-  padding: 20px 16px 24px;
-  margin: -16px -16px 16px;
-}
-
-.ai-hero-greeting {
-  font-size: 1.2rem;
-  font-weight: 700;
-  color: var(--meituan-black);
-  margin-bottom: 14px;
-}
-
-.ai-hero-input {
+/* AI 搜索入口 - 轻量版 */
+.ai-search-card {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: #fff;
-  border-radius: var(--radius-full);
-  padding: 12px 16px;
-  box-shadow: var(--shadow-md);
+  justify-content: space-between;
+  background: linear-gradient(135deg, #FFF8DC 0%, #FFE8B0 100%);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
   cursor: pointer;
-  transition: box-shadow 0.15s;
-}
-
-.ai-hero-input:active {
+  margin-bottom: 8px;
   box-shadow: var(--shadow-sm);
+  transition: transform 0.15s;
 }
 
-.ai-hero-input-icon {
-  font-size: 1.2rem;
+.ai-search-card:active {
+  transform: scale(0.98);
 }
 
-.ai-hero-input-text {
-  flex: 1;
-  color: var(--gray-500);
-  font-size: 0.9rem;
+.ai-search-card-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
 
-.ai-hero-input-arrow {
-  color: var(--gray-400);
-  font-size: 0.9rem;
+.ai-search-card-icon {
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #FF6B35, #FF8F5E);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 800;
+  font-size: 0.85rem;
+  color: white;
+  flex-shrink: 0;
+}
+
+.ai-search-card-title {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.ai-search-card-desc {
+  font-size: 0.78rem;
+  color: var(--gray-600);
+  margin-top: 2px;
+}
+
+.ai-search-card-btn {
+  background: #FF6B35;
+  color: white;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
 }
 
 /* 猜你想要卡片 */
@@ -2637,13 +2755,40 @@ ul, ol {
 /* 明日翻牌投票 */
 .flip-vote {
   margin-top: 14px;
+  margin-bottom: 14px;
+}
+
+.flip-vote-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
 }
 
 .flip-vote-title {
   font-size: 0.85rem;
   font-weight: 600;
   color: var(--gray-700);
-  margin-bottom: 10px;
+}
+
+.flip-vote-nominate-btn {
+  font-size: 0.78rem;
+  color: #FF6B35;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: var(--radius-full);
+  border: 1px solid #FF6B35;
+}
+
+.flip-vote-nominate-btn.nominate-full {
+  color: var(--gray-400);
+  border-color: var(--gray-300);
+  cursor: default;
+}
+
+.flip-nominate-modal .group-order-create-btn {
+  background: linear-gradient(135deg, #FF6B35 0%, #FF8F5E 100%);
 }
 
 .flip-vote-list {
