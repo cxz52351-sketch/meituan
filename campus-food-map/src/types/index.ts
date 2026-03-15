@@ -71,3 +71,25 @@ export interface RankList {
   filterFn: (r: Restaurant) => boolean;
   sortFn: (a: Restaurant, b: Restaurant) => number;
 }
+
+// 用户资料
+export interface UserProfile {
+  id: string;
+  nickname: string;
+  avatar: string;          // emoji
+  university: University;
+  major: string;
+  year: string;            // '大一' ~ '研三'
+  gender: 'male' | 'female';
+}
+
+// 好友
+export interface Friend {
+  id: string;              // name-university-major 拼接
+  name: string;
+  avatar: string;
+  university: University;
+  major: string;
+  year: string;
+  gender: 'male' | 'female';
+}

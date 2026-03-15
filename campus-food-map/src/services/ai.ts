@@ -1,5 +1,5 @@
 import { restaurants } from '../data/restaurants'
-import { Restaurant, University } from '../types'
+import { Restaurant, University, PriceRange, Category } from '../types'
 import { APIMessage, ToolCall, StreamDelta } from '../types/chat'
 import { getSavingsPlan } from '../data/deals'
 
@@ -382,6 +382,109 @@ function getToolDisplayName(name: string): string {
     case 'smart_random': return '正在为你智能推荐...'
     default: return '正在处理...'
   }
+}
+
+// ========== Guide Decision Flow ==========
+
+export interface GuideFilters {
+  scene?: string
+  priceRange?: PriceRange | PriceRange[]
+  category?: Category
+  university: University | 'all'
+  excludeIds?: string[]
+}
+
+export interface GuideRecommendation {
+  restaurants: Restaurant[]
+  reason: string
+}
+
+export function getGuideRecommendation(filters: GuideFilters): GuideRecommendation {
+  let candidates = getFilteredRestaurants(filters.university)
+
+  // 优先在营业的
+  const openCandidates = candidates.filter(isOpenNow)
+  if (openCandidates.length > 0) candidates = openCandidates
+
+  // 按场景筛选
+  if (filters.scene) {
+    const sceneFiltered = candidates.filter(r => r.scenes.includes(filters.scene as Restaurant['scenes'][number]))
+    if (sceneFiltered.length > 0) candidates = sceneFiltered
+  }
+
+  // 按预算筛选
+  if (filters.priceRange) {
+    const ranges = Array.isArray(filters.priceRange) ? filters.priceRange : [filters.priceRange]
+    const priceFiltered = candidates.filter(r => ranges.includes(r.priceRange))
+    if (priceFiltered.length > 0) candidates = priceFiltered
+  }
+
+  // 按品类筛选
+  if (filters.category) {
+    const catFiltered = candidates.filter(r => r.category === filters.category)
+    if (catFiltered.length > 0) candidates = catFiltered
+  }
+
+  // 排除已推荐的
+  if (filters.excludeIds?.length) {
+    const excluded = candidates.filter(r => !filters.excludeIds!.includes(r.id))
+    if (excluded.length > 0) candidates = excluded
+  }
+
+  // 加权随机选 2 家
+  const count = Math.min(2, candidates.length)
+  const selected: Restaurant[] = []
+  const pool = [...candidates]
+
+  for (let i = 0; i < count && pool.length > 0; i++) {
+    const weights = pool.map(r => r.rating * r.rating * (1 + r.repurchaseRate))
+    const totalWeight = weights.reduce((a, b) => a + b, 0)
+    let random = Math.random() * totalWeight
+    let idx = 0
+    for (let j = 0; j < weights.length; j++) {
+      random -= weights[j]
+      if (random <= 0) { idx = j; break }
+    }
+    selected.push(pool[idx])
+    pool.splice(idx, 1)
+  }
+
+  if (selected.length === 0) {
+    return { restaurants: [], reason: '没有找到符合条件的餐厅，试试放宽条件？' }
+  }
+
+  // 生成推荐理由
+  const reasons = selected.map(r => {
+    const parts: string[] = []
+    if (r.repurchaseRate > 0.5) parts.push(`同学复购率${Math.round(r.repurchaseRate * 100)}%`)
+    if (r.weeklyStudentOrders > 200) parts.push(`本周${r.weeklyStudentOrders}人下单`)
+    const plan = getSavingsPlan(r.id)
+    if (plan && plan.coupons.length > 0) parts.push(`有${plan.coupons[0].title}`)
+    if (r.studentDiscount) parts.push(r.studentDiscount)
+    if (parts.length === 0) parts.push(`${r.rating}分好评`)
+    return `${r.name}：${parts.join('，')}，实付人均${r.actualPayPrice}元`
+  })
+
+  return { restaurants: selected, reason: reasons.join('；') }
+}
+
+export function getAvailableCategories(filters: Omit<GuideFilters, 'category'>): Category[] {
+  let candidates = getFilteredRestaurants(filters.university)
+  const openCandidates = candidates.filter(isOpenNow)
+  if (openCandidates.length > 0) candidates = openCandidates
+
+  if (filters.scene) {
+    const sceneFiltered = candidates.filter(r => r.scenes.includes(filters.scene as Restaurant['scenes'][number]))
+    if (sceneFiltered.length > 0) candidates = sceneFiltered
+  }
+  if (filters.priceRange) {
+    const ranges = Array.isArray(filters.priceRange) ? filters.priceRange : [filters.priceRange]
+    const priceFiltered = candidates.filter(r => ranges.includes(r.priceRange))
+    if (priceFiltered.length > 0) candidates = priceFiltered
+  }
+
+  const categories = [...new Set(candidates.map(r => r.category))]
+  return categories.slice(0, 8)
 }
 
 // ========== SSE Stream Parser ==========

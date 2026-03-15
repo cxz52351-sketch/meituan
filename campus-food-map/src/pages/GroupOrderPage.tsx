@@ -2,7 +2,8 @@ import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { University } from '../types'
 import { restaurants } from '../data/restaurants'
-import { getGroupOrders, GroupOrderPost, GroupOrderMode, onlineTags, offlineTags } from '../data/groupOrders'
+import { getGroupOrders, GroupOrderPost, GroupOrderMode, GroupOrderUser, onlineTags, offlineTags } from '../data/groupOrders'
+import { getDefaultInitiator, getFriends, addFriend, isFriend } from '../services/profile'
 
 interface Props {
   university: University | 'all'
@@ -15,6 +16,13 @@ export default function GroupOrderPage({ university }: Props) {
   const [activeTag, setActiveTag] = useState<string | null>(null)
   const [showCreate, setShowCreate] = useState(false)
   const [userPosts, setUserPosts] = useState<GroupOrderPost[]>([])
+  const [addedFriendIds, setAddedFriendIds] = useState<Set<string>>(() => {
+    // 初始化时标记已有好友
+    const ids = new Set<string>()
+    getFriends().forEach(f => ids.add(f.id))
+    return ids
+  })
+  const [invitedFriendIds, setInvitedFriendIds] = useState<Set<string>>(new Set())
 
   // 发起拼单表单状态
   const [createMode, setCreateMode] = useState<GroupOrderMode>('offline')
@@ -93,6 +101,7 @@ export default function GroupOrderPage({ university }: Props) {
     setCreateAddress('')
     setCreateLocation('')
     setCreateTags(new Set())
+    setInvitedFriendIds(new Set())
   }
 
   const handlePublish = () => {
@@ -101,18 +110,26 @@ export default function GroupOrderPage({ university }: Props) {
     const selectedR = restaurants.find(r => r.id === createRestaurantId)
     if (!selectedR) return
 
+    const initiator = getDefaultInitiator(university)
+
+    // 被邀请的好友作为初始 participants
+    const allFriends = getFriends()
+    const invitedParticipants: GroupOrderUser[] = allFriends
+      .filter(f => invitedFriendIds.has(f.id))
+      .map(f => ({
+        name: f.name,
+        avatar: f.avatar,
+        university: f.university,
+        major: f.major,
+        year: f.year,
+        gender: f.gender,
+      }))
+
     const newPost: GroupOrderPost = {
       id: `user-${Date.now()}`,
       mode: createMode,
-      initiator: {
-        name: '我',
-        avatar: '😎',
-        university: university === 'all' ? '北京大学' : university,
-        major: '未填写',
-        year: '大三',
-        gender: 'male'
-      },
-      participants: [],
+      initiator,
+      participants: invitedParticipants,
       restaurantId: selectedR.id,
       restaurantName: selectedR.name,
       targetPeople: createPeople,
@@ -143,6 +160,29 @@ export default function GroupOrderPage({ university }: Props) {
   const openCreate = () => {
     setCreateMode(mode) // 默认选中当前模式
     setShowCreate(true)
+  }
+
+  const isMyPost = (post: GroupOrderPost) => post.id.startsWith('user-')
+
+  const handleAddFriend = (user: GroupOrderUser) => {
+    const friend = addFriend(user)
+    setAddedFriendIds(prev => new Set(prev).add(friend.id))
+  }
+
+  const isAlreadyFriend = (user: GroupOrderUser) => {
+    return addedFriendIds.has(`${user.name}-${user.university}-${user.major}`) || isFriend(user)
+  }
+
+  const handleInviteToggle = (friendId: string) => {
+    setInvitedFriendIds(prev => {
+      const next = new Set(prev)
+      if (next.has(friendId)) {
+        next.delete(friendId)
+      } else {
+        next.add(friendId)
+      }
+      return next
+    })
   }
 
   return (
@@ -222,9 +262,20 @@ export default function GroupOrderPage({ university }: Props) {
                   </span>
                 </div>
               </div>
-              <span className="group-order-time">
-                {post.createdMinutesAgo === 0 ? '刚刚' : `${post.createdMinutesAgo}分钟前`}
-              </span>
+              <div className="group-order-header-right">
+                {!isMyPost(post) && (
+                  <button
+                    className={`group-order-add-friend ${isAlreadyFriend(post.initiator) ? 'added' : ''}`}
+                    onClick={() => handleAddFriend(post.initiator)}
+                    disabled={isAlreadyFriend(post.initiator)}
+                  >
+                    {isAlreadyFriend(post.initiator) ? '已添加' : '+ 好友'}
+                  </button>
+                )}
+                <span className="group-order-time">
+                  {post.createdMinutesAgo === 0 ? '刚刚' : `${post.createdMinutesAgo}分钟前`}
+                </span>
+              </div>
             </div>
 
             {/* 留言 */}
@@ -264,7 +315,7 @@ export default function GroupOrderPage({ university }: Props) {
                   {post.participants.map((p, i) => (
                     <span key={i} className="group-order-people-avatar">{p.avatar}</span>
                   ))}
-                  {joinedIds.has(post.id) && post.initiator.name !== '我' && (
+                  {joinedIds.has(post.id) && !isMyPost(post) && (
                     <span className="group-order-people-avatar me">我</span>
                   )}
                   {Array.from({ length: Math.max(0, post.targetPeople - currentPeople(post)) }).map((_, i) => (
@@ -276,7 +327,7 @@ export default function GroupOrderPage({ university }: Props) {
                   {isFull(post) && ' · 已满'}
                 </span>
               </div>
-              {post.initiator.name === '我' ? (
+              {isMyPost(post) ? (
                 <span className="group-order-my-post">我发起的</span>
               ) : (
                 <button
@@ -412,6 +463,25 @@ export default function GroupOrderPage({ university }: Props) {
                   rows={2}
                 />
               </div>
+
+              {/* 邀请好友 */}
+              {getFriends().length > 0 && (
+                <div className="group-order-create-field">
+                  <label>邀请好友一起</label>
+                  <div className="invite-friend-chips">
+                    {getFriends().map(f => (
+                      <span
+                        key={f.id}
+                        className={`invite-friend-chip ${invitedFriendIds.has(f.id) ? 'selected' : ''}`}
+                        onClick={() => handleInviteToggle(f.id)}
+                      >
+                        <span className="invite-friend-chip-avatar">{f.avatar}</span>
+                        {f.name}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
 
             <button

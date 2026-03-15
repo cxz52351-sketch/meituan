@@ -1,5 +1,12 @@
 import { Restaurant } from './index'
 
+export interface GuideOption {
+  id: string
+  emoji: string
+  label: string
+  description?: string
+}
+
 export interface ChatMessage {
   id: string
   role: 'user' | 'assistant'
@@ -8,6 +15,7 @@ export interface ChatMessage {
   restaurantResults?: Restaurant[]
   status?: 'streaming' | 'tool_calling' | 'done'
   toolInfo?: string
+  guideOptions?: GuideOption[]
 }
 
 // OpenAI 兼容的消息格式

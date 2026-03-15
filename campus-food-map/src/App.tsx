@@ -9,6 +9,7 @@ import RandomPage from './pages/RandomPage'
 import RankPage from './pages/RankPage'
 import GroupOrderPage from './pages/GroupOrderPage'
 import DetailPage from './pages/DetailPage'
+import ProfilePage from './pages/ProfilePage'
 import ChatAgent from './components/ChatAgent'
 
 function App() {
@@ -57,6 +58,7 @@ function App() {
           <Route path="/rank/:rankId" element={<RankPage university={selectedUniversity} />} />
           <Route path="/list" element={<ListPage university={selectedUniversity} />} />
           <Route path="/restaurant/:id" element={<DetailPage />} />
+          <Route path="/profile" element={<ProfilePage university={selectedUniversity} />} />
         </Routes>
       </main>
 
@@ -101,6 +103,14 @@ function App() {
                   <path d="M7.5 21H2V9h5.5v12zm7.25-18h-5.5v18h5.5V3zM22 11h-5.5v10H22V11z"/>
                 </svg>
                 <span className="label">榜单</span>
+              </NavLink>
+            </li>
+            <li>
+              <NavLink to="/profile" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+                <svg className="nav-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+                <span className="label">我的</span>
               </NavLink>
             </li>
           </ul>

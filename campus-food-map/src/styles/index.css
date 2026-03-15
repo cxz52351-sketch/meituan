@@ -225,7 +225,7 @@ ul, ol {
   flex-direction: column;
   align-items: center;
   gap: 2px;
-  padding: 6px 12px;
+  padding: 6px 8px;
   border-radius: var(--radius-md);
   color: var(--gray-500);
   transition: all 0.2s;
@@ -2149,6 +2149,56 @@ ul, ol {
 }
 
 /* ==================== */
+/* 引导式决策流 - Guide  */
+/* ==================== */
+
+.guide-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  margin-top: 10px;
+  max-width: 340px;
+}
+
+.guide-option-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 14px 10px;
+  border: 1.5px solid #eee;
+  border-radius: var(--radius-lg);
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.2s;
+  font-family: var(--font-sans);
+  text-align: center;
+}
+
+.guide-option-card:active {
+  border-color: var(--meituan-yellow);
+  background: #fffbe6;
+  transform: scale(0.96);
+}
+
+.guide-option-emoji {
+  font-size: 28px;
+  line-height: 1.2;
+}
+
+.guide-option-label {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--meituan-black);
+}
+
+.guide-option-desc {
+  font-size: 11px;
+  color: #999;
+  line-height: 1.3;
+}
+
+/* ==================== */
 /* 3秒答案 - Hero Pick  */
 /* ==================== */
 
@@ -3430,4 +3480,473 @@ ul, ol {
 .group-order-create-btn.btn-disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* ==================== 个人主页 ==================== */
+
+.profile-page {
+  padding-bottom: 30px;
+}
+
+/* 设置卡片 */
+.profile-setup-card {
+  background: #fff;
+  border-radius: var(--radius-xl);
+  padding: 28px 20px;
+  box-shadow: var(--shadow-md);
+  margin-top: 10px;
+}
+
+.profile-setup-title {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 4px;
+}
+
+.profile-setup-subtitle {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  margin-bottom: 24px;
+}
+
+.profile-field {
+  margin-bottom: 20px;
+}
+
+.profile-label {
+  display: block;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 8px;
+}
+
+.profile-avatar-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-avatar-option {
+  width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--gray-200);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.profile-avatar-option:hover {
+  border-color: var(--gray-400);
+}
+
+.profile-avatar-option.selected {
+  border-color: var(--meituan-yellow);
+  background: var(--meituan-yellow-light);
+  transform: scale(1.1);
+}
+
+.profile-input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-family: var(--font-sans);
+  transition: border-color 0.15s;
+  outline: none;
+}
+
+.profile-input:focus {
+  border-color: var(--meituan-yellow);
+}
+
+.profile-select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1.5px solid var(--gray-200);
+  border-radius: var(--radius-md);
+  font-size: 0.9rem;
+  font-family: var(--font-sans);
+  background: #fff;
+  outline: none;
+}
+
+.profile-select:focus {
+  border-color: var(--meituan-yellow);
+}
+
+.profile-year-options,
+.profile-gender-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-year-option,
+.profile-gender-option {
+  padding: 6px 16px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--gray-200);
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  color: var(--gray-700);
+}
+
+.profile-year-option:hover,
+.profile-gender-option:hover {
+  border-color: var(--gray-400);
+}
+
+.profile-year-option.selected,
+.profile-gender-option.selected {
+  border-color: var(--meituan-yellow);
+  background: var(--meituan-yellow-light);
+  color: var(--gray-900);
+  font-weight: 600;
+}
+
+.profile-setup-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+.profile-save-btn {
+  flex: 1;
+  padding: 12px;
+  border: none;
+  border-radius: var(--radius-lg);
+  background: var(--meituan-yellow);
+  color: var(--gray-900);
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: opacity 0.15s;
+}
+
+.profile-save-btn:hover {
+  opacity: 0.9;
+}
+
+.profile-save-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.profile-cancel-btn {
+  padding: 12px 24px;
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  color: var(--gray-700);
+  font-size: 0.95rem;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+/* 用户信息卡 */
+.profile-info-card {
+  background: linear-gradient(135deg, var(--meituan-yellow-light) 0%, #fff 100%);
+  border-radius: var(--radius-xl);
+  padding: 20px;
+  margin-top: 10px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: var(--shadow-md);
+  border: 1px solid rgba(255, 209, 0, 0.3);
+}
+
+.profile-info-main {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.profile-info-avatar {
+  font-size: 2.8rem;
+  width: 56px;
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-info-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.profile-info-name {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.profile-info-detail {
+  font-size: 0.8rem;
+  color: var(--gray-600);
+}
+
+.profile-edit-btn {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 14px;
+  border: 1.5px solid var(--gray-300);
+  border-radius: var(--radius-full);
+  background: #fff;
+  color: var(--gray-700);
+  font-size: 0.8rem;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all 0.15s;
+}
+
+.profile-edit-btn:hover {
+  border-color: var(--gray-500);
+  color: var(--gray-900);
+}
+
+/* 个人主页分区 */
+.profile-section {
+  margin-top: 20px;
+  background: #fff;
+  border-radius: var(--radius-xl);
+  padding: 18px;
+  box-shadow: var(--shadow-sm);
+}
+
+.profile-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+}
+
+.profile-section-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.profile-section-count {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+}
+
+/* 好友列表 */
+.profile-friend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.profile-friend-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--gray-50);
+  border-radius: var(--radius-lg);
+}
+
+.profile-friend-avatar {
+  font-size: 1.6rem;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border-radius: var(--radius-md);
+}
+
+.profile-friend-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-friend-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.profile-friend-detail {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+.profile-friend-remove {
+  padding: 4px 12px;
+  border: 1px solid var(--gray-300);
+  border-radius: var(--radius-full);
+  background: #fff;
+  color: var(--gray-500);
+  font-size: 0.75rem;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all 0.15s;
+}
+
+.profile-friend-remove:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+/* 空态 */
+.profile-empty {
+  text-align: center;
+  padding: 30px 10px;
+  color: var(--gray-500);
+}
+
+.profile-empty-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 10px;
+}
+
+.profile-empty p {
+  margin-bottom: 4px;
+  font-size: 0.9rem;
+}
+
+.profile-empty-hint {
+  color: var(--gray-400);
+  font-size: 0.8rem !important;
+}
+
+.profile-go-btn {
+  margin-top: 14px;
+  padding: 8px 24px;
+  border: none;
+  border-radius: var(--radius-full);
+  background: var(--meituan-yellow);
+  color: var(--gray-900);
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-sans);
+}
+
+/* 快捷入口 */
+.profile-shortcuts {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin-top: 10px;
+}
+
+.profile-shortcut-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 14px 4px;
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.profile-shortcut-item:last-child {
+  border-bottom: none;
+}
+
+.profile-shortcut-icon {
+  font-size: 1.2rem;
+}
+
+.profile-shortcut-label {
+  flex: 1;
+  font-size: 0.9rem;
+  color: var(--gray-800);
+}
+
+.profile-shortcut-badge {
+  font-size: 0.7rem;
+  color: var(--gray-400);
+  background: var(--gray-100);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+/* ==================== 拼单页好友功能 ==================== */
+
+.group-order-header-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.group-order-add-friend {
+  padding: 3px 10px;
+  border: 1.5px solid var(--accent);
+  border-radius: var(--radius-full);
+  background: #fff;
+  color: var(--accent);
+  font-size: 0.72rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all 0.15s;
+  white-space: nowrap;
+}
+
+.group-order-add-friend:hover {
+  background: #F0FDF4;
+}
+
+.group-order-add-friend.added {
+  border-color: var(--gray-300);
+  color: var(--gray-400);
+  cursor: default;
+}
+
+/* 邀请好友 chips */
+.invite-friend-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.invite-friend-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--gray-200);
+  font-size: 0.82rem;
+  color: var(--gray-700);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.invite-friend-chip:hover {
+  border-color: var(--gray-400);
+}
+
+.invite-friend-chip.selected {
+  border-color: var(--accent);
+  background: #F0FDF4;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.invite-friend-chip-avatar {
+  font-size: 1rem;
 }
