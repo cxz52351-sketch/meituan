@@ -1,0 +1,155 @@
+import { useMemo } from 'react'
+import { useParams, useNavigate } from 'react-router-dom'
+import { University, Restaurant } from '../types'
+import { restaurants, rankLists } from '../data/restaurants'
+
+interface Props {
+  university: University | 'all'
+}
+
+// 榜单筛选和排序逻辑
+const getRankRestaurants = (
+  rankId: string,
+  allRestaurants: Restaurant[]
+): Restaurant[] => {
+  switch (rankId) {
+    case 'repurchase':
+      // 复购王榜：按学生复购率排序
+      return [...allRestaurants]
+        .sort((a, b) => b.repurchaseRate - a.repurchaseRate)
+
+    case 'budget':
+      // 穷鬼榜：按实付价格排序（含满减后）
+      return allRestaurants
+        .filter((r) => r.actualPayPrice <= 25)
+        .sort((a, b) => a.actualPayPrice - b.actualPayPrice)
+
+    case 'fast':
+      // 快速出餐榜：按真实出餐/配送时间排序
+      return [...allRestaurants]
+        .filter((r) => r.avgDeliveryMinutes <= 10 || r.features.includes('快速出餐'))
+        .sort((a, b) => a.avgDeliveryMinutes - b.avgDeliveryMinutes)
+
+    case 'late':
+      // 深夜食堂榜：22点后营业
+      return allRestaurants
+        .filter((r) => {
+          const closeHour = parseInt(r.closeTime.split(':')[0])
+          return closeHour >= 23 || closeHour <= 3 || r.scenes.includes('深夜')
+        })
+        .sort((a, b) => b.rating - a.rating)
+
+    case 'date':
+      // 约会圣地榜：环境好，适合两人
+      return allRestaurants
+        .filter((r) => r.scenes.includes('约会') || r.features.includes('环境好'))
+        .sort((a, b) => b.rating - a.rating)
+
+    case 'group':
+      // 聚餐推荐榜：适合多人
+      return allRestaurants
+        .filter((r) => r.scenes.includes('聚餐') || r.features.includes('有包间'))
+        .sort((a, b) => b.rating - a.rating)
+
+    case 'rating':
+    default:
+      // 口碑榜：按评分排序
+      return [...allRestaurants].sort((a, b) => b.rating - a.rating)
+  }
+}
+
+export default function RankPage({ university }: Props) {
+  const { rankId } = useParams()
+  const navigate = useNavigate()
+
+  const currentRankId = rankId || 'rating'
+  const currentRank = rankLists.find((r) => r.id === currentRankId) || rankLists[6]
+
+  const filteredRestaurants = useMemo(() => {
+    const baseList = university === 'all'
+      ? restaurants
+      : restaurants.filter((r) => r.university === university)
+
+    return getRankRestaurants(currentRankId, baseList).slice(0, 10)
+  }, [university, currentRankId])
+
+  return (
+    <div className="page">
+      {/* 榜单Tab */}
+      <div className="rank-tabs">
+        {rankLists.map((rank) => (
+          <button
+            key={rank.id}
+            className={`rank-tab ${currentRankId === rank.id ? 'active' : ''}`}
+            onClick={() => navigate(`/rank/${rank.id}`)}
+          >
+            {rank.icon} {rank.title}
+          </button>
+        ))}
+      </div>
+
+      {/* 榜单头部 */}
+      <div className="rank-header" style={{ background: `${currentRank.color}10` }}>
+        <div className="icon">{currentRank.icon}</div>
+        <div className="title">{currentRank.title}</div>
+        <div className="desc">{currentRank.description}</div>
+      </div>
+
+      {/* 榜单列表 */}
+      {filteredRestaurants.length > 0 ? (
+        <div className="rank-list">
+          {filteredRestaurants.map((restaurant, index) => (
+            <div
+              key={restaurant.id}
+              className="rank-item"
+              onClick={() => navigate(`/restaurant/${restaurant.id}`)}
+            >
+              <div className="rank-number">{index + 1}</div>
+              <img
+                className="image"
+                src={restaurant.images[0]}
+                alt={restaurant.name}
+              />
+              <div className="content">
+                <div className="name">{restaurant.name}</div>
+                <div className="meta">
+                  <span className="rating">{restaurant.rating}分</span>
+                  {currentRankId === 'repurchase' && (
+                    <span style={{ color: '#FF6B35', fontWeight: 600 }}>
+                      复购率{Math.round(restaurant.repurchaseRate * 100)}%
+                    </span>
+                  )}
+                  {currentRankId === 'budget' ? (
+                    <span style={{ color: '#10B981', fontWeight: 600 }}>
+                      实付¥{restaurant.actualPayPrice}
+                    </span>
+                  ) : (
+                    <span>¥{restaurant.avgPrice}/人</span>
+                  )}
+                  {currentRankId === 'fast' ? (
+                    <span style={{ color: '#F59E0B', fontWeight: 600 }}>
+                      {restaurant.avgDeliveryMinutes}分钟出餐
+                    </span>
+                  ) : (
+                    <span>{restaurant.walkTime}分钟</span>
+                  )}
+                </div>
+                {restaurant.studentDiscount && (currentRankId === 'budget' || currentRankId === 'repurchase') && (
+                  <div className="rank-discount">🎫 {restaurant.studentDiscount}</div>
+                )}
+                {currentRankId === 'repurchase' && (
+                  <div className="rank-orders">本周{restaurant.weeklyStudentOrders}位同学下单</div>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="empty-state">
+          <div className="icon" style={{ fontSize: '2rem', color: '#ccc' }}>暂无</div>
+          <p className="text">暂无符合条件的餐厅上榜</p>
+        </div>
+      )}
+    </div>
+  )
+}

@@ -1,0 +1,525 @@
+import { restaurants } from '../data/restaurants'
+import { Restaurant, University } from '../types'
+import { APIMessage, ToolCall, StreamDelta } from '../types/chat'
+import { getSavingsPlan } from '../data/deals'
+
+// ========== Time Awareness ==========
+
+export function getMealPeriod(): { period: string; greeting: string } {
+  const hour = new Date().getHours()
+  if (hour >= 5 && hour < 10) return { period: '早餐', greeting: '早上好！该吃早餐啦 🌅' }
+  if (hour >= 10 && hour < 14) return { period: '午餐', greeting: '中午好！午饭时间到 🍱' }
+  if (hour >= 14 && hour < 17) return { period: '下午茶', greeting: '下午好！来点下午茶？ ☕' }
+  if (hour >= 17 && hour < 21) return { period: '晚餐', greeting: '晚上好！晚饭吃什么？ 🌙' }
+  return { period: '宵夜', greeting: '夜猫子！来份宵夜？ 🦉' }
+}
+
+export function getTimeSuggestions(): string[] {
+  const hour = new Date().getHours()
+  if (hour >= 5 && hour < 10) return ['早餐吃啥？', '快速出餐的', '来杯咖啡', '便宜管饱的']
+  if (hour >= 10 && hour < 14) return ['午饭吃啥？', '一个人随便吃', '便宜好吃的', '帮我随机选']
+  if (hour >= 14 && hour < 17) return ['下午茶推荐', '想喝奶茶', '适合约会的', '甜点推荐']
+  if (hour >= 17 && hour < 21) return ['晚饭吃啥？', '想吃火锅', '适合聚餐的', '帮我随机选']
+  return ['宵夜吃啥？', '深夜还开的', '来份烧烤', '帮我随机选']
+}
+
+// ========== System Prompt ==========
+
+function buildSystemPrompt(university: University | 'all'): string {
+  const now = new Date()
+  const timeStr = now.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+  const dayOfWeek = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'][now.getDay()]
+  const uniContext = university === 'all' ? '全部学校' : university
+  const { period } = getMealPeriod()
+
+  return `你是「美团·大学城美食助手」，帮大学生解决"今天吃啥"这个千古难题的 AI 决策助手。你是美团内部的校园美食频道，拥有美团的真实交易数据。
+
+## 身份
+- 热情接地气的美食达人，像大学生的朋友一样聊天
+- 你的核心价值不是搜索引擎，而是**帮用户快速做决定**——减少选择困难
+- 你的推荐基于美团真实交易数据（复购率、订单量、实付价格），而非仅靠评分
+
+## 当前上下文
+- 时间：${timeStr}（${dayOfWeek}），现在是**${period}**时段
+- 用户选择的学校：${uniContext}
+- 你能调用工具查询当前营业的餐厅、按条件搜索、智能随机推荐
+
+## 对话策略
+
+### 冷启动（首次/模糊需求）
+用户说"吃啥"、"推荐"等模糊需求时，**用一句话快速收集关键信息**，并附上快捷回复选项让用户点选：
+- 如果用户说"随便"、"都行"，就果断用 smart_random 工具帮他选，不要再追问
+
+### 推荐策略
+1. 调用工具搜索后，**精选2-3家**，用自然语言介绍，不要列表式输出
+2. 每家给一句**基于数据的推荐理由**，例如：
+   - "同学复购率62%，回头客超多"
+   - "本周347位同学下单，是热门店"
+   - "满减后实付只要14元，比标价便宜一截"
+   - "学生证69折，人均实付59元"
+3. 当前是${period}时段，**优先推荐当前在营业的**
+4. 不要给太多选择，帮用户简化决策
+
+### 决策辅助
+- 用户犹豫时用排除法，给出选项让用户点选
+- 用户说"都行"就果断推一家："那我直接帮你选——"
+- 说完推荐后可以追问："就去这家？还是你有别的想法？"
+
+### 省钱助手（重要！）
+- 推荐餐厅时**主动提及省钱方案**，如"有满25减8的券，实付只要17元"
+- 用户说"便宜的"、"省钱"时，优先推荐有大额满减券或拼单优惠的餐厅
+- 提到优惠信息时用自然语言，如"记得先领券再下单"、"拉个室友一起拼单更划算"
+- 这是美团的核心价值——帮学生在平台内省到最多，而不是比价
+
+## 快捷回复（重要！）
+当你需要向用户**提问或让用户做选择**时，必须在回复末尾添加快捷回复标记，格式为：
+[快捷回复:选项1|选项2|选项3|选项4]
+
+示例：
+- 追问偏好时："几个人吃呀？预算啥范围？[快捷回复:一个人随便吃|和朋友2-3人|约会|请客聚餐]"
+- 追问口味时："想吃啥类型的？[快捷回复:来杯奶茶|甜点蛋糕|简餐轻食|都行随便]"
+- 推荐后追问："就去这家？[快捷回复:就这家吧|换一家看看|有没有更便宜的|有没有更近的]"
+
+规则：
+- 选项2-4个，每个选项不超过8个字
+- 选项要覆盖用户最可能的回答
+- 如果不需要用户选择（如纯推荐结束），可以不加快捷回复
+- 最后一个选项可以是"随便/都行"这类兜底选项
+
+## 回复风格
+- 简洁活泼，像朋友聊天
+- 适度用emoji（1-2个）
+- 回复控制在80-120字
+- 用"你"称呼，价格用"人均xx元"
+
+## 重要规则
+- 只推荐数据库中存在的餐厅，绝不编造
+- 必须调用工具获取数据后再推荐
+- 没有匹配结果时诚实说明，建议放宽条件
+- 推荐时提到餐厅名字，方便用户在下方卡片中找到`
+}
+
+// ========== Tool Definitions ==========
+
+const tools = [
+  {
+    type: 'function' as const,
+    function: {
+      name: 'search_restaurants',
+      description: '按条件搜索餐厅。可按品类、价格、场景、距离、特色筛选和排序。当用户表达了明确偏好时使用。',
+      parameters: {
+        type: 'object',
+        properties: {
+          category: {
+            type: 'string',
+            description: '美食品类',
+            enum: ['中餐', '西餐', '日料', '韩餐', '火锅', '烧烤', '小吃', '快餐', '饮品', '甜点', '面食', '粥店', '东南亚', '其他']
+          },
+          priceRange: {
+            type: 'string',
+            description: '价格区间：budget(人均20以下), affordable(20-40), moderate(40-70), premium(70+)',
+            enum: ['budget', 'affordable', 'moderate', 'premium']
+          },
+          scene: {
+            type: 'string',
+            description: '用餐场景',
+            enum: ['一个人', '和室友', '约会', '聚餐', '请客', '深夜', '快速']
+          },
+          maxWalkTime: {
+            type: 'number',
+            description: '最大步行时间（分钟）'
+          },
+          feature: {
+            type: 'string',
+            description: '餐厅特色',
+            enum: ['穷鬼友好', '快速出餐', '环境好', '分量足', '有包间', '可外带', '有wifi']
+          },
+          sortBy: {
+            type: 'string',
+            description: '排序方式',
+            enum: ['rating', 'distance', 'price'],
+            default: 'rating'
+          },
+          limit: {
+            type: 'number',
+            description: '返回数量限制，默认3',
+            default: 3
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'get_restaurant_detail',
+      description: '获取单个餐厅的详细信息，包括推荐菜、小贴士、营业时间等。当用户询问某家具体餐厅时使用。',
+      parameters: {
+        type: 'object',
+        properties: {
+          restaurantId: {
+            type: 'string',
+            description: '餐厅ID'
+          },
+          restaurantName: {
+            type: 'string',
+            description: '餐厅名称（模糊匹配）'
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'get_open_now',
+      description: '获取当前时间正在营业的餐厅列表。当用户关心"现在能吃到什么"或需要考虑营业时间时使用。',
+      parameters: {
+        type: 'object',
+        properties: {
+          category: {
+            type: 'string',
+            description: '可选品类筛选',
+            enum: ['中餐', '西餐', '日料', '韩餐', '火锅', '烧烤', '小吃', '快餐', '饮品', '甜点', '面食', '粥店', '东南亚', '其他']
+          }
+        },
+        required: []
+      }
+    }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'smart_random',
+      description: '智能随机推荐。不是纯随机，而是基于当前时间段（早餐/午餐/下午茶/晚餐/宵夜）、是否营业、评分等综合权重随机选择。当用户说"随便"、"都行"、"帮我选"、"不知道吃啥"时使用。',
+      parameters: {
+        type: 'object',
+        properties: {
+          count: {
+            type: 'number',
+            description: '推荐数量，默认1',
+            default: 1
+          },
+          excludeIds: {
+            type: 'array',
+            items: { type: 'string' },
+            description: '排除的餐厅ID列表（避免重复推荐）'
+          }
+        },
+        required: []
+      }
+    }
+  }
+]
+
+// ========== Tool Execution ==========
+
+function getFilteredRestaurants(university: University | 'all'): Restaurant[] {
+  if (university === 'all') return restaurants
+  return restaurants.filter(r => r.university === university)
+}
+
+function isOpenNow(r: Restaurant): boolean {
+  const now = new Date()
+  const currentMinutes = now.getHours() * 60 + now.getMinutes()
+  const [openH, openM] = r.openTime.split(':').map(Number)
+  const [closeH, closeM] = r.closeTime.split(':').map(Number)
+  const openMinutes = openH * 60 + openM
+  const closeMinutes = closeH * 60 + closeM
+
+  if (closeMinutes < openMinutes) {
+    return currentMinutes >= openMinutes || currentMinutes <= closeMinutes
+  }
+  return currentMinutes >= openMinutes && currentMinutes <= closeMinutes
+}
+
+function formatRestaurant(r: Restaurant): string {
+  const openStatus = isOpenNow(r) ? '✅营业中' : '❌已打烊'
+  const discount = r.studentDiscount ? ` | 学生优惠：${r.studentDiscount}` : ''
+  const plan = getSavingsPlan(r.id)
+  let savingsInfo = ''
+  if (plan) {
+    const couponStr = plan.coupons.map(c => c.title).join('、')
+    const groupStr = plan.groupOrder ? `拼单${plan.groupOrder.discountDesc}` : ''
+    const pickupStr = plan.selfPickupSave > 0 ? `到店自取省${plan.selfPickupSave}元` : ''
+    savingsInfo = ` | 省钱方案：${[couponStr, groupStr, pickupStr].filter(Boolean).join('；')}`
+  }
+  return `【${r.name}】(ID:${r.id}) ${r.category} | 标价人均${r.avgPrice}元，实付均价${r.actualPayPrice}元 | ${r.rating}分(${r.reviewCount}条) | 同学复购率${Math.round(r.repurchaseRate * 100)}% | 本周${r.weeklyStudentOrders}位同学下单 | ${r.distance}m/步行${r.walkTime}分钟 | 平均${r.avgDeliveryMinutes}分钟出餐 | ${r.address} | ${openStatus} ${r.openTime}-${r.closeTime} | 推荐菜：${r.recommendDishes.join('、')} | 特色：${r.features.join('、')} | 场景：${r.scenes.join('、')}${discount}${savingsInfo} | 贴士：${r.tips.join('；')}`
+}
+
+interface SearchParams {
+  category?: string
+  priceRange?: string
+  scene?: string
+  maxWalkTime?: number
+  feature?: string
+  sortBy?: string
+  limit?: number
+}
+
+function executeSearchRestaurants(params: SearchParams, university: University | 'all'): { text: string; restaurants: Restaurant[] } {
+  let results = getFilteredRestaurants(university)
+
+  if (params.category) {
+    results = results.filter(r => r.category === params.category)
+  }
+  if (params.priceRange) {
+    results = results.filter(r => r.priceRange === params.priceRange)
+  }
+  if (params.scene) {
+    results = results.filter(r => r.scenes.includes(params.scene as Restaurant['scenes'][number]))
+  }
+  if (params.maxWalkTime) {
+    results = results.filter(r => r.walkTime <= params.maxWalkTime!)
+  }
+  if (params.feature) {
+    results = results.filter(r => r.features.includes(params.feature as Restaurant['features'][number]))
+  }
+
+  const sortBy = params.sortBy || 'rating'
+  if (sortBy === 'rating') {
+    results.sort((a, b) => b.rating - a.rating)
+  } else if (sortBy === 'distance') {
+    results.sort((a, b) => a.distance - b.distance)
+  } else if (sortBy === 'price') {
+    results.sort((a, b) => a.avgPrice - b.avgPrice)
+  }
+
+  const limit = params.limit || 3
+  results = results.slice(0, limit)
+
+  if (results.length === 0) {
+    return { text: '没有找到符合条件的餐厅。建议放宽筛选条件。', restaurants: [] }
+  }
+
+  const text = `找到${results.length}家餐厅：\n${results.map(formatRestaurant).join('\n')}`
+  return { text, restaurants: results }
+}
+
+function executeGetDetail(params: { restaurantId?: string; restaurantName?: string }): { text: string; restaurants: Restaurant[] } {
+  let r: Restaurant | undefined
+  if (params.restaurantId) {
+    r = restaurants.find(rest => rest.id === params.restaurantId)
+  } else if (params.restaurantName) {
+    r = restaurants.find(rest => rest.name.includes(params.restaurantName!))
+  }
+  if (!r) return { text: '未找到该餐厅。', restaurants: [] }
+  return { text: formatRestaurant(r), restaurants: [r] }
+}
+
+function executeGetOpenNow(params: { category?: string }, university: University | 'all'): { text: string; restaurants: Restaurant[] } {
+  let results = getFilteredRestaurants(university).filter(isOpenNow)
+  if (params.category) {
+    results = results.filter(r => r.category === params.category)
+  }
+  results.sort((a, b) => b.rating - a.rating)
+  if (results.length === 0) {
+    return { text: '当前时间没有营业的餐厅。', restaurants: [] }
+  }
+  const text = `当前营业中（${results.length}家）：\n${results.map(formatRestaurant).join('\n')}`
+  return { text, restaurants: results }
+}
+
+function executeSmartRandom(params: { count?: number; excludeIds?: string[] }, university: University | 'all'): { text: string; restaurants: Restaurant[] } {
+  let candidates = getFilteredRestaurants(university).filter(isOpenNow)
+  if (params.excludeIds?.length) {
+    candidates = candidates.filter(r => !params.excludeIds!.includes(r.id))
+  }
+  // 如果当前没有营业的，回退到全部
+  if (candidates.length === 0) {
+    candidates = getFilteredRestaurants(university)
+    if (params.excludeIds?.length) {
+      candidates = candidates.filter(r => !params.excludeIds!.includes(r.id))
+    }
+  }
+
+  const count = Math.min(params.count || 1, candidates.length)
+  const selected: Restaurant[] = []
+  const pool = [...candidates]
+
+  for (let i = 0; i < count && pool.length > 0; i++) {
+    // 评分加权随机：rating^2 作为权重
+    const weights = pool.map(r => r.rating * r.rating)
+    const totalWeight = weights.reduce((a, b) => a + b, 0)
+    let random = Math.random() * totalWeight
+    let idx = 0
+    for (let j = 0; j < weights.length; j++) {
+      random -= weights[j]
+      if (random <= 0) { idx = j; break }
+    }
+    selected.push(pool[idx])
+    pool.splice(idx, 1)
+  }
+
+  const { period } = getMealPeriod()
+  const text = `基于当前${period}时段、营业状态和评分智能随机推荐${selected.length}家：\n${selected.map(formatRestaurant).join('\n')}`
+  return { text, restaurants: selected }
+}
+
+function executeTool(toolCall: ToolCall, university: University | 'all'): { text: string; restaurants: Restaurant[] } {
+  const args = JSON.parse(toolCall.function.arguments)
+  switch (toolCall.function.name) {
+    case 'search_restaurants':
+      return executeSearchRestaurants(args, university)
+    case 'get_restaurant_detail':
+      return executeGetDetail(args)
+    case 'get_open_now':
+      return executeGetOpenNow(args, university)
+    case 'smart_random':
+      return executeSmartRandom(args, university)
+    default:
+      return { text: '未知工具', restaurants: [] }
+  }
+}
+
+function getToolDisplayName(name: string): string {
+  switch (name) {
+    case 'search_restaurants': return '正在搜索餐厅...'
+    case 'get_restaurant_detail': return '正在查看详情...'
+    case 'get_open_now': return '正在查看营业状态...'
+    case 'smart_random': return '正在为你智能推荐...'
+    default: return '正在处理...'
+  }
+}
+
+// ========== SSE Stream Parser ==========
+
+async function* parseSSE(response: Response) {
+  const reader = response.body!.getReader()
+  const decoder = new TextDecoder()
+  let buffer = ''
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read()
+      if (done) break
+      buffer += decoder.decode(value, { stream: true })
+      const lines = buffer.split('\n')
+      buffer = lines.pop() || ''
+      for (const line of lines) {
+        const trimmed = line.trim()
+        if (!trimmed || !trimmed.startsWith('data: ')) continue
+        const data = trimmed.slice(6)
+        if (data === '[DONE]') return
+        try { yield JSON.parse(data) } catch { /* skip */ }
+      }
+    }
+  } finally {
+    reader.releaseLock()
+  }
+}
+
+// ========== Streaming API Call ==========
+
+export async function sendMessageStream(
+  conversationHistory: APIMessage[],
+  userMessage: string,
+  university: University | 'all',
+  onDelta: (delta: StreamDelta) => void
+): Promise<void> {
+  const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY
+  if (!apiKey || apiKey === 'your_key_here') {
+    onDelta({ type: 'error', message: '请在 .env.local 中配置 VITE_DEEPSEEK_API_KEY' })
+    return
+  }
+
+  const messages: APIMessage[] = [
+    { role: 'system', content: buildSystemPrompt(university) },
+    ...conversationHistory.slice(-20),
+    { role: 'user', content: userMessage }
+  ]
+
+  let allRestaurants: Restaurant[] = []
+  let maxIterations = 5
+
+  while (maxIterations-- > 0) {
+    const response = await fetch('/api/deepseek/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages,
+        tools,
+        temperature: 0.7,
+        stream: true
+      })
+    })
+
+    if (!response.ok) {
+      const errorText = await response.text()
+      onDelta({ type: 'error', message: `API 请求失败 (${response.status}): ${errorText}` })
+      return
+    }
+
+    let assistantContent = ''
+    const toolCallMap = new Map<number, ToolCall>()
+    let hasToolCalls = false
+
+    for await (const chunk of parseSSE(response)) {
+      const delta = chunk.choices?.[0]?.delta
+      const finishReason = chunk.choices?.[0]?.finish_reason
+
+      // 内容流
+      if (delta?.content) {
+        assistantContent += delta.content
+        onDelta({ type: 'content', text: delta.content })
+      }
+
+      // 工具调用流
+      if (delta?.tool_calls) {
+        for (const tc of delta.tool_calls) {
+          const index: number = tc.index ?? 0
+          if (tc.id) {
+            toolCallMap.set(index, {
+              id: tc.id,
+              type: 'function',
+              function: { name: tc.function?.name || '', arguments: tc.function?.arguments || '' }
+            })
+          } else {
+            const existing = toolCallMap.get(index)
+            if (existing) {
+              if (tc.function?.arguments) existing.function.arguments += tc.function.arguments
+              if (tc.function?.name) existing.function.name = tc.function.name
+            }
+          }
+        }
+      }
+
+      if (finishReason === 'tool_calls') hasToolCalls = true
+      if (finishReason === 'stop') {
+        onDelta({ type: 'done', content: assistantContent, restaurants: allRestaurants })
+        return
+      }
+    }
+
+    // 执行工具调用
+    if (hasToolCalls && toolCallMap.size > 0) {
+      const toolCallArray = Array.from(toolCallMap.values())
+      messages.push({
+        role: 'assistant',
+        content: assistantContent || null,
+        tool_calls: toolCallArray
+      })
+
+      for (const tc of toolCallArray) {
+        onDelta({ type: 'tool_start', toolName: getToolDisplayName(tc.function.name) })
+        const result = executeTool(tc, university)
+        allRestaurants = [...allRestaurants, ...result.restaurants]
+        onDelta({ type: 'tool_result', restaurants: result.restaurants })
+        messages.push({ role: 'tool', content: result.text, tool_call_id: tc.id })
+      }
+      continue
+    }
+
+    // 流结束但没有明确的 stop/tool_calls
+    onDelta({ type: 'done', content: assistantContent || '抱歉，我没有生成回复。', restaurants: allRestaurants })
+    return
+  }
+
+  onDelta({ type: 'done', content: '处理超时，请重试。', restaurants: allRestaurants })
+}

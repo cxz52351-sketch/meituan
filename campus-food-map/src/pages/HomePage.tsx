@@ -1,0 +1,406 @@
+import { useState, useMemo, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
+import { University, Restaurant } from '../types'
+import { restaurants, rankLists } from '../data/restaurants'
+import { getLatestReviews, formatTimeAgo } from '../data/reviews'
+import { getTodayFlip, getTomorrowCandidates } from '../data/deals'
+import { getMealPeriod } from '../services/ai'
+import RestaurantCard from '../components/RestaurantCard'
+
+interface Props {
+  university: University | 'all'
+}
+
+function isOpenNow(r: Restaurant): boolean {
+  const now = new Date()
+  const currentMinutes = now.getHours() * 60 + now.getMinutes()
+  const [openH, openM] = r.openTime.split(':').map(Number)
+  const [closeH, closeM] = r.closeTime.split(':').map(Number)
+  const openMinutes = openH * 60 + openM
+  const closeMinutes = closeH * 60 + closeM
+  if (closeMinutes < openMinutes) {
+    return currentMinutes >= openMinutes || currentMinutes <= closeMinutes
+  }
+  return currentMinutes >= openMinutes && currentMinutes <= closeMinutes
+}
+
+export default function HomePage({ university }: Props) {
+  const navigate = useNavigate()
+  const { greeting, period } = getMealPeriod()
+
+  const filteredRestaurants = university === 'all'
+    ? restaurants
+    : restaurants.filter((r) => r.university === university)
+
+  // 模拟实时下单动态
+  const orderFeedPool = useMemo(() => {
+    const majors = ['计算机', '经济学', '文学', '物理', '数学', '法学', '新闻', '心理学', '建筑', '化学', '生物', '历史']
+    return filteredRestaurants.map(r => {
+      const major = majors[Math.floor(Math.random() * majors.length)]
+      const mins = Math.floor(Math.random() * 15) + 1
+      const dish = r.recommendDishes[Math.floor(Math.random() * r.recommendDishes.length)]
+      return {
+        id: r.id,
+        text: `${r.university.replace('北京', '').replace('大学', '')}${major}系同学`,
+        restaurant: r.name,
+        dish,
+        time: `${mins}分钟前`
+      }
+    })
+  }, [filteredRestaurants])
+
+  const [currentOrderIdx, setCurrentOrderIdx] = useState(0)
+
+  useEffect(() => {
+    if (orderFeedPool.length === 0) return
+    const timer = setInterval(() => {
+      setCurrentOrderIdx(prev => (prev + 1) % orderFeedPool.length)
+    }, 3000)
+    return () => clearInterval(timer)
+  }, [orderFeedPool])
+
+  // 今日翻牌
+  const todayFlip = useMemo(() => getTodayFlip(), [])
+  const tomorrowCandidates = useMemo(() => getTomorrowCandidates(), [])
+  const [flipParticipants, setFlipParticipants] = useState(todayFlip.participantBase)
+  const [hasJoined, setHasJoined] = useState(false)
+  const [votedId, setVotedId] = useState<string | null>(null)
+  const [showShareToast, setShowShareToast] = useState(false)
+
+  // 模拟参与人数缓慢增长
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setFlipParticipants(prev => prev + Math.floor(Math.random() * 3))
+    }, 8000)
+    return () => clearInterval(timer)
+  }, [])
+
+  // 智能推荐：基于当前时间 + 营业状态 + 评分加权
+  const smartPicks = useMemo(() => {
+    const open = filteredRestaurants.filter(isOpenNow)
+    const pool = open.length >= 3 ? open : filteredRestaurants
+
+    // 按场景加权
+    const scored = pool.map(r => {
+      let score = r.rating * 10
+      if (isOpenNow(r)) score += 20
+      const hour = new Date().getHours()
+      if (hour >= 5 && hour < 10 && r.features.includes('快速出餐')) score += 15
+      if (hour >= 10 && hour < 14 && r.priceRange !== 'premium') score += 10
+      if (hour >= 14 && hour < 17 && (r.category === '饮品' || r.category === '甜点')) score += 20
+      if (hour >= 17 && hour < 21) score += 5
+      if ((hour >= 21 || hour < 5) && r.scenes.includes('深夜')) score += 25
+      score += Math.random() * 10 // 加点随机性
+      return { restaurant: r, score }
+    })
+
+    return scored
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 3)
+      .map(s => s.restaurant)
+  }, [filteredRestaurants])
+
+  // 3秒答案：今天就吃这个！基于时段+评分+营业状态的 top1
+  const heroPick = useMemo(() => {
+    return smartPicks[0] || filteredRestaurants[0]
+  }, [smartPicks, filteredRestaurants])
+
+  const nearbyRestaurants = [...filteredRestaurants]
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 6)
+
+  // 同学说：最新 UGC 评论
+  const latestReviews = useMemo(() => {
+    return getLatestReviews(5, university === 'all' ? undefined : university)
+  }, [university])
+
+  // 推荐理由生成（基于美团交易数据）
+  function getRecommendReason(r: Restaurant): string {
+    if (r.repurchaseRate >= 0.65) return `${Math.round(r.repurchaseRate * 100)}%同学回头客`
+    if (r.weeklyStudentOrders >= 400) return `本周${r.weeklyStudentOrders}位同学下单`
+    if (r.actualPayPrice <= 15) return `实付仅¥${r.actualPayPrice}，满减后超值`
+    if (r.distance <= 200) return `走路${r.walkTime}分钟就到`
+    if (r.rating >= 4.5) return `${r.rating}分口碑好评`
+    if (r.studentDiscount) return `🎫 ${r.studentDiscount}`
+    return r.tags[0]
+  }
+
+  return (
+    <div className="page">
+      {/* 3秒答案：今天就吃这个 */}
+      {heroPick && (
+        <div className="hero-pick" onClick={() => navigate(`/restaurant/${heroPick.id}`)}>
+          <div className="hero-pick-badge">🍜 今天就吃这个</div>
+          <div className="hero-pick-card">
+            <img className="hero-pick-img" src={heroPick.images[0]} alt={heroPick.name} loading="lazy" />
+            <div className="hero-pick-overlay">
+              <div className="hero-pick-name">{heroPick.name}</div>
+              <div className="hero-pick-meta">
+                <span>{heroPick.rating}分</span>
+                <span>¥{heroPick.avgPrice}/人</span>
+                <span>{heroPick.walkTime}分钟</span>
+              </div>
+              <div className="hero-pick-reason">{getRecommendReason(heroPick)}</div>
+            </div>
+          </div>
+          <div className="hero-pick-action">
+            <span>不想吃？</span>
+            <span className="hero-pick-change" onClick={(e) => { e.stopPropagation(); navigate('/ai') }}>告诉 AI 你想吃啥 &gt;</span>
+          </div>
+        </div>
+      )}
+
+      {/* AI 决策区域 */}
+      <div className="ai-hero">
+        <div className="ai-hero-greeting">{greeting}</div>
+        <div
+          className="ai-hero-input"
+          onClick={() => navigate('/ai')}
+        >
+          <span className="ai-hero-input-icon">🍜</span>
+          <span className="ai-hero-input-text">想吃什么？问我就对了…</span>
+          <span className="ai-hero-input-arrow">&gt;</span>
+        </div>
+      </div>
+
+      {/* 同学在点 - 实时订单动态 */}
+      {orderFeedPool.length > 0 && (
+        <div className="live-order-feed">
+          <span className="live-dot" />
+          <span className="live-text">
+            {orderFeedPool[currentOrderIdx].text}
+            {' 下单了 '}
+            <strong>{orderFeedPool[currentOrderIdx].restaurant}</strong>
+            {' 的 '}
+            {orderFeedPool[currentOrderIdx].dish}
+          </span>
+          <span className="live-time">{orderFeedPool[currentOrderIdx].time}</span>
+        </div>
+      )}
+
+      {/* 猜你想要 - AI 智能推荐 */}
+      <section className="section">
+        <div className="section-header">
+          <h2 className="section-title">猜你想要</h2>
+          <span className="section-tag">{period}推荐</span>
+        </div>
+        <div className="smart-picks">
+          {smartPicks.map((r) => (
+            <div
+              key={r.id}
+              className="smart-pick-card"
+              onClick={() => navigate(`/restaurant/${r.id}`)}
+            >
+              <img className="smart-pick-img" src={r.images[0]} alt={r.name} loading="lazy" />
+              <div className="smart-pick-info">
+                <div className="smart-pick-name">{r.name}</div>
+                <div className="smart-pick-meta">
+                  <span className="smart-pick-price">¥{r.avgPrice}/人</span>
+                  <span className="smart-pick-rating">{r.rating}分</span>
+                </div>
+                <div className="smart-pick-reason">{getRecommendReason(r)}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 快捷决策 */}
+      <section className="section">
+        <div className="section-header">
+          <h2 className="section-title">快捷决策</h2>
+        </div>
+        <div className="quick-decisions">
+          <button className="quick-decision-btn" onClick={() => navigate('/random')}>
+            <span className="quick-decision-icon">🎲</span>
+            <span>随机帮我选</span>
+          </button>
+          <button className="quick-decision-btn" onClick={() => navigate('/rank/budget')}>
+            <span className="quick-decision-icon">💰</span>
+            <span>穷鬼榜</span>
+          </button>
+          <button className="quick-decision-btn" onClick={() => navigate('/ai', { state: { initialMessage: '深夜还有什么吃的' } })}>
+            <span className="quick-decision-icon">🌙</span>
+            <span>深夜觅食</span>
+          </button>
+          <button className="quick-decision-btn" onClick={() => navigate('/ai', { state: { initialMessage: '适合约会的餐厅' } })}>
+            <span className="quick-decision-icon">💕</span>
+            <span>约会推荐</span>
+          </button>
+        </div>
+      </section>
+
+      {/* 今日翻牌 - 校园版疯狂星期四 */}
+      <section className="section">
+        <div className="section-header">
+          <h2 className="section-title">🎯 今日翻牌</h2>
+          <span className="section-tag">每日特价</span>
+        </div>
+        <div className="flip-card" onClick={() => navigate(`/restaurant/${todayFlip.restaurantId}`)}>
+          <div className="flip-header">
+            <span className="flip-badge">今天全校都在吃</span>
+          </div>
+          <div className="flip-main">
+            <span className="flip-icon">{todayFlip.icon}</span>
+            <div className="flip-info">
+              <div className="flip-name">{todayFlip.restaurantName}</div>
+              <div className="flip-dish">{todayFlip.dealDish}</div>
+            </div>
+            <div className="flip-price">
+              <span className="flip-price-original">¥{todayFlip.originalPrice}</span>
+              <span className="flip-price-deal">¥{todayFlip.flipPrice}</span>
+            </div>
+          </div>
+          <div className="flip-participants">
+            <div className="flip-avatars">
+              {'👦👧🧑👩🧑‍💻'.split(/(?=[\u{1F466}\u{1F467}\u{1F9D1}\u{1F469}])/u).slice(0, 5).map((a, i) => (
+                <span key={i} className="flip-avatar">{a}</span>
+              ))}
+              <span className="flip-avatar more">+{flipParticipants - 5}</span>
+            </div>
+            <span className="flip-count">已有 <strong>{flipParticipants}</strong> 位同学参与</span>
+          </div>
+          <div className="flip-actions" onClick={e => e.stopPropagation()}>
+            <button
+              className={`flip-btn-join ${hasJoined ? 'joined' : ''}`}
+              onClick={() => {
+                if (!hasJoined) {
+                  setHasJoined(true)
+                  setFlipParticipants(p => p + 1)
+                }
+              }}
+            >
+              {hasJoined ? '已参与 ✓' : '我也去'}
+            </button>
+            <button
+              className="flip-btn-share"
+              onClick={() => {
+                setShowShareToast(true)
+                setTimeout(() => setShowShareToast(false), 2000)
+              }}
+            >
+              分享到宿舍群
+            </button>
+          </div>
+        </div>
+
+        {/* 明天翻牌投票 */}
+        <div className="flip-vote">
+          <div className="flip-vote-title">明天翻牌哪家？投票选出来</div>
+          <div className="flip-vote-list">
+            {tomorrowCandidates.map(c => (
+              <div
+                key={c.restaurantId}
+                className={`flip-vote-item ${votedId === c.restaurantId ? 'voted' : ''}`}
+                onClick={() => setVotedId(c.restaurantId)}
+              >
+                <span className="flip-vote-name">{c.restaurantName}</span>
+                <span className="flip-vote-dish">{c.dealDish} ¥{c.flipPrice}</span>
+                <div className="flip-vote-bar-wrap">
+                  <div
+                    className="flip-vote-bar"
+                    style={{ width: `${Math.min((c.votes + (votedId === c.restaurantId ? 1 : 0)) / 2.5, 100)}%` }}
+                  />
+                </div>
+                <span className="flip-vote-count">{c.votes + (votedId === c.restaurantId ? 1 : 0)}票</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* 分享成功提示 */}
+      {showShareToast && (
+        <div className="toast">已复制分享链接，快去宿舍群粘贴吧！</div>
+      )}
+
+      {/* 特色榜单 */}
+      <section className="section">
+        <div className="section-header">
+          <h2 className="section-title">特色榜单</h2>
+          <button className="section-more" onClick={() => navigate('/rank')}>
+            查看全部 &gt;
+          </button>
+        </div>
+        <div className="rank-list-grid">
+          {rankLists.slice(0, 4).map((rank) => (
+            <div
+              key={rank.id}
+              className="rank-card"
+              onClick={() => navigate(`/rank/${rank.id}`)}
+            >
+              <div
+                className="icon"
+                style={{ background: rank.color }}
+              >
+                {rank.icon}
+              </div>
+              <div className="content">
+                <div className="title">{rank.title}</div>
+                <div className="desc">{rank.description}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 同学说 - UGC 社交动态 */}
+      <section className="section">
+        <div className="section-header">
+          <h2 className="section-title">🗣️ 同学说</h2>
+          <span className="section-tag">最新点评</span>
+        </div>
+        <div className="ugc-feed">
+          {latestReviews.map((review) => {
+            const restaurant = restaurants.find(r => r.id === review.restaurantId)
+            return (
+              <div
+                key={review.id}
+                className="ugc-card"
+                onClick={() => navigate(`/restaurant/${review.restaurantId}`)}
+              >
+                <div className="ugc-header">
+                  <span className="ugc-avatar">{review.avatar}</span>
+                  <div className="ugc-user-info">
+                    <span className="ugc-name">{review.userName}</span>
+                    <span className="ugc-meta">{review.university} · {review.major}</span>
+                  </div>
+                  <span className="ugc-time">{formatTimeAgo(review.timestamp)}</span>
+                </div>
+                <p className="ugc-content">{review.content}</p>
+                {review.tags && (
+                  <div className="ugc-tags">
+                    {review.tags.map(tag => (
+                      <span key={tag} className="ugc-tag">{tag}</span>
+                    ))}
+                  </div>
+                )}
+                <div className="ugc-footer">
+                  {restaurant && (
+                    <span className="ugc-restaurant">📍 {restaurant.name}</span>
+                  )}
+                  <span className="ugc-likes">👍 {review.likes}</span>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </section>
+
+      {/* 附近好店 */}
+      <section className="section">
+        <div className="section-header">
+          <h2 className="section-title">附近好店</h2>
+          <button className="section-more" onClick={() => navigate('/list')}>
+            更多 &gt;
+          </button>
+        </div>
+        <div className="scroll-x">
+          {nearbyRestaurants.map((restaurant) => (
+            <RestaurantCard key={restaurant.id} restaurant={restaurant} />
+          ))}
+        </div>
+      </section>
+    </div>
+  )
+}
