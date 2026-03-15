@@ -622,49 +622,49 @@ export const rankLists = [
   {
     id: 'repurchase',
     title: '复购王榜',
-    icon: '🔄',
+    icon: '👑',
     description: '同学们用脚投票，复购率最高的店',
     color: '#FF6B35'
   },
   {
     id: 'budget',
     title: '穷鬼套餐榜',
-    icon: '省',
+    icon: '💰',
     description: '实付金额最低，含满减后的真实价格',
     color: '#10B981'
   },
   {
     id: 'fast',
     title: '快速出餐榜',
-    icon: '快',
+    icon: '⚡',
     description: '真实出餐数据，最快几分钟送达',
     color: '#F59E0B'
   },
   {
     id: 'late',
     title: '深夜食堂榜',
-    icon: '夜',
+    icon: '🌙',
     description: '22点后还营业，夜猫子福音',
     color: '#6366F1'
   },
   {
     id: 'date',
     title: '约会圣地榜',
-    icon: '约',
+    icon: '💕',
     description: '环境好有氛围，两人世界',
     color: '#EC4899'
   },
   {
     id: 'group',
     title: '聚餐推荐榜',
-    icon: '聚',
+    icon: '🎉',
     description: '适合多人聚会，有包间更好',
     color: '#8B5CF6'
   },
   {
     id: 'rating',
     title: '口碑好评榜',
-    icon: '赞',
+    icon: '👍',
     description: '评分最高的店，不踩雷',
     color: '#EF4444'
   }
