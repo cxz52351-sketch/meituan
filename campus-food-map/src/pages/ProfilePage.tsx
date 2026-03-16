@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { University, UserProfile } from '../types'
 import { getProfile, saveProfile, getFriends, removeFriend } from '../services/profile'
@@ -33,6 +33,13 @@ const bioPlaceholders = [
   '人生苦短，先吃为敬',
 ]
 
+// 雷达图五个轴的角度（从正上方开始，顺时针）
+const RADAR_ANGLES = Array.from({ length: 5 }, (_, i) => -Math.PI / 2 + (i * 2 * Math.PI) / 5)
+const radarPt = (angle: number, value: number, r = 80) => ({
+  x: 100 + r * (value / 100) * Math.cos(angle),
+  y: 100 + r * (value / 100) * Math.sin(angle),
+})
+
 export default function ProfilePage({ university }: Props) {
   const navigate = useNavigate()
   const [profile, setProfile] = useState<UserProfile | null>(null)
@@ -46,6 +53,15 @@ export default function ProfilePage({ university }: Props) {
   const [flipHistory, setFlipHistory] = useState<FlipHistoryItem[]>([])
   const [visitHistory, setVisitHistory] = useState<VisitHistoryItem[]>([])
   const [expandedTool, setExpandedTool] = useState<string | null>(null)
+
+  // 美团生态状态
+  const [meituanBound, setMeituanBound] = useState(() => localStorage.getItem('campus_food_meituan_bound') === 'true')
+  const [importedCount, setImportedCount] = useState(() => {
+    const v = localStorage.getItem('campus_food_imported_count')
+    return v ? Number(v) : 0
+  })
+  const [showImportToast, setShowImportToast] = useState(false)
+  const [showBindSuccess, setShowBindSuccess] = useState(false)
 
   // 表单状态
   const [nickname, setNickname] = useState('')
@@ -85,6 +101,77 @@ export default function ProfilePage({ university }: Props) {
     setFlipHistory(getFlipHistory())
     setVisitHistory(getVisitHistory())
   }, [])
+
+  // ===== AI 口味 DNA 分析 =====
+  const tasteDNA = useMemo(() => {
+    const allDining = [...randomHistory, ...visitHistory]
+    const totalActions = randomHistory.length + groupHistory.length + flipHistory.length + visitHistory.length
+    if (totalActions < 1) return null
+
+    // 1. 辣味指数：火锅/烧烤/中餐占比 + 用户标签加成
+    const spicyCats = new Set(['火锅', '烧烤'])
+    const mildSpicyCats = new Set(['中餐', '小吃'])
+    const spicyCount = allDining.filter(r => spicyCats.has(r.category)).length
+    const mildCount = allDining.filter(r => mildSpicyCats.has(r.category)).length
+    const hasSpicyTag = profile?.diningTags?.some(t => t.includes('辣'))
+    let spice = allDining.length > 0
+      ? Math.round((spicyCount * 2 + mildCount * 0.5) / allDining.length * 50) + 15
+      : 15
+    if (hasSpicyTag) spice += 20
+    spice = Math.min(spice, 100)
+
+    // 2. 省钱力：平均价格越低分越高
+    const prices = allDining.map(r => r.avgPrice).filter(p => p > 0)
+    const avg = prices.length > 0 ? prices.reduce((a, b) => a + b, 0) / prices.length : 35
+    const hasBudgetTag = profile?.diningTags?.some(t => t.includes('穷鬼') || t.includes('性价比'))
+    let budget = Math.round(Math.max(110 - avg * 2, 10))
+    if (hasBudgetTag) budget += 15
+    budget = Math.min(budget, 100)
+
+    // 3. 社牛值：拼单次数 + 好友数
+    const social = Math.min(groupHistory.length * 18 + friends.length * 12 + 10, 100)
+
+    // 4. 探店力：独立餐厅数 + 品类多样性
+    const uniqueRests = new Set(allDining.map(r => r.restaurantId))
+    const uniqueCats = new Set(allDining.map(r => r.category))
+    const explore = Math.min(uniqueRests.size * 10 + uniqueCats.size * 8, 100)
+
+    // 5. 活跃度：总操作数
+    const activity = Math.min(totalActions * 7 + 10, 100)
+
+    const dimensions = [
+      { label: '辣味', score: spice, icon: '🌶️' },
+      { label: '省钱', score: budget, icon: '💰' },
+      { label: '社牛', score: social, icon: '🤝' },
+      { label: '探店', score: explore, icon: '🔍' },
+      { label: '活跃', score: activity, icon: '⚡' },
+    ]
+
+    // 生成 AI 口味标签
+    const labels: string[] = []
+    if (spice >= 60) labels.push('无辣不欢')
+    else if (spice < 30) labels.push('清淡养生派')
+    if (budget >= 65) labels.push('省钱小天才')
+    if (avg >= 40) labels.push('品质美食家')
+    if (social >= 50) labels.push('社交干饭王')
+    if (explore >= 50) labels.push('探店达人')
+    if (activity >= 60) labels.push('干饭积极分子')
+    const drinkCount = allDining.filter(r => r.category === '饮品' || r.category === '甜点').length
+    if (drinkCount >= 2) labels.push('奶茶续命体质')
+    if (labels.length === 0) labels.push('干饭新手上路')
+
+    // AI 总结
+    const top = dimensions.reduce((a, b) => a.score > b.score ? a : b)
+    const summaries: Record<string, string> = {
+      '辣味': '你的味蕾被辣椒征服了，火锅烧烤是你的快乐源泉',
+      '省钱': '精打细算的干饭高手，用最少的钱吃最香的饭',
+      '社牛': '天生的饭搭子体质，一个人吃饭是不存在的',
+      '探店': '永远在探索新味道，你的美食版图在不断扩张',
+      '活跃': '干饭频率拉满，你可能是全校最努力的干饭人',
+    }
+
+    return { dimensions, labels: labels.slice(0, 4), summary: summaries[top.label] }
+  }, [randomHistory, visitHistory, groupHistory, flipHistory, friends, profile])
 
   const handleDiningTagToggle = (tag: string) => {
     setDiningTags(prev => {
@@ -156,6 +243,23 @@ export default function ProfilePage({ university }: Props) {
 
   const toggleTool = (key: string) => {
     setExpandedTool(prev => prev === key ? null : key)
+  }
+
+  const handleBindMeituan = () => {
+    if (meituanBound) return
+    setMeituanBound(true)
+    localStorage.setItem('campus_food_meituan_bound', 'true')
+    setShowBindSuccess(true)
+    setTimeout(() => setShowBindSuccess(false), 2500)
+  }
+
+  const handleImportFromMeituan = () => {
+    if (importedCount > 0) return
+    const count = Math.floor(Math.random() * 8) + 6 // 6-13家
+    setImportedCount(count)
+    localStorage.setItem('campus_food_imported_count', String(count))
+    setShowImportToast(true)
+    setTimeout(() => setShowImportToast(false), 2500)
   }
 
   // 设置/编辑卡片
@@ -359,6 +463,226 @@ export default function ProfilePage({ university }: Props) {
         </div>
       )}
 
+      {/* ===== AI 口味 DNA ===== */}
+      <div className="profile-section">
+        <div className="profile-section-header">
+          <h3 className="profile-section-title">AI 口味 DNA</h3>
+          <span className="profile-ai-badge">AI 分析</span>
+        </div>
+
+        {tasteDNA ? (
+          <div className="profile-taste-dna">
+            {/* 雷达图 */}
+            <div className="profile-radar-wrap">
+              <svg viewBox="0 0 200 210" className="profile-radar-svg">
+                {/* 背景网格 */}
+                {[20, 40, 60, 80, 100].map(level => (
+                  <polygon
+                    key={level}
+                    points={RADAR_ANGLES.map(a => `${radarPt(a, level).x},${radarPt(a, level).y}`).join(' ')}
+                    fill="none"
+                    stroke={level === 100 ? '#E2E8F0' : '#EDF2F7'}
+                    strokeWidth={level === 100 ? '1' : '0.5'}
+                  />
+                ))}
+                {/* 轴线 */}
+                {RADAR_ANGLES.map((a, i) => (
+                  <line key={i} x1="100" y1="100" x2={radarPt(a, 100).x} y2={radarPt(a, 100).y} stroke="#E2E8F0" strokeWidth="0.5" />
+                ))}
+                {/* 数据区域 */}
+                <polygon
+                  points={tasteDNA.dimensions.map((d, i) => {
+                    const p = radarPt(RADAR_ANGLES[i], d.score)
+                    return `${p.x},${p.y}`
+                  }).join(' ')}
+                  fill="rgba(255, 209, 0, 0.25)"
+                  stroke="#FFD100"
+                  strokeWidth="2"
+                />
+                {/* 数据点 */}
+                {tasteDNA.dimensions.map((d, i) => {
+                  const p = radarPt(RADAR_ANGLES[i], d.score)
+                  return <circle key={i} cx={p.x} cy={p.y} r="3.5" fill="#FFD100" stroke="#fff" strokeWidth="1.5" />
+                })}
+                {/* 轴标签 */}
+                {tasteDNA.dimensions.map((d, i) => {
+                  const p = radarPt(RADAR_ANGLES[i], 118, 80)
+                  return (
+                    <text key={i} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="central" fontSize="11" fill="#4A5568" fontWeight="500">
+                      {d.icon}{d.label}
+                    </text>
+                  )
+                })}
+                {/* 分数 */}
+                {tasteDNA.dimensions.map((d, i) => {
+                  const p = radarPt(RADAR_ANGLES[i], 118, 80)
+                  return (
+                    <text key={`s-${i}`} x={p.x} y={p.y + 13} textAnchor="middle" fontSize="9" fill="#A0AEC0">
+                      {d.score}
+                    </text>
+                  )
+                })}
+              </svg>
+            </div>
+
+            {/* AI 标签 */}
+            <div className="profile-taste-labels">
+              {tasteDNA.labels.map(label => (
+                <span key={label} className="profile-taste-label">{label}</span>
+              ))}
+            </div>
+
+            {/* AI 总结 */}
+            <div className="profile-taste-summary">
+              <span className="profile-taste-ai-icon">AI</span>
+              <span className="profile-taste-summary-text">{tasteDNA.summary}</span>
+            </div>
+          </div>
+        ) : (
+          <div className="profile-taste-empty">
+            <div className="profile-taste-empty-radar">
+              <svg viewBox="0 0 120 120" className="profile-radar-svg-mini">
+                <polygon
+                  points={RADAR_ANGLES.map(a => `${60 + 45 * Math.cos(a)},${60 + 45 * Math.sin(a)}`).join(' ')}
+                  fill="none" stroke="#E2E8F0" strokeWidth="1" strokeDasharray="4 2"
+                />
+                <circle cx="60" cy="60" r="4" fill="#E2E8F0" />
+              </svg>
+            </div>
+            <p className="profile-taste-empty-title">口味 DNA 待解锁</p>
+            <p className="profile-taste-empty-hint">多逛逛店、转转轮盘、拼拼单，AI 就能分析出你的口味基因</p>
+          </div>
+        )}
+      </div>
+
+      {/* AI 干饭顾问入口 */}
+      <div className="profile-ai-advisor" onClick={() => navigate('/ai', { state: { initialMessage: tasteDNA
+        ? `我是${profile?.nickname || '同学'}，口味偏好：${tasteDNA.labels.join('、')}，帮我推荐今天吃什么`
+        : '帮我推荐今天吃什么'
+      }})}>
+        <div className="profile-ai-advisor-left">
+          <img className="profile-ai-advisor-icon" src="/tuanzi.png" alt="团子" />
+          <div className="profile-ai-advisor-text">
+            <span className="profile-ai-advisor-title">AI 干饭顾问 · 团子</span>
+            <span className="profile-ai-advisor-desc">
+              {tasteDNA
+                ? `基于你的口味DNA，输入场景一句话出推荐`
+                : '告诉我预算、人数、口味，秒出推荐方案'}
+            </span>
+          </div>
+        </div>
+        <span className="profile-ai-advisor-action">问问 ›</span>
+      </div>
+
+      {/* ===== 美团生态模块 ===== */}
+
+      {/* 美团账号绑定 + 学生数据面板 */}
+      <div className="profile-meituan-card">
+        <div className="profile-meituan-header">
+          <div className="profile-meituan-logo">
+            <span className="profile-meituan-logo-icon">美</span>
+            <span className="profile-meituan-logo-text">美团学生版</span>
+          </div>
+          {meituanBound ? (
+            <span className="profile-meituan-bound">已绑定</span>
+          ) : (
+            <button className="profile-meituan-bind-btn" onClick={handleBindMeituan}>一键绑定</button>
+          )}
+        </div>
+
+        {meituanBound ? (
+          <>
+            {/* 绑定后：学生数据面板 */}
+            <div className="profile-meituan-stats">
+              <div className="profile-meituan-stat">
+                <span className="profile-meituan-stat-value">¥{Math.floor(Math.random() * 80) + 40}</span>
+                <span className="profile-meituan-stat-label">本月已省</span>
+              </div>
+              <div className="profile-meituan-stat">
+                <span className="profile-meituan-stat-value">{Math.floor(Math.random() * 20) + 8}</span>
+                <span className="profile-meituan-stat-label">外卖订单</span>
+              </div>
+              <div className="profile-meituan-stat">
+                <span className="profile-meituan-stat-value">{Math.floor(Math.random() * 5) + 2}</span>
+                <span className="profile-meituan-stat-label">待用券</span>
+              </div>
+              <div className="profile-meituan-stat">
+                <span className="profile-meituan-stat-value">{Math.floor(Math.random() * 300) + 100}</span>
+                <span className="profile-meituan-stat-label">积分</span>
+              </div>
+            </div>
+          </>
+        ) : (
+          <p className="profile-meituan-hint">绑定美团账号，同步外卖数据、解锁学生专享福利</p>
+        )}
+      </div>
+
+      {/* 学生专享券包 */}
+      <div className="profile-section">
+        <div className="profile-section-header">
+          <h3 className="profile-section-title">学生专享福利</h3>
+          {!meituanBound && <span className="profile-section-lock">绑定解锁</span>}
+        </div>
+        <div className={`profile-coupon-list ${!meituanBound ? 'locked' : ''}`}>
+          <div className="profile-coupon">
+            <div className="profile-coupon-left">
+              <span className="profile-coupon-amount">5<small>元</small></span>
+            </div>
+            <div className="profile-coupon-right">
+              <span className="profile-coupon-title">新人到店红包</span>
+              <span className="profile-coupon-rule">满20可用 · 限堂食</span>
+              <span className="profile-coupon-expire">3天后过期</span>
+            </div>
+            <button className="profile-coupon-btn" disabled={!meituanBound}>领取</button>
+          </div>
+          <div className="profile-coupon">
+            <div className="profile-coupon-left monthly">
+              <span className="profile-coupon-amount">9.9<small>/月</small></span>
+            </div>
+            <div className="profile-coupon-right">
+              <span className="profile-coupon-title">学生免配送月卡</span>
+              <span className="profile-coupon-rule">每单免配送费 · 限学生认证</span>
+              <span className="profile-coupon-expire">长期有效</span>
+            </div>
+            <button className="profile-coupon-btn" disabled={!meituanBound}>开通</button>
+          </div>
+          <div className="profile-coupon">
+            <div className="profile-coupon-left group">
+              <span className="profile-coupon-amount">7<small>折</small></span>
+            </div>
+            <div className="profile-coupon-right">
+              <span className="profile-coupon-title">校园拼团特惠</span>
+              <span className="profile-coupon-rule">3人成团享7折 · 指定商户</span>
+              <span className="profile-coupon-expire">本周有效</span>
+            </div>
+            <button className="profile-coupon-btn" disabled={!meituanBound}>去拼团</button>
+          </div>
+        </div>
+      </div>
+
+      {/* 从美团/大众点评导入 */}
+      <div className="profile-section">
+        <div className="profile-section-header">
+          <h3 className="profile-section-title">快速导入</h3>
+        </div>
+        <div className="profile-import-card" onClick={handleImportFromMeituan}>
+          <div className="profile-import-icons">
+            <span className="profile-import-icon meituan">美</span>
+            <span className="profile-import-icon dianping">点</span>
+          </div>
+          <div className="profile-import-text">
+            <span className="profile-import-title">
+              {importedCount > 0 ? `已导入 ${importedCount} 家收藏的店` : '从美团/大众点评导入想吃清单'}
+            </span>
+            <span className="profile-import-desc">
+              {importedCount > 0 ? '收藏数据已同步到本地' : '一键同步你收藏过的餐厅，无需重新发现'}
+            </span>
+          </div>
+          {importedCount === 0 && <span className="profile-import-arrow">导入 ›</span>}
+          {importedCount > 0 && <span className="profile-import-done">已同步</span>}
+        </div>
+      </div>
+
       {/* 饭搭子列表 */}
       <div className="profile-section">
         <div className="profile-section-header">
@@ -539,6 +863,14 @@ export default function ProfilePage({ university }: Props) {
 
         </div>
       </div>
+
+      {/* Toast 提示 */}
+      {showBindSuccess && (
+        <div className="toast">绑定成功！已解锁学生专享福利</div>
+      )}
+      {showImportToast && (
+        <div className="toast">已从美团/大众点评导入 {importedCount} 家收藏的店</div>
+      )}
     </div>
   )
 }

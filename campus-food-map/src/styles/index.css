@@ -3662,7 +3662,7 @@ ul, ol {
 .profile-info-card {
   background: linear-gradient(135deg, var(--meituan-yellow-light) 0%, #fff 100%);
   border-radius: var(--radius-xl);
-  padding: 20px;
+  padding: 14px 16px;
   margin-top: 10px;
   display: flex;
   justify-content: space-between;
@@ -3678,9 +3678,9 @@ ul, ol {
 }
 
 .profile-info-avatar {
-  font-size: 2.8rem;
-  width: 56px;
-  height: 56px;
+  font-size: 2.2rem;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3696,7 +3696,7 @@ ul, ol {
 }
 
 .profile-info-name {
-  font-size: 1.2rem;
+  font-size: 1.05rem;
   font-weight: 700;
   color: var(--gray-900);
 }
@@ -3746,8 +3746,8 @@ ul, ol {
 
 /* 干饭语录卡 */
 .profile-bio-card {
-  margin-top: 12px;
-  padding: 14px 18px;
+  margin-top: 10px;
+  padding: 10px 14px;
   background: linear-gradient(135deg, #FFF8E1 0%, #FFF3E0 100%);
   border-radius: var(--radius-lg);
   display: flex;
@@ -3756,7 +3756,7 @@ ul, ol {
 }
 
 .profile-bio-quote {
-  font-size: 1.4rem;
+  font-size: 1.1rem;
   font-weight: 700;
   color: var(--meituan-yellow-dark);
   line-height: 1;
@@ -3830,10 +3830,10 @@ ul, ol {
 
 /* 个人主页分区 */
 .profile-section {
-  margin-top: 20px;
+  margin-top: 14px;
   background: #fff;
   border-radius: var(--radius-xl);
-  padding: 18px;
+  padding: 14px;
   box-shadow: var(--shadow-sm);
 }
 
@@ -3841,11 +3841,11 @@ ul, ol {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .profile-section-title {
-  font-size: 1rem;
+  font-size: 0.92rem;
   font-weight: 700;
   color: var(--gray-900);
 }
@@ -3920,14 +3920,14 @@ ul, ol {
 /* 空态 */
 .profile-empty {
   text-align: center;
-  padding: 30px 10px;
+  padding: 20px 10px;
   color: var(--gray-500);
 }
 
 .profile-empty-icon {
-  font-size: 2.5rem;
+  font-size: 2rem;
   display: block;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .profile-empty p {
@@ -3971,8 +3971,8 @@ ul, ol {
 .profile-tool-header {
   display: flex;
   align-items: center;
-  gap: 12px;
-  padding: 14px 4px;
+  gap: 10px;
+  padding: 11px 4px;
   cursor: pointer;
   transition: background 0.15s;
 }
@@ -4149,6 +4149,463 @@ ul, ol {
   padding: 8px 0;
   font-size: 0.75rem;
   color: var(--gray-400);
+}
+
+/* ==================== AI 口味 DNA ==================== */
+
+.profile-ai-badge {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: #fff;
+  background: linear-gradient(135deg, #667EEA, #764BA2);
+  padding: 2px 10px;
+  border-radius: var(--radius-full);
+}
+
+.profile-taste-dna {
+  margin-top: 10px;
+}
+
+.profile-radar-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 0 10px;
+}
+
+.profile-radar-svg {
+  width: 100%;
+  max-width: 200px;
+}
+
+.profile-taste-labels {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 8px;
+}
+
+.profile-taste-label {
+  padding: 3px 10px;
+  background: linear-gradient(135deg, #FFF5E6, #FFF0D4);
+  border: 1px solid #FFE082;
+  border-radius: var(--radius-full);
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #B8860B;
+}
+
+.profile-taste-summary {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin-top: 10px;
+  padding: 10px;
+  background: linear-gradient(135deg, #F5F3FF, #EEF2FF);
+  border-radius: var(--radius-lg);
+}
+
+.profile-taste-ai-icon {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #667EEA, #764BA2);
+  padding: 2px 6px;
+  border-radius: var(--radius-sm);
+}
+
+.profile-taste-summary-text {
+  font-size: 0.82rem;
+  color: #4A5568;
+  line-height: 1.5;
+}
+
+/* 空态 */
+.profile-taste-empty {
+  text-align: center;
+  padding: 16px 12px;
+}
+
+.profile-taste-empty-radar {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 12px;
+}
+
+.profile-radar-svg-mini {
+  width: 80px;
+  height: 80px;
+  opacity: 0.5;
+}
+
+.profile-taste-empty-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-600);
+  margin-bottom: 6px;
+}
+
+.profile-taste-empty-hint {
+  font-size: 0.78rem;
+  color: var(--gray-400);
+  line-height: 1.5;
+}
+
+/* AI 干饭顾问入口 */
+.profile-ai-advisor {
+  margin-top: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #1A1A2E, #16213E);
+  border-radius: var(--radius-xl);
+  cursor: pointer;
+  transition: transform 0.15s;
+  overflow: hidden;
+  position: relative;
+}
+
+.profile-ai-advisor::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 120px;
+  height: 120px;
+  background: radial-gradient(circle, rgba(255,209,0,0.15) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.profile-ai-advisor:active {
+  transform: scale(0.98);
+}
+
+.profile-ai-advisor-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+.profile-ai-advisor-icon {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.profile-ai-advisor-text {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.profile-ai-advisor-title {
+  font-size: 0.9rem;
+  font-weight: 700;
+  color: #fff;
+}
+
+.profile-ai-advisor-desc {
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.6);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-ai-advisor-action {
+  flex-shrink: 0;
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--brand);
+  padding: 6px 14px;
+  background: rgba(255,209,0,0.15);
+  border-radius: var(--radius-full);
+}
+
+/* ==================== 美团生态模块 ==================== */
+
+.profile-meituan-card {
+  margin-top: 14px;
+  background: linear-gradient(135deg, #FFF8E1 0%, #FFFDF5 100%);
+  border-radius: var(--radius-xl);
+  padding: 14px;
+  border: 1.5px solid #FFE082;
+}
+
+.profile-meituan-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10px;
+}
+
+.profile-meituan-logo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.profile-meituan-logo-icon {
+  width: 28px;
+  height: 28px;
+  background: var(--brand);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: var(--gray-900);
+}
+
+.profile-meituan-logo-text {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.profile-meituan-bind-btn {
+  padding: 6px 16px;
+  background: var(--brand);
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  cursor: pointer;
+  animation: meituanPulse 2s ease-in-out infinite;
+}
+
+@keyframes meituanPulse {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 209, 0, 0.4); }
+  50% { box-shadow: 0 0 0 8px rgba(255, 209, 0, 0); }
+}
+
+.profile-meituan-bound {
+  font-size: 0.75rem;
+  color: var(--green);
+  background: #E8F8EF;
+  padding: 4px 12px;
+  border-radius: var(--radius-full);
+  font-weight: 500;
+}
+
+.profile-meituan-hint {
+  font-size: 0.78rem;
+  color: var(--gray-500);
+  line-height: 1.5;
+}
+
+.profile-meituan-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.profile-meituan-stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.profile-meituan-stat-value {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.profile-meituan-stat-label {
+  font-size: 0.65rem;
+  color: var(--gray-500);
+}
+
+/* 学生专享券 */
+.profile-section-lock {
+  font-size: 0.65rem;
+  color: var(--gray-400);
+  background: var(--gray-100);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+}
+
+.profile-coupon-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.profile-coupon-list.locked {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.profile-coupon {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  background: #FFFBF0;
+  border-radius: var(--radius-lg);
+  border: 1px solid #FFE8A3;
+}
+
+.profile-coupon-left {
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #FF6B35, #FF8F60);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.profile-coupon-left.monthly {
+  background: linear-gradient(135deg, #06C167, #2FD889);
+}
+
+.profile-coupon-left.group {
+  background: linear-gradient(135deg, #4A6CF7, #7B93FA);
+}
+
+.profile-coupon-amount {
+  font-size: 1rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.profile-coupon-amount small {
+  font-size: 0.6rem;
+  font-weight: 500;
+}
+
+.profile-coupon-right {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.profile-coupon-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.profile-coupon-rule {
+  font-size: 0.7rem;
+  color: var(--gray-500);
+}
+
+.profile-coupon-expire {
+  font-size: 0.65rem;
+  color: #FF6B35;
+}
+
+.profile-coupon-btn {
+  padding: 5px 14px;
+  background: var(--brand);
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.profile-coupon-btn:disabled {
+  background: var(--gray-200);
+  color: var(--gray-400);
+  cursor: not-allowed;
+}
+
+/* 导入卡片 */
+.profile-import-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  margin-top: 8px;
+  background: #F8F9FE;
+  border-radius: var(--radius-lg);
+  border: 1.5px dashed #C5CAE9;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.profile-import-card:hover {
+  border-color: #7986CB;
+  background: #F0F2FA;
+}
+
+.profile-import-icons {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.profile-import-icon {
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 800;
+  color: #fff;
+}
+
+.profile-import-icon.meituan {
+  background: var(--brand);
+  color: var(--gray-900);
+}
+
+.profile-import-icon.dianping {
+  background: #FF6633;
+}
+
+.profile-import-text {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.profile-import-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.profile-import-desc {
+  font-size: 0.7rem;
+  color: var(--gray-500);
+}
+
+.profile-import-arrow {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #4A6CF7;
+  flex-shrink: 0;
+}
+
+.profile-import-done {
+  font-size: 0.72rem;
+  color: var(--green);
+  font-weight: 500;
+  flex-shrink: 0;
 }
 
 /* ==================== 拼单页好友功能 ==================== */
