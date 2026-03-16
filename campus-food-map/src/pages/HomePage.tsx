@@ -4,6 +4,7 @@ import { University, Restaurant } from '../types'
 import { restaurants, rankLists, universities } from '../data/restaurants'
 import { getLatestReviews, formatTimeAgo } from '../data/reviews'
 import { getTodayFlip, getTomorrowCandidates } from '../data/deals'
+import { getSocialFeed, formatFeedTime } from '../data/socialFeed'
 import { getMealPeriod } from '../services/ai'
 import RestaurantCard from '../components/RestaurantCard'
 import { addFlipHistory } from '../services/history'
@@ -496,6 +497,61 @@ export default function HomePage({ university }: Props) {
               <div className="content">
                 <div className="title">{rank.title}</div>
                 <div className="desc">{rank.description}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* 校友圈 - 好友动态流 */}
+      <section className="section">
+        <div className="section-header">
+          <h2 className="section-title">校友圈</h2>
+          <span className="section-tag">同学动态</span>
+        </div>
+        <div className="social-feed">
+          {getSocialFeed(university === 'all' ? undefined : university, 4).map(item => (
+            <div
+              key={item.id}
+              className="social-feed-card"
+              onClick={() => navigate(`/restaurant/${item.restaurantId}`)}
+            >
+              <div className="social-feed-header">
+                <span className="social-feed-avatar">{item.user.avatar}</span>
+                <div className="social-feed-user">
+                  <span className="social-feed-name">{item.user.name}</span>
+                  <span className="social-feed-school">{item.user.university.replace('北京', '').replace('大学', '')} · {item.user.major}</span>
+                </div>
+                <span className="social-feed-time">{formatFeedTime(item.minutesAgo)}</span>
+              </div>
+              <div className="social-feed-body">
+                {item.type === 'checkin' && (
+                  <div className="social-feed-text">
+                    在 <strong>{item.restaurantName}</strong> 吃了{item.dish}
+                    {item.rating && <span className="social-feed-rating">{'★'.repeat(item.rating)}</span>}
+                  </div>
+                )}
+                {item.type === 'gift' && (
+                  <div className="social-feed-text">
+                    请 <span className="social-feed-gift-to">{item.giftToAvatar} {item.giftTo}</span> 喝了一杯 <strong>{item.giftDish}</strong>
+                    <span className="social-feed-gift-tag">请Ta吃</span>
+                  </div>
+                )}
+                {item.type === 'spin' && (
+                  <div className="social-feed-text">
+                    转盘选中了 <strong>{item.restaurantName}</strong>
+                  </div>
+                )}
+                {item.comment && (
+                  <div className="social-feed-comment">"{item.comment}"</div>
+                )}
+              </div>
+              <div className="social-feed-footer">
+                <div className="social-feed-restaurant">
+                  <img className="social-feed-restaurant-img" src={item.restaurantImage} alt="" />
+                  <span>{item.restaurantName}</span>
+                </div>
+                <span className="social-feed-likes">{item.likes} 赞</span>
               </div>
             </div>
           ))}

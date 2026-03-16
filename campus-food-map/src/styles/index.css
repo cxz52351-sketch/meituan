@@ -784,64 +784,139 @@ ul, ol {
   background: var(--gray-200);
 }
 
-/* Random Page - 美团风格 */
+/* Random Page - 游戏化决策轮盘 */
 .random-page {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 40px 20px;
+  padding: 24px 20px;
   min-height: calc(100vh - 160px);
+  position: relative;
+  overflow: hidden;
 }
 
-.random-wheel {
-  width: 260px;
-  height: 260px;
+/* ---- 三模式 Tab ---- */
+.spin-mode-tabs {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.spin-mode-tab {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 10px 8px;
+  border-radius: var(--radius-lg);
+  background: var(--gray-50);
+  border: 2px solid transparent;
+  font-size: 0.82rem;
+  font-weight: 500;
+  color: var(--gray-500);
+  transition: all 0.3s;
+}
+
+.spin-mode-tab .spin-mode-tab-icon {
+  font-size: 0.75rem;
+  font-weight: 700;
+  width: 24px;
+  height: 24px;
+  line-height: 24px;
+  text-align: center;
   border-radius: 50%;
-  background: conic-gradient(
-    var(--meituan-yellow) 0deg 60deg,
-    #333 60deg 120deg,
-    var(--meituan-green) 120deg 180deg,
-    var(--meituan-yellow) 180deg 240deg,
-    #333 240deg 300deg,
-    var(--meituan-green) 300deg 360deg
-  );
+  background: var(--gray-200);
+  color: var(--gray-500);
+}
+
+.spin-mode-tab.active {
+  background: #FFF8E1;
+  border-color: var(--meituan-yellow);
+  color: var(--gray-900);
+  font-weight: 600;
+  box-shadow: 0 2px 8px rgba(255, 209, 0, 0.25);
+}
+
+.spin-mode-tab.active .spin-mode-tab-icon {
+  background: var(--meituan-yellow);
+  color: var(--gray-900);
+}
+
+.spin-mode-tab:active {
+  transform: scale(0.96);
+}
+
+/* ---- 盲盒提示 ---- */
+.blind-hint {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  background: linear-gradient(135deg, #FFF8E1, #FFF3CD);
+  border-radius: var(--radius-lg);
+  font-size: 0.8rem;
+  color: var(--gray-700);
+  margin-bottom: 16px;
+  width: 100%;
+  max-width: 360px;
+}
+
+.blind-refresh {
+  margin-left: auto;
+  padding: 4px 12px;
+  background: var(--meituan-yellow);
+  border-radius: var(--radius-full);
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  white-space: nowrap;
+}
+
+/* ---- 扇形转盘 ---- */
+.spin-wheel-container {
+  position: relative;
+  width: 280px;
+  height: 280px;
+  margin-bottom: 24px;
+}
+
+.spin-wheel-pointer {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 1.6rem;
+  color: #E74C3C;
+  z-index: 10;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+}
+
+.spin-wheel-svg {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 4px #fff, 0 0 0 6px var(--meituan-yellow);
+}
+
+.spin-wheel-empty {
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: var(--gray-100);
   display: flex;
   align-items: center;
   justify-content: center;
-  position: relative;
-  box-shadow: var(--shadow-xl);
-  margin-bottom: 30px;
-}
-
-.random-wheel::before {
-  content: '';
-  position: absolute;
-  width: 190px;
-  height: 190px;
-  border-radius: 50%;
-  background: white;
-}
-
-.random-wheel-center {
-  position: relative;
-  z-index: 1;
-  text-align: center;
-}
-
-.random-wheel-center .text {
+  color: var(--gray-400);
   font-size: 0.9rem;
-  color: var(--gray-600);
+  box-shadow: var(--shadow-md);
 }
 
-.random-wheel-center .result {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--gray-900);
-  margin-top: 4px;
-}
-
+/* ---- 旋转按钮 ---- */
 .random-btn {
-  width: 180px;
+  width: 200px;
   padding: 14px;
   background: var(--meituan-yellow);
   color: var(--gray-900);
@@ -877,11 +952,341 @@ ul, ol {
   animation: fadeIn 0.3s ease;
 }
 
+.result-discount {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #FFF3E0;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  color: #E65100;
+  margin-top: 10px;
+}
+
 .random-filter-hint {
   text-align: center;
   color: var(--gray-500);
   font-size: 0.85rem;
   margin-top: 20px;
+}
+
+/* ---- 纸屑动画 ---- */
+.confetti-container {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  z-index: 1000;
+  overflow: hidden;
+}
+
+.confetti-piece {
+  position: absolute;
+  top: -20px;
+  border-radius: 2px;
+  animation: confettiFall 3s ease-in forwards;
+}
+
+@keyframes confettiFall {
+  0% {
+    top: -20px;
+    opacity: 1;
+    transform: translateX(0) rotate(0deg) scale(1);
+  }
+  25% {
+    opacity: 1;
+    transform: translateX(30px) rotate(180deg) scale(1);
+  }
+  50% {
+    opacity: 0.9;
+    transform: translateX(-20px) rotate(360deg) scale(0.9);
+  }
+  75% {
+    opacity: 0.6;
+    transform: translateX(15px) rotate(540deg) scale(0.7);
+  }
+  100% {
+    top: 110vh;
+    opacity: 0;
+    transform: translateX(-10px) rotate(720deg) scale(0.5);
+  }
+}
+
+/* ---- 优惠券弹窗 ---- */
+.coupon-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1001;
+  animation: fadeIn 0.3s ease;
+}
+
+.coupon-modal {
+  background: #fff;
+  border-radius: 20px;
+  padding: 28px 24px;
+  width: 85%;
+  max-width: 340px;
+  text-align: center;
+  animation: bounceIn 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+@keyframes bounceIn {
+  0% { transform: scale(0.3); opacity: 0; }
+  50% { transform: scale(1.05); }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.coupon-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.coupon-modal-icon {
+  font-size: 1.5rem;
+}
+
+.coupon-modal-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.coupon-card-egg {
+  display: flex;
+  border: 2px dashed;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+
+.coupon-card-egg-left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  min-width: 60px;
+}
+
+.coupon-card-egg-icon {
+  font-size: 1.5rem;
+}
+
+.coupon-card-egg-right {
+  flex: 1;
+  padding: 12px 16px;
+  text-align: left;
+}
+
+.coupon-card-egg-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 4px;
+}
+
+.coupon-card-egg-desc {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+}
+
+.coupon-restaurant-tip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 12px;
+  background: #FFF8E1;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  color: #F57F17;
+  margin-bottom: 16px;
+}
+
+.coupon-modal-btn {
+  width: 100%;
+  padding: 12px;
+  border-radius: var(--radius-full);
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.coupon-modal-btn:active {
+  transform: scale(0.96);
+}
+
+/* ---- 聚餐模式 ---- */
+.group-setup {
+  width: 100%;
+  max-width: 380px;
+  margin-bottom: 20px;
+}
+
+.group-setup-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  text-align: center;
+  margin-bottom: 12px;
+}
+
+.group-setup-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.group-mate-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--gray-100);
+  transition: all 0.3s;
+}
+
+.group-mate-row.active {
+  border-color: var(--meituan-yellow);
+  background: #FFFDE7;
+  box-shadow: 0 2px 8px rgba(255, 209, 0, 0.2);
+}
+
+.group-mate-row.done {
+  opacity: 0.85;
+}
+
+.group-mate-avatar {
+  font-size: 1.4rem;
+  width: 36px;
+  text-align: center;
+}
+
+.group-mate-info {
+  flex: 1;
+}
+
+.group-mate-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.group-mate-desc {
+  font-size: 0.75rem;
+  color: var(--gray-400);
+}
+
+.group-mate-pick {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.82rem;
+  color: var(--meituan-green);
+  font-weight: 500;
+}
+
+.group-mate-btn {
+  padding: 6px 16px;
+  background: var(--meituan-yellow);
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  animation: pulse 1.5s ease infinite;
+}
+
+.group-mate-waiting {
+  font-size: 0.8rem;
+  color: var(--gray-400);
+}
+
+.group-ready-hint {
+  padding: 12px 20px;
+  background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+  border-radius: var(--radius-lg);
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2E7D32;
+  margin-bottom: 16px;
+  animation: fadeIn 0.3s ease;
+}
+
+/* ---- 我的选择 (聚餐模式) ---- */
+.my-pick-section {
+  width: 100%;
+  max-width: 380px;
+  margin-bottom: 20px;
+  animation: fadeIn 0.3s ease;
+}
+
+.my-pick-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 10px;
+}
+
+.my-pick-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.my-pick-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 8px;
+  background: #fff;
+  border-radius: var(--radius-lg);
+  border: 2px solid var(--gray-100);
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.my-pick-item:active {
+  border-color: var(--meituan-yellow);
+  background: #FFFDE7;
+  transform: scale(0.96);
+}
+
+.my-pick-img {
+  width: 100%;
+  height: 56px;
+  object-fit: cover;
+  border-radius: var(--radius-md);
+  margin-bottom: 6px;
+}
+
+.my-pick-name {
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: var(--gray-900);
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  width: 100%;
+}
+
+.my-pick-meta {
+  font-size: 0.7rem;
+  color: var(--gray-400);
 }
 
 /* Map Container - 美团风格 */
@@ -1246,6 +1651,431 @@ ul, ol {
   background: white;
   color: var(--gray-700);
   border: 1px solid var(--gray-200);
+}
+
+.detail-action-btn.gift {
+  background: var(--meituan-green);
+  color: #fff;
+  font-weight: 600;
+}
+
+.detail-action-btn.gift:active {
+  background: #05a856;
+}
+
+/* ---- 请Ta吃弹窗 ---- */
+.gift-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.2s ease;
+}
+
+.gift-modal {
+  background: #fff;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px 32px;
+  width: 100%;
+  max-width: 500px;
+  max-height: 75vh;
+  overflow-y: auto;
+  animation: slideUp 0.3s ease;
+}
+
+@keyframes slideUp {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+
+.gift-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.gift-modal-header h3 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gray-900);
+}
+
+.gift-modal-close {
+  font-size: 1.2rem;
+  color: var(--gray-400);
+  cursor: pointer;
+  padding: 4px;
+}
+
+.gift-modal-subtitle {
+  font-size: 0.82rem;
+  color: var(--gray-500);
+  margin-bottom: 16px;
+}
+
+.gift-dish-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gift-dish-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: var(--gray-50);
+  border-radius: var(--radius-lg);
+  border: 2px solid transparent;
+  transition: all 0.2s;
+  cursor: pointer;
+}
+
+.gift-dish-item:active {
+  border-color: var(--meituan-green);
+  background: #E8F5E9;
+}
+
+.gift-dish-name {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.gift-dish-price {
+  font-size: 0.82rem;
+  color: var(--meituan-green);
+  font-weight: 500;
+}
+
+.gift-selected-dish {
+  padding: 10px 14px;
+  background: #E8F5E9;
+  border-radius: var(--radius-md);
+  font-size: 0.82rem;
+  color: #2E7D32;
+  margin-bottom: 16px;
+}
+
+.gift-friend-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.gift-friend-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: var(--gray-50);
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.gift-friend-item:active {
+  background: #E8F5E9;
+}
+
+.gift-friend-avatar {
+  font-size: 1.5rem;
+}
+
+.gift-friend-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.gift-friend-name {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.gift-friend-detail {
+  font-size: 0.75rem;
+  color: var(--gray-400);
+}
+
+.gift-friend-action {
+  padding: 6px 16px;
+  background: var(--meituan-green);
+  color: #fff;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 600;
+}
+
+.gift-no-friends {
+  text-align: center;
+  padding: 24px 0;
+}
+
+.gift-no-friends-text {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--gray-700);
+  margin-bottom: 6px;
+}
+
+.gift-no-friends-hint {
+  font-size: 0.8rem;
+  color: var(--gray-400);
+  margin-bottom: 16px;
+}
+
+.gift-no-friends-btn {
+  padding: 10px 24px;
+  background: var(--meituan-yellow);
+  color: var(--gray-900);
+  border-radius: var(--radius-full);
+  font-size: 0.88rem;
+  font-weight: 600;
+}
+
+/* 送出成功 */
+.gift-success {
+  text-align: center;
+  padding: 16px 0 8px;
+}
+
+.gift-success-animation {
+  margin-bottom: 16px;
+}
+
+.gift-success-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--meituan-green);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: bounceIn 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.gift-success-check {
+  font-size: 1.8rem;
+  color: #fff;
+  font-weight: 700;
+}
+
+.gift-success-title {
+  font-size: 1.2rem;
+  font-weight: 700;
+  color: var(--gray-900);
+  margin-bottom: 16px;
+}
+
+.gift-success-card {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-bottom: 8px;
+}
+
+.gift-success-from {
+  padding: 8px 16px;
+  background: var(--gray-100);
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  color: var(--gray-700);
+}
+
+.gift-success-arrow {
+  color: var(--meituan-green);
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.gift-success-to {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: #E8F5E9;
+  border-radius: var(--radius-full);
+  font-weight: 600;
+  color: #2E7D32;
+}
+
+.gift-success-to-avatar {
+  font-size: 1.1rem;
+}
+
+.gift-success-dish {
+  font-size: 0.85rem;
+  color: var(--gray-500);
+  margin-bottom: 12px;
+}
+
+.gift-success-share {
+  padding: 10px;
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  margin-bottom: 16px;
+}
+
+.gift-success-actions {
+  display: flex;
+  gap: 10px;
+}
+
+.gift-success-btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: var(--radius-full);
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+.gift-success-btn.share {
+  background: var(--meituan-green);
+  color: #fff;
+}
+
+.gift-success-btn.close {
+  background: var(--gray-100);
+  color: var(--gray-600);
+}
+
+/* ---- 校友圈动态流 ---- */
+.social-feed {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.social-feed-card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  padding: 14px;
+  box-shadow: var(--shadow-sm);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.social-feed-card:active {
+  transform: scale(0.99);
+  box-shadow: var(--shadow-md);
+}
+
+.social-feed-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.social-feed-avatar {
+  font-size: 1.4rem;
+  width: 32px;
+  text-align: center;
+}
+
+.social-feed-user {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.social-feed-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--gray-900);
+}
+
+.social-feed-school {
+  font-size: 0.72rem;
+  color: var(--gray-400);
+}
+
+.social-feed-time {
+  font-size: 0.72rem;
+  color: var(--gray-400);
+}
+
+.social-feed-body {
+  margin-bottom: 10px;
+}
+
+.social-feed-text {
+  font-size: 0.88rem;
+  color: var(--gray-700);
+  line-height: 1.5;
+}
+
+.social-feed-text strong {
+  color: var(--gray-900);
+  font-weight: 600;
+}
+
+.social-feed-rating {
+  color: #F59E0B;
+  font-size: 0.8rem;
+  margin-left: 6px;
+}
+
+.social-feed-gift-to {
+  color: var(--meituan-green);
+  font-weight: 500;
+}
+
+.social-feed-gift-tag {
+  display: inline-block;
+  padding: 1px 8px;
+  background: #E8F5E9;
+  color: var(--meituan-green);
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.social-feed-comment {
+  font-size: 0.82rem;
+  color: var(--gray-500);
+  font-style: italic;
+  margin-top: 4px;
+}
+
+.social-feed-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.social-feed-restaurant {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.78rem;
+  color: var(--gray-500);
+}
+
+.social-feed-restaurant-img {
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  object-fit: cover;
+}
+
+.social-feed-likes {
+  font-size: 0.75rem;
+  color: var(--gray-400);
 }
 
 /* Rank Page - 美团风格 */

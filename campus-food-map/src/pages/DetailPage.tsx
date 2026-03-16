@@ -1,9 +1,11 @@
-import { useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { restaurants } from '../data/restaurants'
 import { getReviewsByRestaurant, formatTimeAgo } from '../data/reviews'
 import { getSavingsPlan, getMaxSavings } from '../data/deals'
-import { addVisitHistory } from '../services/history'
+import { addVisitHistory, addGiftHistory } from '../services/history'
+import { getFriends } from '../services/profile'
+import { Friend } from '../types'
 
 export default function DetailPage() {
   const { id } = useParams()
@@ -21,6 +23,17 @@ export default function DetailPage() {
     return id ? getSavingsPlan(id) : undefined
   }, [id])
 
+  // 请Ta吃 状态
+  const [showGiftFlow, setShowGiftFlow] = useState(false)
+  const [giftStep, setGiftStep] = useState<'dish' | 'friend' | 'success'>('dish')
+  const [selectedDish, setSelectedDish] = useState('')
+  const [selectedFriend, setSelectedFriend] = useState<Friend | null>(null)
+  const [friends, setFriends] = useState<Friend[]>([])
+
+  useEffect(() => {
+    setFriends(getFriends())
+  }, [])
+
   // 记录浏览足迹
   useEffect(() => {
     if (restaurant) {
@@ -34,6 +47,42 @@ export default function DetailPage() {
       })
     }
   }, [restaurant])
+
+  const startGiftFlow = () => {
+    setShowGiftFlow(true)
+    setGiftStep('dish')
+    setSelectedDish('')
+    setSelectedFriend(null)
+    setFriends(getFriends())
+  }
+
+  const handleSelectDish = (dish: string) => {
+    setSelectedDish(dish)
+    setGiftStep('friend')
+  }
+
+  const handleSelectFriend = (friend: Friend) => {
+    setSelectedFriend(friend)
+    // 保存礼物记录
+    if (restaurant) {
+      addGiftHistory({
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name,
+        dish: selectedDish,
+        friendName: friend.name,
+        friendAvatar: friend.avatar,
+        timestamp: Date.now(),
+      })
+    }
+    setGiftStep('success')
+  }
+
+  const closeGiftFlow = () => {
+    setShowGiftFlow(false)
+    setGiftStep('dish')
+    setSelectedDish('')
+    setSelectedFriend(null)
+  }
 
   if (!restaurant) {
     return (
@@ -110,7 +159,7 @@ export default function DetailPage() {
           </div>
           {restaurant.studentDiscount && (
             <div className="detail-discount-banner">
-              🎫 学生专属：{restaurant.studentDiscount}
+              学生专属：{restaurant.studentDiscount}
             </div>
           )}
         </div>
@@ -119,7 +168,7 @@ export default function DetailPage() {
         {savingsPlan && (
           <div className="detail-section">
             <h2 className="detail-section-title">
-              💰 省钱方案
+              省钱方案
               {savingsPlan && <span className="savings-max">最多省¥{getMaxSavings(savingsPlan)}</span>}
             </h2>
             <div className="savings-plans">
@@ -230,7 +279,7 @@ export default function DetailPage() {
         {/* 同学说 - UGC 评论 */}
         {reviews.length > 0 && (
           <div className="detail-section">
-            <h2 className="detail-section-title">🗣️ 同学说 ({reviews.length})</h2>
+            <h2 className="detail-section-title">同学说 ({reviews.length})</h2>
             <div className="detail-reviews">
               {reviews.map((review) => (
                 <div key={review.id} className="detail-review">
@@ -254,7 +303,7 @@ export default function DetailPage() {
                     </div>
                   )}
                   <div className="detail-review-footer">
-                    <span className="detail-review-likes">👍 {review.likes}人觉得有用</span>
+                    <span className="detail-review-likes">{review.likes}人觉得有用</span>
                   </div>
                 </div>
               ))}
@@ -281,15 +330,127 @@ export default function DetailPage() {
         </div>
       </div>
 
+      {/* 请Ta吃弹窗流程 */}
+      {showGiftFlow && (
+        <div className="gift-overlay" onClick={closeGiftFlow}>
+          <div className="gift-modal" onClick={e => e.stopPropagation()}>
+            {/* 步骤一：选菜品 */}
+            {giftStep === 'dish' && (
+              <>
+                <div className="gift-modal-header">
+                  <h3>请Ta吃什么？</h3>
+                  <span className="gift-modal-close" onClick={closeGiftFlow}>✕</span>
+                </div>
+                <p className="gift-modal-subtitle">选一道 {restaurant.name} 的招牌菜送给好友</p>
+                <div className="gift-dish-list">
+                  {restaurant.recommendDishes.map(dish => (
+                    <button
+                      key={dish}
+                      className="gift-dish-item"
+                      onClick={() => handleSelectDish(dish)}
+                    >
+                      <span className="gift-dish-name">{dish}</span>
+                      <span className="gift-dish-price">约¥{Math.round(restaurant.avgPrice * 0.6)}</span>
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+
+            {/* 步骤二：选好友 */}
+            {giftStep === 'friend' && (
+              <>
+                <div className="gift-modal-header">
+                  <h3>送给谁？</h3>
+                  <span className="gift-modal-close" onClick={closeGiftFlow}>✕</span>
+                </div>
+                <div className="gift-selected-dish">
+                  已选：{selectedDish}（{restaurant.name}）
+                </div>
+                {friends.length === 0 ? (
+                  <div className="gift-no-friends">
+                    <p className="gift-no-friends-text">还没有饭搭子</p>
+                    <p className="gift-no-friends-hint">去拼单广场认识同学，添加为好友后就能请Ta吃了</p>
+                    <button className="gift-no-friends-btn" onClick={() => { closeGiftFlow(); navigate('/group') }}>
+                      去拼单广场
+                    </button>
+                  </div>
+                ) : (
+                  <div className="gift-friend-list">
+                    {friends.map(friend => (
+                      <button
+                        key={friend.id}
+                        className="gift-friend-item"
+                        onClick={() => handleSelectFriend(friend)}
+                      >
+                        <span className="gift-friend-avatar">{friend.avatar}</span>
+                        <div className="gift-friend-info">
+                          <span className="gift-friend-name">{friend.name}</span>
+                          <span className="gift-friend-detail">
+                            {friend.university.replace('北京', '').replace('大学', '')} · {friend.major}
+                          </span>
+                        </div>
+                        <span className="gift-friend-action">送Ta</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </>
+            )}
+
+            {/* 步骤三：成功 */}
+            {giftStep === 'success' && selectedFriend && (
+              <div className="gift-success">
+                <div className="gift-success-animation">
+                  <div className="gift-success-icon">
+                    <span className="gift-success-check">✓</span>
+                  </div>
+                </div>
+                <h3 className="gift-success-title">已送出！</h3>
+                <div className="gift-success-card">
+                  <div className="gift-success-from">你</div>
+                  <div className="gift-success-arrow">→</div>
+                  <div className="gift-success-to">
+                    <span className="gift-success-to-avatar">{selectedFriend.avatar}</span>
+                    <span>{selectedFriend.name}</span>
+                  </div>
+                </div>
+                <div className="gift-success-dish">
+                  {selectedDish}（{restaurant.name}）
+                </div>
+                <div className="gift-success-share">
+                  <p>已生成分享卡片，可发送给好友领取</p>
+                </div>
+                <div className="gift-success-actions">
+                  <button className="gift-success-btn share" onClick={() => {
+                    closeGiftFlow()
+                  }}>
+                    分享给Ta
+                  </button>
+                  <button className="gift-success-btn close" onClick={closeGiftFlow}>
+                    完成
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* 底部操作栏 */}
       <div className="detail-actions">
         <button className="detail-action-btn secondary">
           电话
         </button>
         <button
+          className="detail-action-btn gift"
+          onClick={startGiftFlow}
+        >
+          请Ta吃
+        </button>
+        <button
           className="detail-action-btn primary"
           onClick={() => {
-            // 模拟打开导航
             alert(`即将导航至：${restaurant.address}`)
           }}
         >

@@ -119,3 +119,32 @@ export function addVisitHistory(item: VisitHistoryItem): void {
   filtered.unshift(item)
   localStorage.setItem(VISIT_HISTORY_KEY, JSON.stringify(filtered.slice(0, 50)))
 }
+
+// ---- 请Ta吃历史（虚拟礼物） ----
+
+const GIFT_HISTORY_KEY = 'campus_food_gift_history'
+
+export interface GiftHistoryItem {
+  restaurantId: string
+  restaurantName: string
+  dish: string
+  friendName: string
+  friendAvatar: string
+  timestamp: number
+}
+
+export function getGiftHistory(): GiftHistoryItem[] {
+  const raw = localStorage.getItem(GIFT_HISTORY_KEY)
+  if (!raw) return []
+  try {
+    return JSON.parse(raw) as GiftHistoryItem[]
+  } catch {
+    return []
+  }
+}
+
+export function addGiftHistory(item: GiftHistoryItem): void {
+  const list = getGiftHistory()
+  list.unshift(item)
+  localStorage.setItem(GIFT_HISTORY_KEY, JSON.stringify(list.slice(0, 30)))
+}
