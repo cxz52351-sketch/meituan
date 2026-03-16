@@ -2,6 +2,7 @@
 // 三种动态类型：用餐打卡、请Ta吃、转盘结果
 
 import { restaurants } from './restaurants'
+import { getLatestReviews } from './reviews'
 
 export type FeedType = 'checkin' | 'gift' | 'spin'
 
@@ -184,4 +185,75 @@ export function getSocialFeed(university?: string, limit = 10): FeedItem[] {
 // 获取指定餐厅的动态
 export function getRestaurantFeed(restaurantId: string): FeedItem[] {
   return feedPool.filter(f => f.restaurantId === restaurantId)
+}
+
+// 统一动态类型（合并社交动态 + UGC 评论）
+export interface UnifiedFeedItem {
+  id: string
+  source: 'social' | 'review'
+  user: { name: string; avatar: string; university: string; major: string }
+  restaurantId: string
+  restaurantName: string
+  restaurantImage: string
+  minutesAgo: number
+  likes: number
+  // social 字段
+  feedType?: FeedType
+  dish?: string
+  rating?: number
+  comment?: string
+  giftTo?: string
+  giftToAvatar?: string
+  giftDish?: string
+  // review 字段
+  reviewContent?: string
+  reviewTags?: string[]
+}
+
+// 合并社交动态和 UGC 评论，按时间排序
+export function getUnifiedFeed(university?: string, limit = 6): UnifiedFeedItem[] {
+  // 社交动态 → 统一格式
+  const socialItems: UnifiedFeedItem[] = getSocialFeed(university, 10).map(f => ({
+    id: f.id,
+    source: 'social' as const,
+    user: f.user,
+    restaurantId: f.restaurantId,
+    restaurantName: f.restaurantName,
+    restaurantImage: f.restaurantImage,
+    minutesAgo: f.minutesAgo,
+    likes: f.likes,
+    feedType: f.type,
+    dish: f.dish,
+    rating: f.rating,
+    comment: f.comment,
+    giftTo: f.giftTo,
+    giftToAvatar: f.giftToAvatar,
+    giftDish: f.giftDish,
+  }))
+
+  // UGC 评论 → 统一格式
+  const reviews = getLatestReviews(10, university)
+
+  const reviewItems: UnifiedFeedItem[] = reviews.map(r => {
+    const rest = restaurants.find(x => x.id === r.restaurantId)
+    const minutesAgo = Math.floor((Date.now() - r.timestamp) / 60000)
+    return {
+      id: `review-${r.id}`,
+      source: 'review' as const,
+      user: { name: r.userName, avatar: r.avatar, university: r.university, major: r.major },
+      restaurantId: r.restaurantId,
+      restaurantName: rest?.name || '',
+      restaurantImage: rest?.images[0] || '',
+      minutesAgo,
+      likes: r.likes,
+      rating: r.rating,
+      reviewContent: r.content,
+      reviewTags: r.tags,
+    }
+  })
+
+  // 混合并按时间排序
+  const all = [...socialItems, ...reviewItems]
+  all.sort((a, b) => a.minutesAgo - b.minutesAgo)
+  return all.slice(0, limit)
 }

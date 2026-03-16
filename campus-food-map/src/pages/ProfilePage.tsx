@@ -1,8 +1,8 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { University, UserProfile } from '../types'
-import { getProfile, saveProfile, getFriends, removeFriend } from '../services/profile'
-import { universities } from '../data/restaurants'
+import { getProfile, saveProfile, getFriends, removeFriend, getMealStatus, setMealStatus, clearMealStatus, getMockFriendStatuses, MealStatus } from '../services/profile'
+import { universities, restaurants } from '../data/restaurants'
 import {
   getRandomHistory, RandomHistoryItem,
   getGroupOrderHistory, GroupOrderHistoryItem,
@@ -54,6 +54,14 @@ export default function ProfilePage({ university }: Props) {
   const [visitHistory, setVisitHistory] = useState<VisitHistoryItem[]>([])
   const [expandedTool, setExpandedTool] = useState<string | null>(null)
 
+  // 干饭状态
+  const [mealStatus, setMealStatusState] = useState<MealStatus | null>(null)
+  const [showStatusModal, setShowStatusModal] = useState(false)
+  const [statusRestaurantId, setStatusRestaurantId] = useState('')
+  const [statusText, setStatusText] = useState('')
+  const [statusMood, setStatusMood] = useState('😋')
+  const [friendStatuses, setFriendStatuses] = useState<Map<string, MealStatus>>(new Map())
+
   // 美团生态状态
   const [meituanBound, setMeituanBound] = useState(() => localStorage.getItem('campus_food_meituan_bound') === 'true')
   const [importedCount, setImportedCount] = useState(() => {
@@ -100,6 +108,15 @@ export default function ProfilePage({ university }: Props) {
     setGroupHistory(getGroupOrderHistory())
     setFlipHistory(getFlipHistory())
     setVisitHistory(getVisitHistory())
+  }, [])
+
+  // 加载干饭状态
+  useEffect(() => {
+    setMealStatusState(getMealStatus())
+    const mockStatuses = getMockFriendStatuses()
+    const map = new Map<string, MealStatus>()
+    mockStatuses.forEach(s => map.set(s.friendId, s.status))
+    setFriendStatuses(map)
   }, [])
 
   // ===== AI 口味 DNA 分析 =====
@@ -243,6 +260,42 @@ export default function ProfilePage({ university }: Props) {
 
   const toggleTool = (key: string) => {
     setExpandedTool(prev => prev === key ? null : key)
+  }
+
+  const moodOptions = ['😋', '😊', '🤤', '👍', '❤️', '🔥', '😴', '😭', '🌙', '☕', '🎉', '💪']
+
+  const handlePublishStatus = () => {
+    if (!statusRestaurantId) return
+    const r = restaurants.find(r => r.id === statusRestaurantId)
+    if (!r) return
+    const status: MealStatus = {
+      restaurantId: r.id,
+      restaurantName: r.name,
+      restaurantImage: r.images[0],
+      text: statusText.trim() || '在吃好吃的~',
+      mood: statusMood,
+      timestamp: Date.now(),
+    }
+    setMealStatus(status)
+    setMealStatusState(status)
+    setShowStatusModal(false)
+    setStatusRestaurantId('')
+    setStatusText('')
+    setStatusMood('😋')
+  }
+
+  const handleClearStatus = () => {
+    clearMealStatus()
+    setMealStatusState(null)
+  }
+
+  const statusTimeAgo = (ts: number) => {
+    const min = Math.floor((Date.now() - ts) / 60000)
+    if (min < 1) return '刚刚'
+    if (min < 60) return `${min}分钟前`
+    const hour = Math.floor(min / 60)
+    if (hour < 24) return `${hour}小时前`
+    return '1天前'
   }
 
   const handleBindMeituan = () => {
@@ -446,6 +499,101 @@ export default function ProfilePage({ university }: Props) {
           <span className="profile-bio-quote">"</span>
           <span className="profile-bio-text">{profile.bio}</span>
           <span className="profile-bio-quote">"</span>
+        </div>
+      )}
+
+      {/* 干饭状态 */}
+      <div className="profile-status-card" onClick={() => !mealStatus && setShowStatusModal(true)}>
+        {mealStatus ? (
+          <div className="profile-status-content">
+            <div className="profile-status-header">
+              <span className="profile-status-mood">{mealStatus.mood}</span>
+              <span className="profile-status-time">{statusTimeAgo(mealStatus.timestamp)}</span>
+              <span className="profile-status-clear" onClick={(e) => { e.stopPropagation(); handleClearStatus() }}>清除</span>
+            </div>
+            <div className="profile-status-body" onClick={() => navigate(`/restaurant/${mealStatus.restaurantId}`)}>
+              {mealStatus.restaurantImage && (
+                <img className="profile-status-img" src={mealStatus.restaurantImage} alt="" />
+              )}
+              <div className="profile-status-info">
+                <span className="profile-status-text">{mealStatus.text}</span>
+                <span className="profile-status-restaurant">{mealStatus.restaurantName}</span>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div className="profile-status-empty">
+            <span className="profile-status-empty-icon">📸</span>
+            <span className="profile-status-empty-text">分享你的干饭日常</span>
+            <span className="profile-status-empty-btn">发状态</span>
+          </div>
+        )}
+      </div>
+
+      {/* 发状态弹窗 */}
+      {showStatusModal && (
+        <div className="group-order-create-overlay" onClick={() => setShowStatusModal(false)}>
+          <div className="group-order-create-modal" onClick={e => e.stopPropagation()}>
+            <div className="group-order-create-top">
+              <h3>发干饭状态</h3>
+              <span className="group-order-create-close" onClick={() => setShowStatusModal(false)}>✕</span>
+            </div>
+            <p className="group-order-create-hint">让饭搭子看看你在吃什么</p>
+            <div className="group-order-create-fields">
+              <div className="group-order-create-field">
+                <label>今天吃的哪家？</label>
+                <select value={statusRestaurantId} onChange={e => setStatusRestaurantId(e.target.value)}>
+                  <option value="">选择一家餐厅...</option>
+                  {restaurants.map(r => (
+                    <option key={r.id} value={r.id}>{r.name} · ¥{r.avgPrice}/人</option>
+                  ))}
+                </select>
+              </div>
+              <div className="group-order-create-field">
+                <label>配一句话</label>
+                <input
+                  type="text"
+                  placeholder="今天的心情是..."
+                  value={statusText}
+                  onChange={e => setStatusText(e.target.value)}
+                  maxLength={30}
+                />
+              </div>
+              <div className="group-order-create-field">
+                <label>此刻心情</label>
+                <div className="profile-mood-grid">
+                  {moodOptions.map(m => (
+                    <span
+                      key={m}
+                      className={`profile-mood-option ${statusMood === m ? 'selected' : ''}`}
+                      onClick={() => setStatusMood(m)}
+                    >
+                      {m}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+            {statusRestaurantId && (() => {
+              const previewR = restaurants.find(r => r.id === statusRestaurantId)
+              return previewR ? (
+                <div className="profile-status-preview">
+                  <img className="profile-status-preview-img" src={previewR.images[0]} alt="" />
+                  <div className="profile-status-preview-info">
+                    <span className="profile-status-preview-name">{previewR.name}</span>
+                    <span className="profile-status-preview-text">{statusMood} {statusText || '在吃好吃的~'}</span>
+                  </div>
+                </div>
+              ) : null
+            })()}
+            <button
+              className={`group-order-create-btn ${!statusRestaurantId ? 'btn-disabled' : ''}`}
+              disabled={!statusRestaurantId}
+              onClick={handlePublishStatus}
+            >
+              发布状态
+            </button>
+          </div>
         </div>
       )}
 
@@ -698,18 +846,26 @@ export default function ProfilePage({ university }: Props) {
           </div>
         ) : (
           <div className="profile-friend-list">
-            {friends.map(f => (
-              <div key={f.id} className="profile-friend-item">
-                <span className="profile-friend-avatar">{f.avatar}</span>
-                <div className="profile-friend-info">
-                  <span className="profile-friend-name">{f.name}</span>
-                  <span className="profile-friend-detail">
-                    {f.university.replace('北京', '').replace('大学', '')} · {f.major} · {f.year}
-                  </span>
+            {friends.map(f => {
+              const fStatus = friendStatuses.get(f.id)
+              return (
+                <div key={f.id} className="profile-friend-item">
+                  <span className="profile-friend-avatar">{f.avatar}</span>
+                  <div className="profile-friend-info">
+                    <span className="profile-friend-name">{f.name}</span>
+                    <span className="profile-friend-detail">
+                      {f.university.replace('北京', '').replace('大学', '')} · {f.major} · {f.year}
+                    </span>
+                    {fStatus && (
+                      <span className="profile-friend-status">
+                        {fStatus.mood} {fStatus.text} · {fStatus.restaurantName}
+                      </span>
+                    )}
+                  </div>
+                  <button className="profile-friend-remove" onClick={() => handleRemoveFriend(f.id)}>不搭了</button>
                 </div>
-                <button className="profile-friend-remove" onClick={() => handleRemoveFriend(f.id)}>不搭了</button>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </div>

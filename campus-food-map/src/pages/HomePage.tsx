@@ -2,9 +2,8 @@ import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { University, Restaurant } from '../types'
 import { restaurants, rankLists, universities } from '../data/restaurants'
-import { getLatestReviews, formatTimeAgo } from '../data/reviews'
 import { getTodayFlip, getTomorrowCandidates } from '../data/deals'
-import { getSocialFeed, formatFeedTime } from '../data/socialFeed'
+import { getUnifiedFeed, formatFeedTime } from '../data/socialFeed'
 import { getMealPeriod } from '../services/ai'
 import RestaurantCard from '../components/RestaurantCard'
 import { addFlipHistory } from '../services/history'
@@ -141,9 +140,9 @@ export default function HomePage({ university }: Props) {
     return universities.find((u) => u.name === university) || universities[0]
   }, [university])
 
-  // 同学说：最新 UGC 评论
-  const latestReviews = useMemo(() => {
-    return getLatestReviews(5, university === 'all' ? undefined : university)
+  // 同学圈：合并社交动态 + UGC 评论
+  const unifiedFeed = useMemo(() => {
+    return getUnifiedFeed(university === 'all' ? undefined : university, 5)
   }, [university])
 
   // 推荐理由生成（基于美团交易数据）
@@ -503,14 +502,14 @@ export default function HomePage({ university }: Props) {
         </div>
       </section>
 
-      {/* 校友圈 - 好友动态流 */}
+      {/* 同学圈 - 合并社交动态 + UGC 评论 */}
       <section className="section">
         <div className="section-header">
-          <h2 className="section-title">校友圈</h2>
-          <span className="section-tag">同学动态</span>
+          <h2 className="section-title">同学圈</h2>
+          <span className="section-tag">实时动态</span>
         </div>
         <div className="social-feed">
-          {getSocialFeed(university === 'all' ? undefined : university, 4).map(item => (
+          {unifiedFeed.map(item => (
             <div
               key={item.id}
               className="social-feed-card"
@@ -525,30 +524,39 @@ export default function HomePage({ university }: Props) {
                 <span className="social-feed-time">{formatFeedTime(item.minutesAgo)}</span>
               </div>
               <div className="social-feed-body">
-                {item.type === 'checkin' && (
+                {item.source === 'social' && item.feedType === 'checkin' && (
                   <div className="social-feed-text">
                     在 <strong>{item.restaurantName}</strong> 吃了{item.dish}
                     {item.rating && <span className="social-feed-rating">{'★'.repeat(item.rating)}</span>}
                   </div>
                 )}
-                {item.type === 'gift' && (
+                {item.source === 'social' && item.feedType === 'gift' && (
                   <div className="social-feed-text">
                     请 <span className="social-feed-gift-to">{item.giftToAvatar} {item.giftTo}</span> 喝了一杯 <strong>{item.giftDish}</strong>
                     <span className="social-feed-gift-tag">请Ta吃</span>
                   </div>
                 )}
-                {item.type === 'spin' && (
+                {item.source === 'social' && item.feedType === 'spin' && (
                   <div className="social-feed-text">
                     转盘选中了 <strong>{item.restaurantName}</strong>
                   </div>
                 )}
-                {item.comment && (
+                {item.source === 'review' && (
+                  <div className="social-feed-text">
+                    在 <strong>{item.restaurantName}</strong> 打卡
+                    {item.rating && <span className="social-feed-rating">{'★'.repeat(item.rating)}</span>}
+                  </div>
+                )}
+                {item.source === 'social' && item.comment && (
                   <div className="social-feed-comment">"{item.comment}"</div>
+                )}
+                {item.source === 'review' && item.reviewContent && (
+                  <div className="social-feed-comment">"{item.reviewContent.slice(0, 50)}{(item.reviewContent.length || 0) > 50 ? '...' : ''}"</div>
                 )}
               </div>
               <div className="social-feed-footer">
                 <div className="social-feed-restaurant">
-                  <img className="social-feed-restaurant-img" src={item.restaurantImage} alt="" />
+                  {item.restaurantImage && <img className="social-feed-restaurant-img" src={item.restaurantImage} alt="" />}
                   <span>{item.restaurantName}</span>
                 </div>
                 <span className="social-feed-likes">{item.likes} 赞</span>
@@ -573,48 +581,6 @@ export default function HomePage({ university }: Props) {
         </div>
       </section>
 
-      {/* 同学说 - UGC 社交动态 */}
-      <section className="section">
-        <div className="section-header">
-          <h2 className="section-title">🗣️ 同学说</h2>
-          <span className="section-tag">最新点评</span>
-        </div>
-        <div className="ugc-feed">
-          {latestReviews.map((review) => {
-            const restaurant = restaurants.find(r => r.id === review.restaurantId)
-            return (
-              <div
-                key={review.id}
-                className="ugc-card"
-                onClick={() => navigate(`/restaurant/${review.restaurantId}`)}
-              >
-                <div className="ugc-header">
-                  <span className="ugc-avatar">{review.avatar}</span>
-                  <div className="ugc-user-info">
-                    <span className="ugc-name">{review.userName}</span>
-                    <span className="ugc-meta">{review.university} · {review.major}</span>
-                  </div>
-                  <span className="ugc-time">{formatTimeAgo(review.timestamp)}</span>
-                </div>
-                <p className="ugc-content">{review.content}</p>
-                {review.tags && (
-                  <div className="ugc-tags">
-                    {review.tags.map(tag => (
-                      <span key={tag} className="ugc-tag">{tag}</span>
-                    ))}
-                  </div>
-                )}
-                <div className="ugc-footer">
-                  {restaurant && (
-                    <span className="ugc-restaurant">📍 {restaurant.name}</span>
-                  )}
-                  <span className="ugc-likes">👍 {review.likes}</span>
-                </div>
-              </div>
-            )
-          })}
-        </div>
-      </section>
     </div>
   )
 }

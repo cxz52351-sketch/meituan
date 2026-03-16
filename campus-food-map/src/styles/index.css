@@ -5505,3 +5505,202 @@ ul, ol {
 .invite-friend-chip-avatar {
   font-size: 1rem;
 }
+
+/* ==================== 干饭状态 ==================== */
+
+.profile-status-card {
+  margin-top: 10px;
+  border-radius: var(--radius-xl);
+  overflow: hidden;
+  cursor: pointer;
+  transition: transform 0.15s;
+}
+
+.profile-status-card:active {
+  transform: scale(0.98);
+}
+
+/* 有状态时 */
+.profile-status-content {
+  background: #fff;
+  border-radius: var(--radius-xl);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--gray-100);
+  overflow: hidden;
+}
+
+.profile-status-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px 0;
+}
+
+.profile-status-mood {
+  font-size: 1.2rem;
+}
+
+.profile-status-time {
+  flex: 1;
+  font-size: 0.72rem;
+  color: var(--gray-400);
+}
+
+.profile-status-clear {
+  font-size: 0.72rem;
+  color: var(--gray-400);
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--gray-200);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.profile-status-clear:hover {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.profile-status-body {
+  display: flex;
+  gap: 12px;
+  padding: 10px 14px 12px;
+  cursor: pointer;
+}
+
+.profile-status-img {
+  width: 64px;
+  height: 64px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.profile-status-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-content: center;
+  min-width: 0;
+}
+
+.profile-status-text {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.profile-status-restaurant {
+  font-size: 0.78rem;
+  color: var(--gray-500);
+}
+
+/* 无状态时 - 引导 */
+.profile-status-empty {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 14px 16px;
+  background: linear-gradient(135deg, #FFF8E1 0%, #FFF3E0 100%);
+  border-radius: var(--radius-xl);
+  border: 1.5px dashed rgba(255, 209, 0, 0.5);
+}
+
+.profile-status-empty-icon {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+
+.profile-status-empty-text {
+  flex: 1;
+  font-size: 0.88rem;
+  color: var(--gray-600);
+  font-weight: 500;
+}
+
+.profile-status-empty-btn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #FF6B35;
+  padding: 5px 14px;
+  background: #fff;
+  border-radius: var(--radius-full);
+  flex-shrink: 0;
+  box-shadow: var(--shadow-sm);
+}
+
+/* 发状态弹窗 - 心情选择 */
+.profile-mood-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-mood-option {
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  border-radius: var(--radius-md);
+  border: 2px solid var(--gray-200);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.profile-mood-option:hover {
+  border-color: var(--gray-400);
+}
+
+.profile-mood-option.selected {
+  border-color: var(--meituan-yellow);
+  background: var(--meituan-yellow-light);
+  transform: scale(1.1);
+}
+
+/* 发状态弹窗 - 预览 */
+.profile-status-preview {
+  display: flex;
+  gap: 10px;
+  padding: 12px;
+  background: var(--gray-50);
+  border-radius: var(--radius-md);
+  margin-bottom: 14px;
+}
+
+.profile-status-preview-img {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.profile-status-preview-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  justify-content: center;
+}
+
+.profile-status-preview-name {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--gray-800);
+}
+
+.profile-status-preview-text {
+  font-size: 0.8rem;
+  color: var(--gray-500);
+}
+
+/* 好友状态 */
+.profile-friend-status {
+  font-size: 0.72rem;
+  color: #FF6B35;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
