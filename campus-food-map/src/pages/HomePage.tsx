@@ -338,57 +338,7 @@ export default function HomePage({ university }: Props) {
       <div className="ai-search-card" onClick={() => navigate('/ai')}>
         <div className="ai-search-card-left">
           <div className="ai-search-card-icon">
-            <svg viewBox="0 0 120 140" width="36" height="42">
-              {/* 金色鹿角 - 左 */}
-              <line x1="46" y1="32" x2="38" y2="6" stroke="#F0A500" strokeWidth="5" strokeLinecap="round"/>
-              <line x1="38" y1="16" x2="30" y2="4" stroke="#F0A500" strokeWidth="4" strokeLinecap="round"/>
-              {/* 金色鹿角 - 右 */}
-              <line x1="74" y1="32" x2="82" y2="6" stroke="#F0A500" strokeWidth="5" strokeLinecap="round"/>
-              <line x1="82" y1="16" x2="90" y2="4" stroke="#F0A500" strokeWidth="4" strokeLinecap="round"/>
-              {/* 小星星装饰 */}
-              <circle cx="32" cy="2" r="1.5" fill="#FFD100"/>
-              <circle cx="88" cy="2" r="1.5" fill="#FFD100"/>
-              <circle cx="26" cy="10" r="1" fill="#FFD100" opacity="0.6"/>
-              <circle cx="94" cy="8" r="1" fill="#FFD100" opacity="0.6"/>
-              {/* 白色大脸 */}
-              <ellipse cx="60" cy="75" rx="38" ry="44" fill="white" stroke="#EDEDED" strokeWidth="1"/>
-              {/* 耳朵 - 左 */}
-              <circle cx="22" cy="52" r="11" fill="white" stroke="#EDEDED" strokeWidth="1"/>
-              <circle cx="22" cy="52" r="6" fill="#FFD1DC"/>
-              {/* 耳朵 - 右 */}
-              <circle cx="98" cy="52" r="11" fill="white" stroke="#EDEDED" strokeWidth="1"/>
-              <circle cx="98" cy="52" r="6" fill="#FFD1DC"/>
-              {/* 眉毛 */}
-              <path d="M42 62 Q46 59 50 62" fill="none" stroke="#B0A090" strokeWidth="1.2" strokeLinecap="round"/>
-              <path d="M70 62 Q74 59 78 62" fill="none" stroke="#B0A090" strokeWidth="1.2" strokeLinecap="round"/>
-              {/* 眼白 */}
-              <circle cx="47" cy="72" r="9" fill="white" stroke="#D8D8D8" strokeWidth="0.8"/>
-              <circle cx="73" cy="72" r="9" fill="white" stroke="#D8D8D8" strokeWidth="0.8"/>
-              {/* 瞳孔 */}
-              <circle cx="47" cy="73" r="6" fill="#3D2B1F"/>
-              <circle cx="73" cy="73" r="6" fill="#3D2B1F"/>
-              {/* 眼睛高光 */}
-              <circle cx="49" cy="70.5" r="2.2" fill="white"/>
-              <circle cx="75" cy="70.5" r="2.2" fill="white"/>
-              <circle cx="45" cy="75" r="1.2" fill="white" opacity="0.6"/>
-              <circle cx="71" cy="75" r="1.2" fill="white" opacity="0.6"/>
-              {/* 鼻子 */}
-              <ellipse cx="60" cy="84" rx="4" ry="3" fill="#FF9DAC"/>
-              {/* 嘴巴 */}
-              <path d="M54 88 Q60 93 66 88" fill="none" stroke="#D4878F" strokeWidth="1.5" strokeLinecap="round"/>
-              {/* 腮红 */}
-              <ellipse cx="33" cy="82" rx="8" ry="5" fill="#FFD1DC" opacity="0.5"/>
-              <ellipse cx="87" cy="82" rx="8" ry="5" fill="#FFD1DC" opacity="0.5"/>
-              {/* 小手 - 左 */}
-              <circle cx="24" cy="90" r="8" fill="white" stroke="#EDEDED" strokeWidth="1"/>
-              {/* 小手 - 右 */}
-              <circle cx="96" cy="90" r="8" fill="white" stroke="#EDEDED" strokeWidth="1"/>
-              {/* 美团黄围兜 */}
-              <rect x="36" y="100" width="48" height="12" rx="6" fill="#F0A500"/>
-              <circle cx="60" cy="106" r="5" fill="#FFD100"/>
-              {/* 围兜下小蝴蝶结 */}
-              <path d="M56 114 L60 118 L64 114" fill="none" stroke="#F0A500" strokeWidth="1.2" strokeLinecap="round"/>
-            </svg>
+            <img src="/tuanzi.png" alt="团子" className="tuanzi-icon" />
           </div>
           <div className="ai-search-card-content">
             <div className="ai-search-card-title">不知道吃什么？问团子</div>

@@ -545,38 +545,7 @@ export default function ChatAgent({ university }: Props) {
           return (
             <div key={msg.id} className={`chat-message chat-message-${msg.role}`}>
               {msg.role === 'assistant' && <div className="chat-avatar">
-                <svg viewBox="0 0 120 140" width="28" height="32">
-                  <line x1="46" y1="32" x2="38" y2="6" stroke="#F0A500" strokeWidth="5" strokeLinecap="round"/>
-                  <line x1="38" y1="16" x2="30" y2="4" stroke="#F0A500" strokeWidth="4" strokeLinecap="round"/>
-                  <line x1="74" y1="32" x2="82" y2="6" stroke="#F0A500" strokeWidth="5" strokeLinecap="round"/>
-                  <line x1="82" y1="16" x2="90" y2="4" stroke="#F0A500" strokeWidth="4" strokeLinecap="round"/>
-                  <circle cx="32" cy="2" r="1.5" fill="#FFD100"/>
-                  <circle cx="88" cy="2" r="1.5" fill="#FFD100"/>
-                  <ellipse cx="60" cy="75" rx="38" ry="44" fill="white" stroke="#EDEDED" strokeWidth="1"/>
-                  <circle cx="22" cy="52" r="11" fill="white" stroke="#EDEDED" strokeWidth="1"/>
-                  <circle cx="22" cy="52" r="6" fill="#FFD1DC"/>
-                  <circle cx="98" cy="52" r="11" fill="white" stroke="#EDEDED" strokeWidth="1"/>
-                  <circle cx="98" cy="52" r="6" fill="#FFD1DC"/>
-                  <path d="M42 62 Q46 59 50 62" fill="none" stroke="#B0A090" strokeWidth="1.2" strokeLinecap="round"/>
-                  <path d="M70 62 Q74 59 78 62" fill="none" stroke="#B0A090" strokeWidth="1.2" strokeLinecap="round"/>
-                  <circle cx="47" cy="72" r="9" fill="white" stroke="#D8D8D8" strokeWidth="0.8"/>
-                  <circle cx="73" cy="72" r="9" fill="white" stroke="#D8D8D8" strokeWidth="0.8"/>
-                  <circle cx="47" cy="73" r="6" fill="#3D2B1F"/>
-                  <circle cx="73" cy="73" r="6" fill="#3D2B1F"/>
-                  <circle cx="49" cy="70.5" r="2.2" fill="white"/>
-                  <circle cx="75" cy="70.5" r="2.2" fill="white"/>
-                  <circle cx="45" cy="75" r="1.2" fill="white" opacity="0.6"/>
-                  <circle cx="71" cy="75" r="1.2" fill="white" opacity="0.6"/>
-                  <ellipse cx="60" cy="84" rx="4" ry="3" fill="#FF9DAC"/>
-                  <path d="M54 88 Q60 93 66 88" fill="none" stroke="#D4878F" strokeWidth="1.5" strokeLinecap="round"/>
-                  <ellipse cx="33" cy="82" rx="8" ry="5" fill="#FFD1DC" opacity="0.5"/>
-                  <ellipse cx="87" cy="82" rx="8" ry="5" fill="#FFD1DC" opacity="0.5"/>
-                  <circle cx="24" cy="90" r="8" fill="white" stroke="#EDEDED" strokeWidth="1"/>
-                  <circle cx="96" cy="90" r="8" fill="white" stroke="#EDEDED" strokeWidth="1"/>
-                  <rect x="36" y="100" width="48" height="12" rx="6" fill="#F0A500"/>
-                  <circle cx="60" cy="106" r="5" fill="#FFD100"/>
-                  <path d="M56 114 L60 118 L64 114" fill="none" stroke="#F0A500" strokeWidth="1.2" strokeLinecap="round"/>
-                </svg>
+                <img src="/tuanzi.png" alt="团子" />
               </div>}
               <div className="chat-bubble-wrap">
                 {msg.role === 'assistant' && !msg.content && !msg.guideOptions && msg.status === 'streaming' && (
