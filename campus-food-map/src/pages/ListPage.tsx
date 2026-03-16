@@ -184,7 +184,7 @@ export default function ListPage({ university }: Props) {
       {/* 纠结了？AI 帮你选 */}
       {filteredRestaurants.length > 2 && (
         <div className="ai-nudge" onClick={() => navigate('/ai')}>
-          <span>😋 纠结了？让 AI 帮你选</span>
+          <span>😋 纠结了？让团子帮你选</span>
         </div>
       )}
     </div>

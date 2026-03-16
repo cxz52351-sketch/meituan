@@ -94,7 +94,7 @@ function App() {
                 <svg className="nav-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
                   <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-3 12H7v-2h10v2zm0-3H7V9h10v2zm0-3H7V6h10v2z"/>
                 </svg>
-                <span className="label">AI</span>
+                <span className="label">团子</span>
               </NavLink>
             </li>
             <li>

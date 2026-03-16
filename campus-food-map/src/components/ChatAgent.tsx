@@ -619,7 +619,7 @@ export default function ChatAgent({ university }: Props) {
           ref={inputRef}
           className="chat-input"
           type="text"
-          placeholder={guideState.step === 'chat' ? '想吃点什么？' : '也可以直接输入问 AI...'}
+          placeholder={guideState.step === 'chat' ? '想吃点什么？' : '也可以直接输入问团子...'}
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}

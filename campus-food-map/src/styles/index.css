@@ -1735,17 +1735,15 @@ ul, ol {
 }
 
 .ai-search-card-icon {
-  width: 40px;
-  height: 40px;
-  background: linear-gradient(135deg, #FF6B35, #FF8F5E);
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #FFF3D0, #FFE8A0);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-weight: 800;
-  font-size: 0.85rem;
-  color: white;
   flex-shrink: 0;
+  overflow: hidden;
 }
 
 .ai-search-card-title {
@@ -3720,6 +3718,108 @@ ul, ol {
   color: var(--gray-900);
 }
 
+/* 校园认证标识 */
+.profile-campus-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px 10px;
+  background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #2E7D32;
+  width: fit-content;
+}
+
+.profile-campus-badge-icon {
+  font-size: 0.75rem;
+}
+
+/* 干饭语录卡 */
+.profile-bio-card {
+  margin-top: 12px;
+  padding: 14px 18px;
+  background: linear-gradient(135deg, #FFF8E1 0%, #FFF3E0 100%);
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.profile-bio-quote {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: var(--meituan-yellow-dark);
+  line-height: 1;
+}
+
+.profile-bio-text {
+  font-size: 0.85rem;
+  color: var(--gray-800);
+  font-style: italic;
+}
+
+/* 干饭人设标签展示 */
+.profile-persona-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.profile-persona-tag {
+  padding: 5px 14px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--meituan-yellow-light), #FFF8DC);
+  border: 1px solid rgba(255, 209, 0, 0.3);
+  font-size: 0.8rem;
+  color: var(--gray-800);
+  font-weight: 500;
+}
+
+/* 设置页-干饭人设标签选择 */
+.profile-dining-group {
+  margin-bottom: 12px;
+}
+
+.profile-dining-group:last-child {
+  margin-bottom: 0;
+}
+
+.profile-dining-group-label {
+  display: block;
+  font-size: 0.75rem;
+  color: var(--gray-500);
+  margin-bottom: 6px;
+}
+
+.profile-dining-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.profile-dining-tag {
+  padding: 5px 12px;
+  border-radius: var(--radius-full);
+  border: 1.5px solid var(--gray-200);
+  font-size: 0.8rem;
+  color: var(--gray-600);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.profile-dining-tag:hover {
+  border-color: var(--gray-400);
+}
+
+.profile-dining-tag.selected {
+  border-color: var(--meituan-yellow);
+  background: var(--meituan-yellow-light);
+  color: var(--gray-900);
+  font-weight: 600;
+}
+
 /* 个人主页分区 */
 .profile-section {
   margin-top: 20px;
@@ -3845,42 +3945,202 @@ ul, ol {
   font-family: var(--font-sans);
 }
 
-/* 快捷入口 */
-.profile-shortcuts {
+/* 干饭工具箱 */
+.profile-toolbox {
   display: flex;
   flex-direction: column;
-  gap: 1px;
   margin-top: 10px;
 }
 
-.profile-shortcut-item {
+.profile-tool-item {
+  border-bottom: 1px solid var(--gray-100);
+}
+
+.profile-tool-item:last-child {
+  border-bottom: none;
+}
+
+.profile-tool-header {
   display: flex;
   align-items: center;
   gap: 12px;
   padding: 14px 4px;
-  border-bottom: 1px solid var(--gray-100);
+  cursor: pointer;
+  transition: background 0.15s;
 }
 
-.profile-shortcut-item:last-child {
-  border-bottom: none;
+.profile-tool-header:hover {
+  background: var(--gray-50);
 }
 
-.profile-shortcut-icon {
+.profile-tool-icon {
   font-size: 1.2rem;
 }
 
-.profile-shortcut-label {
+.profile-tool-label {
   flex: 1;
   font-size: 0.9rem;
+  font-weight: 500;
   color: var(--gray-800);
 }
 
-.profile-shortcut-badge {
-  font-size: 0.7rem;
-  color: var(--gray-400);
-  background: var(--gray-100);
+.profile-tool-count {
+  font-size: 0.75rem;
+  color: var(--accent);
+  background: #FFF5E6;
   padding: 2px 8px;
   border-radius: var(--radius-full);
+  font-weight: 500;
+}
+
+.profile-tool-arrow {
+  font-size: 1.1rem;
+  color: var(--gray-400);
+  transition: transform 0.2s;
+  font-weight: bold;
+}
+
+.profile-tool-arrow.expanded {
+  transform: rotate(90deg);
+}
+
+.profile-tool-content {
+  padding: 0 4px 12px;
+  animation: toolSlideDown 0.2s ease-out;
+}
+
+@keyframes toolSlideDown {
+  from { opacity: 0; max-height: 0; }
+  to { opacity: 1; max-height: 600px; }
+}
+
+.profile-tool-empty {
+  text-align: center;
+  padding: 20px 0;
+  color: var(--gray-400);
+  font-size: 0.85rem;
+}
+
+.profile-tool-empty p {
+  margin-bottom: 10px;
+}
+
+.profile-tool-go {
+  padding: 6px 16px;
+  background: var(--brand);
+  color: var(--gray-900);
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.profile-tool-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.profile-tool-record {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 6px;
+  border-radius: var(--radius-lg);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.profile-tool-record:hover {
+  background: var(--gray-50);
+}
+
+.profile-tool-record-img {
+  width: 40px;
+  height: 40px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  flex-shrink: 0;
+}
+
+.profile-tool-record-mode {
+  font-size: 0.65rem;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.profile-tool-record-mode.offline {
+  background: #FFF0EB;
+  color: #FF6B35;
+}
+
+.profile-tool-record-mode.online {
+  background: #E8F8EF;
+  color: var(--green);
+}
+
+.profile-tool-record-action {
+  font-size: 0.65rem;
+  padding: 3px 8px;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  flex-shrink: 0;
+}
+
+.profile-tool-record-action.join {
+  background: #FFF5E6;
+  color: #E6A000;
+}
+
+.profile-tool-record-action.vote {
+  background: #EBF0FF;
+  color: #4A6CF7;
+}
+
+.profile-tool-record-action.nominate {
+  background: #FCE8F3;
+  color: #D946A8;
+}
+
+.profile-tool-record-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.profile-tool-record-name {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--gray-800);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-tool-record-meta {
+  font-size: 0.72rem;
+  color: var(--gray-500);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.profile-tool-record-time {
+  font-size: 0.7rem;
+  color: var(--gray-400);
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+.profile-tool-more {
+  text-align: center;
+  padding: 8px 0;
+  font-size: 0.75rem;
+  color: var(--gray-400);
 }
 
 /* ==================== 拼单页好友功能 ==================== */

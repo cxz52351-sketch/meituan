@@ -81,6 +81,8 @@ export interface UserProfile {
   major: string;
   year: string;            // '大一' ~ '研三'
   gender: 'male' | 'female';
+  diningTags: string[];    // 干饭人设标签
+  bio: string;             // 干饭语录
 }
 
 // 好友

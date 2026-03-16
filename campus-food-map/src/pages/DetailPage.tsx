@@ -1,8 +1,9 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { restaurants } from '../data/restaurants'
 import { getReviewsByRestaurant, formatTimeAgo } from '../data/reviews'
 import { getSavingsPlan, getMaxSavings } from '../data/deals'
+import { addVisitHistory } from '../services/history'
 
 export default function DetailPage() {
   const { id } = useParams()
@@ -19,6 +20,20 @@ export default function DetailPage() {
   const savingsPlan = useMemo(() => {
     return id ? getSavingsPlan(id) : undefined
   }, [id])
+
+  // 记录浏览足迹
+  useEffect(() => {
+    if (restaurant) {
+      addVisitHistory({
+        restaurantId: restaurant.id,
+        restaurantName: restaurant.name,
+        category: restaurant.category,
+        avgPrice: restaurant.avgPrice,
+        image: restaurant.images[0],
+        timestamp: Date.now(),
+      })
+    }
+  }, [restaurant])
 
   if (!restaurant) {
     return (

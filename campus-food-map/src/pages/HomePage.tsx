@@ -6,6 +6,7 @@ import { getLatestReviews, formatTimeAgo } from '../data/reviews'
 import { getTodayFlip, getTomorrowCandidates } from '../data/deals'
 import { getMealPeriod } from '../services/ai'
 import RestaurantCard from '../components/RestaurantCard'
+import { addFlipHistory } from '../services/history'
 
 interface Props {
   university: University | 'all'
@@ -195,6 +196,13 @@ export default function HomePage({ university }: Props) {
                 if (!hasJoined) {
                   setHasJoined(true)
                   setFlipParticipants(p => p + 1)
+                  addFlipHistory({
+                    action: 'join',
+                    restaurantId: todayFlip.restaurantId,
+                    restaurantName: todayFlip.restaurantName,
+                    detail: `参与了「${todayFlip.dealDish}」翻牌特价 ¥${todayFlip.flipPrice}`,
+                    timestamp: Date.now(),
+                  })
                 }
               }}
             >
@@ -228,7 +236,18 @@ export default function HomePage({ university }: Props) {
             <div
               key={c.restaurantId}
               className={`flip-vote-item ${votedId === c.restaurantId ? 'voted' : ''}`}
-              onClick={() => setVotedId(c.restaurantId)}
+              onClick={() => {
+                if (votedId !== c.restaurantId) {
+                  setVotedId(c.restaurantId)
+                  addFlipHistory({
+                    action: 'vote',
+                    restaurantId: c.restaurantId,
+                    restaurantName: c.restaurantName,
+                    detail: `投票给「${c.restaurantName}」· ${c.dealDish} ¥${c.flipPrice}`,
+                    timestamp: Date.now(),
+                  })
+                }
+              }}
             >
               <span className="flip-vote-name">{c.restaurantName}</span>
               <span className="flip-vote-dish">{c.dealDish} ¥{c.flipPrice}</span>
@@ -296,6 +315,13 @@ export default function HomePage({ university }: Props) {
                   votes: 1
                 }])
                 setVotedId(r.id)
+                addFlipHistory({
+                  action: 'nominate',
+                  restaurantId: r.id,
+                  restaurantName: r.name,
+                  detail: `提名「${r.name}」· ${nominateDish} ¥${nominatePrice}`,
+                  timestamp: Date.now(),
+                })
                 setShowNominate(false)
                 setNominateId('')
                 setNominateDish('')
@@ -311,9 +337,43 @@ export default function HomePage({ university }: Props) {
       {/* AI 搜索入口 */}
       <div className="ai-search-card" onClick={() => navigate('/ai')}>
         <div className="ai-search-card-left">
-          <div className="ai-search-card-icon">AI</div>
+          <div className="ai-search-card-icon">
+            <svg viewBox="0 0 100 100" width="32" height="32">
+              {/* 美团黄帽子 */}
+              <ellipse cx="50" cy="22" rx="28" ry="12" fill="#FFD100"/>
+              <rect x="22" y="18" width="56" height="10" rx="2" fill="#FFD100"/>
+              <rect x="30" y="14" width="40" height="6" rx="3" fill="#FFB800"/>
+              {/* 圆耳朵 */}
+              <circle cx="24" cy="38" r="12" fill="#2D2D2D"/>
+              <circle cx="24" cy="38" r="7" fill="#4A4A4A"/>
+              <circle cx="76" cy="38" r="12" fill="#2D2D2D"/>
+              <circle cx="76" cy="38" r="7" fill="#4A4A4A"/>
+              {/* 白色大脸 */}
+              <ellipse cx="50" cy="58" rx="32" ry="30" fill="white"/>
+              <ellipse cx="50" cy="58" rx="32" ry="30" fill="none" stroke="#E0E0E0" strokeWidth="1"/>
+              {/* 黑色眼眶 */}
+              <ellipse cx="37" cy="52" rx="10" ry="11" fill="#2D2D2D"/>
+              <ellipse cx="63" cy="52" rx="10" ry="11" fill="#2D2D2D"/>
+              {/* 白色眼珠 */}
+              <circle cx="39" cy="50" r="4.5" fill="white"/>
+              <circle cx="65" cy="50" r="4.5" fill="white"/>
+              {/* 黑色瞳孔 */}
+              <circle cx="40" cy="49.5" r="2.5" fill="#111"/>
+              <circle cx="66" cy="49.5" r="2.5" fill="#111"/>
+              {/* 高光 */}
+              <circle cx="41.5" cy="48" r="1.2" fill="white"/>
+              <circle cx="67.5" cy="48" r="1.2" fill="white"/>
+              {/* 鼻子 */}
+              <ellipse cx="50" cy="62" rx="4" ry="3" fill="#2D2D2D"/>
+              {/* 嘴巴 - 微笑 */}
+              <path d="M44 66 Q50 72 56 66" fill="none" stroke="#2D2D2D" strokeWidth="1.8" strokeLinecap="round"/>
+              {/* 腮红 */}
+              <ellipse cx="28" cy="63" rx="6" ry="4" fill="#FFB3B3" opacity="0.6"/>
+              <ellipse cx="72" cy="63" rx="6" ry="4" fill="#FFB3B3" opacity="0.6"/>
+            </svg>
+          </div>
           <div className="ai-search-card-content">
-            <div className="ai-search-card-title">不知道吃什么？问 AI</div>
+            <div className="ai-search-card-title">不知道吃什么？问团子</div>
             <div className="ai-search-card-desc">告诉我你的口味，帮你秒选</div>
           </div>
         </div>

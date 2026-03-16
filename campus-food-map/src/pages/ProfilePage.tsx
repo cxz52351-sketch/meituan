@@ -3,6 +3,12 @@ import { useNavigate } from 'react-router-dom'
 import { University, UserProfile } from '../types'
 import { getProfile, saveProfile, getFriends, removeFriend } from '../services/profile'
 import { universities } from '../data/restaurants'
+import {
+  getRandomHistory, RandomHistoryItem,
+  getGroupOrderHistory, GroupOrderHistoryItem,
+  getFlipHistory, FlipHistoryItem,
+  getVisitHistory, VisitHistoryItem,
+} from '../services/history'
 
 interface Props {
   university: University | 'all'
@@ -12,12 +18,34 @@ const avatarOptions = ['😎', '😊', '🤓', '😋', '🥳', '🤗', '😺', '
 
 const yearOptions = ['大一', '大二', '大三', '大四', '研一', '研二', '研三']
 
+// 干饭人设标签
+const diningTagOptions = [
+  { group: '辣度', tags: ['不吃辣星人', '微辣选手', '无辣不欢', '变态辣挑战者'] },
+  { group: '预算', tags: ['穷鬼套餐专业户', '性价比之王', '偶尔奢侈', '顿顿不亏嘴'] },
+  { group: '风格', tags: ['一人食达人', '社交型干饭', '外卖依赖症', '食堂钉子户', '奶茶续命', '深夜放毒'] },
+  { group: '偏好', tags: ['中餐永远的神', '日料寿司控', '火锅一周三次', '甜品不能停', '减脂餐选手', '来者不拒'] },
+]
+
+const bioPlaceholders = [
+  '没有什么事是一顿火锅解决不了的',
+  '今天的快乐是奶茶给的',
+  '学废了就去干饭，干完饭继续学废',
+  '人生苦短，先吃为敬',
+]
+
 export default function ProfilePage({ university }: Props) {
   const navigate = useNavigate()
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [isSetup, setIsSetup] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [friends, setFriends] = useState(getFriends())
+
+  // 工具箱历史数据
+  const [randomHistory, setRandomHistory] = useState<RandomHistoryItem[]>([])
+  const [groupHistory, setGroupHistory] = useState<GroupOrderHistoryItem[]>([])
+  const [flipHistory, setFlipHistory] = useState<FlipHistoryItem[]>([])
+  const [visitHistory, setVisitHistory] = useState<VisitHistoryItem[]>([])
+  const [expandedTool, setExpandedTool] = useState<string | null>(null)
 
   // 表单状态
   const [nickname, setNickname] = useState('')
@@ -26,18 +54,21 @@ export default function ProfilePage({ university }: Props) {
   const [year, setYear] = useState('大三')
   const [gender, setGender] = useState<'male' | 'female'>('male')
   const [selectedUni, setSelectedUni] = useState<University>(university === 'all' ? '北京大学' : university)
+  const [diningTags, setDiningTags] = useState<Set<string>>(new Set())
+  const [bio, setBio] = useState('')
 
   useEffect(() => {
     const saved = getProfile()
     if (saved) {
       setProfile(saved)
-      // 预填编辑表单
       setNickname(saved.nickname)
       setAvatar(saved.avatar)
       setMajor(saved.major)
       setYear(saved.year)
       setGender(saved.gender)
       setSelectedUni(saved.university)
+      setDiningTags(new Set(saved.diningTags || []))
+      setBio(saved.bio || '')
     } else {
       setIsSetup(true)
     }
@@ -46,6 +77,26 @@ export default function ProfilePage({ university }: Props) {
   useEffect(() => {
     setFriends(getFriends())
   }, [])
+
+  // 加载工具箱历史数据
+  useEffect(() => {
+    setRandomHistory(getRandomHistory())
+    setGroupHistory(getGroupOrderHistory())
+    setFlipHistory(getFlipHistory())
+    setVisitHistory(getVisitHistory())
+  }, [])
+
+  const handleDiningTagToggle = (tag: string) => {
+    setDiningTags(prev => {
+      const next = new Set(prev)
+      if (next.has(tag)) {
+        next.delete(tag)
+      } else {
+        next.add(tag)
+      }
+      return next
+    })
+  }
 
   const handleSave = () => {
     if (!nickname.trim()) return
@@ -57,8 +108,9 @@ export default function ProfilePage({ university }: Props) {
       major: major.trim() || '未填写',
       year,
       gender,
+      diningTags: Array.from(diningTags),
+      bio: bio.trim(),
     }
-    // 编辑时保留原 id
     if (profile) p.id = profile.id
     saveProfile(p)
     setProfile(p)
@@ -79,8 +131,31 @@ export default function ProfilePage({ university }: Props) {
       setYear(profile.year)
       setGender(profile.gender)
       setSelectedUni(profile.university)
+      setDiningTags(new Set(profile.diningTags || []))
+      setBio(profile.bio || '')
     }
     setIsEditing(true)
+  }
+
+  const getYearLabel = (y: string) => {
+    if (y.startsWith('研')) return '研究生'
+    return '本科生'
+  }
+
+  const formatTimeAgo = (ts: number) => {
+    const diff = Date.now() - ts
+    const min = Math.floor(diff / 60000)
+    if (min < 1) return '刚刚'
+    if (min < 60) return `${min}分钟前`
+    const hour = Math.floor(min / 60)
+    if (hour < 24) return `${hour}小时前`
+    const day = Math.floor(hour / 24)
+    if (day < 7) return `${day}天前`
+    return new Date(ts).toLocaleDateString('zh-CN', { month: 'short', day: 'numeric' })
+  }
+
+  const toggleTool = (key: string) => {
+    setExpandedTool(prev => prev === key ? null : key)
   }
 
   // 设置/编辑卡片
@@ -88,12 +163,12 @@ export default function ProfilePage({ university }: Props) {
     return (
       <div className="page profile-page">
         <div className="profile-setup-card">
-          <h2 className="profile-setup-title">{isEditing ? '编辑资料' : '设置个人信息'}</h2>
-          <p className="profile-setup-subtitle">{isEditing ? '修改你的个人信息' : '让同学们认识你，拼单更方便'}</p>
+          <h2 className="profile-setup-title">{isEditing ? '编辑干饭档案' : '建立你的干饭档案'}</h2>
+          <p className="profile-setup-subtitle">{isEditing ? '更新一下你的干饭人设' : '填完就能愉快地找饭搭子啦'}</p>
 
           {/* 头像选择 */}
           <div className="profile-field">
-            <label className="profile-label">选择头像</label>
+            <label className="profile-label">你的专属表情</label>
             <div className="profile-avatar-grid">
               {avatarOptions.map(e => (
                 <span
@@ -109,11 +184,11 @@ export default function ProfilePage({ university }: Props) {
 
           {/* 昵称 */}
           <div className="profile-field">
-            <label className="profile-label">昵称</label>
+            <label className="profile-label">江湖称号</label>
             <input
               type="text"
               className="profile-input"
-              placeholder="给自己起个名字吧"
+              placeholder="如：干饭王小李、奶茶续命人"
               value={nickname}
               onChange={e => setNickname(e.target.value)}
               maxLength={12}
@@ -122,7 +197,7 @@ export default function ProfilePage({ university }: Props) {
 
           {/* 学校 */}
           <div className="profile-field">
-            <label className="profile-label">学校</label>
+            <label className="profile-label">所在学校</label>
             <select
               className="profile-select"
               value={selectedUni}
@@ -140,7 +215,7 @@ export default function ProfilePage({ university }: Props) {
             <input
               type="text"
               className="profile-input"
-              placeholder="如：计算机科学"
+              placeholder="如：计算机科学与技术"
               value={major}
               onChange={e => setMajor(e.target.value)}
               maxLength={20}
@@ -182,16 +257,50 @@ export default function ProfilePage({ university }: Props) {
             </div>
           </div>
 
+          {/* 干饭人设标签 */}
+          <div className="profile-field">
+            <label className="profile-label">干饭人设（选出你的标签）</label>
+            {diningTagOptions.map(group => (
+              <div key={group.group} className="profile-dining-group">
+                <span className="profile-dining-group-label">{group.group}</span>
+                <div className="profile-dining-tags">
+                  {group.tags.map(tag => (
+                    <span
+                      key={tag}
+                      className={`profile-dining-tag ${diningTags.has(tag) ? 'selected' : ''}`}
+                      onClick={() => handleDiningTagToggle(tag)}
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* 干饭语录 */}
+          <div className="profile-field">
+            <label className="profile-label">干饭语录（你的美食座右铭）</label>
+            <input
+              type="text"
+              className="profile-input"
+              placeholder={bioPlaceholders[Math.floor(Math.random() * bioPlaceholders.length)]}
+              value={bio}
+              onChange={e => setBio(e.target.value)}
+              maxLength={30}
+            />
+          </div>
+
           <div className="profile-setup-actions">
             {isEditing && (
-              <button className="profile-cancel-btn" onClick={() => setIsEditing(false)}>取消</button>
+              <button className="profile-cancel-btn" onClick={() => setIsEditing(false)}>算了</button>
             )}
             <button
               className={`profile-save-btn ${!nickname.trim() ? 'disabled' : ''}`}
               onClick={handleSave}
               disabled={!nickname.trim()}
             >
-              {isEditing ? '保存修改' : '完成设置'}
+              {isEditing ? '更新人设' : '开始干饭之旅'}
             </button>
           </div>
         </div>
@@ -202,15 +311,19 @@ export default function ProfilePage({ university }: Props) {
   // 个人主页展示
   return (
     <div className="page profile-page">
-      {/* 用户信息卡 */}
+      {/* 用户信息卡 + 校园认证 */}
       {profile && (
         <div className="profile-info-card">
           <div className="profile-info-main">
             <span className="profile-info-avatar">{profile.avatar}</span>
             <div className="profile-info-text">
               <span className="profile-info-name">{profile.nickname}</span>
+              <span className="profile-campus-badge">
+                <span className="profile-campus-badge-icon">🎓</span>
+                已认证 {profile.university} {getYearLabel(profile.year)}
+              </span>
               <span className="profile-info-detail">
-                {profile.university} · {profile.major} · {profile.year}
+                {profile.major} · {profile.year}
               </span>
             </div>
           </div>
@@ -223,17 +336,40 @@ export default function ProfilePage({ university }: Props) {
         </div>
       )}
 
-      {/* 好友列表 */}
+      {/* 干饭语录 */}
+      {profile?.bio && (
+        <div className="profile-bio-card">
+          <span className="profile-bio-quote">"</span>
+          <span className="profile-bio-text">{profile.bio}</span>
+          <span className="profile-bio-quote">"</span>
+        </div>
+      )}
+
+      {/* 干饭人设 */}
+      {profile && (profile.diningTags?.length ?? 0) > 0 && (
+        <div className="profile-section">
+          <div className="profile-section-header">
+            <h3 className="profile-section-title">干饭人设</h3>
+          </div>
+          <div className="profile-persona-tags">
+            {profile.diningTags.map(tag => (
+              <span key={tag} className="profile-persona-tag">{tag}</span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 饭搭子列表 */}
       <div className="profile-section">
         <div className="profile-section-header">
-          <h3 className="profile-section-title">我的好友</h3>
+          <h3 className="profile-section-title">我的饭搭子</h3>
           <span className="profile-section-count">{friends.length}人</span>
         </div>
         {friends.length === 0 ? (
           <div className="profile-empty">
-            <span className="profile-empty-icon">🤝</span>
-            <p>还没有好友</p>
-            <p className="profile-empty-hint">去拼单广场认识新朋友吧</p>
+            <span className="profile-empty-icon">🍜</span>
+            <p>还没有饭搭子</p>
+            <p className="profile-empty-hint">去拼单广场勾搭一下同学吧</p>
             <button className="profile-go-btn" onClick={() => navigate('/group')}>去拼单广场</button>
           </div>
         ) : (
@@ -247,27 +383,160 @@ export default function ProfilePage({ university }: Props) {
                     {f.university.replace('北京', '').replace('大学', '')} · {f.major} · {f.year}
                   </span>
                 </div>
-                <button className="profile-friend-remove" onClick={() => handleRemoveFriend(f.id)}>移除</button>
+                <button className="profile-friend-remove" onClick={() => handleRemoveFriend(f.id)}>不搭了</button>
               </div>
             ))}
           </div>
         )}
       </div>
 
-      {/* 快捷入口 */}
+      {/* 干饭工具箱 */}
       <div className="profile-section">
-        <h3 className="profile-section-title">更多功能</h3>
-        <div className="profile-shortcuts">
-          <div className="profile-shortcut-item">
-            <span className="profile-shortcut-icon">⭐</span>
-            <span className="profile-shortcut-label">收藏的店</span>
-            <span className="profile-shortcut-badge">敬请期待</span>
+        <h3 className="profile-section-title">干饭工具箱</h3>
+        <div className="profile-toolbox">
+
+          {/* 今天吃什么 — 随机吃历史 */}
+          <div className="profile-tool-item">
+            <div className="profile-tool-header" onClick={() => toggleTool('random')}>
+              <span className="profile-tool-icon">🎲</span>
+              <span className="profile-tool-label">今天吃什么</span>
+              <span className="profile-tool-count">{randomHistory.length}次</span>
+              <span className={`profile-tool-arrow ${expandedTool === 'random' ? 'expanded' : ''}`}>›</span>
+            </div>
+            {expandedTool === 'random' && (
+              <div className="profile-tool-content">
+                {randomHistory.length === 0 ? (
+                  <div className="profile-tool-empty">
+                    <p>还没转过命运转盘</p>
+                    <button className="profile-tool-go" onClick={() => navigate('/random')}>去试试手气</button>
+                  </div>
+                ) : (
+                  <div className="profile-tool-list">
+                    {randomHistory.slice(0, 10).map((item, i) => (
+                      <div key={i} className="profile-tool-record" onClick={() => navigate(`/restaurant/${item.restaurantId}`)}>
+                        <img className="profile-tool-record-img" src={item.image} alt={item.restaurantName} />
+                        <div className="profile-tool-record-info">
+                          <span className="profile-tool-record-name">{item.restaurantName}</span>
+                          <span className="profile-tool-record-meta">{item.category} · ¥{item.avgPrice}/人 · {item.rating}分</span>
+                        </div>
+                        <span className="profile-tool-record-time">{formatTimeAgo(item.timestamp)}</span>
+                      </div>
+                    ))}
+                    {randomHistory.length > 10 && (
+                      <div className="profile-tool-more">还有 {randomHistory.length - 10} 条记录</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
-          <div className="profile-shortcut-item">
-            <span className="profile-shortcut-icon">💬</span>
-            <span className="profile-shortcut-label">我的评论</span>
-            <span className="profile-shortcut-badge">敬请期待</span>
+
+          {/* 我的拼单 — 拼单历史 */}
+          <div className="profile-tool-item">
+            <div className="profile-tool-header" onClick={() => toggleTool('group')}>
+              <span className="profile-tool-icon">🤝</span>
+              <span className="profile-tool-label">我的拼单</span>
+              <span className="profile-tool-count">{groupHistory.length}次</span>
+              <span className={`profile-tool-arrow ${expandedTool === 'group' ? 'expanded' : ''}`}>›</span>
+            </div>
+            {expandedTool === 'group' && (
+              <div className="profile-tool-content">
+                {groupHistory.length === 0 ? (
+                  <div className="profile-tool-empty">
+                    <p>还没发起过拼单</p>
+                    <button className="profile-tool-go" onClick={() => navigate('/group')}>去拼单广场</button>
+                  </div>
+                ) : (
+                  <div className="profile-tool-list">
+                    {groupHistory.slice(0, 10).map((item, i) => (
+                      <div key={i} className="profile-tool-record" onClick={() => navigate(`/restaurant/${item.restaurantId}`)}>
+                        <span className={`profile-tool-record-mode ${item.mode}`}>
+                          {item.mode === 'offline' ? '线下' : '线上'}
+                        </span>
+                        <div className="profile-tool-record-info">
+                          <span className="profile-tool-record-name">{item.restaurantName}</span>
+                          <span className="profile-tool-record-meta">{item.targetPeople}人拼 · {item.message.slice(0, 20)}{item.message.length > 20 ? '...' : ''}</span>
+                        </div>
+                        <span className="profile-tool-record-time">{formatTimeAgo(item.timestamp)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* 我的翻牌 — 翻牌历史 */}
+          <div className="profile-tool-item">
+            <div className="profile-tool-header" onClick={() => toggleTool('flip')}>
+              <span className="profile-tool-icon">🃏</span>
+              <span className="profile-tool-label">我的翻牌</span>
+              <span className="profile-tool-count">{flipHistory.length}次</span>
+              <span className={`profile-tool-arrow ${expandedTool === 'flip' ? 'expanded' : ''}`}>›</span>
+            </div>
+            {expandedTool === 'flip' && (
+              <div className="profile-tool-content">
+                {flipHistory.length === 0 ? (
+                  <div className="profile-tool-empty">
+                    <p>还没参与过翻牌活动</p>
+                    <button className="profile-tool-go" onClick={() => navigate('/')}>去首页翻牌</button>
+                  </div>
+                ) : (
+                  <div className="profile-tool-list">
+                    {flipHistory.slice(0, 10).map((item, i) => (
+                      <div key={i} className="profile-tool-record" onClick={() => navigate(`/restaurant/${item.restaurantId}`)}>
+                        <span className={`profile-tool-record-action ${item.action}`}>
+                          {item.action === 'join' ? '参与' : item.action === 'vote' ? '投票' : '提名'}
+                        </span>
+                        <div className="profile-tool-record-info">
+                          <span className="profile-tool-record-name">{item.restaurantName}</span>
+                          <span className="profile-tool-record-meta">{item.detail}</span>
+                        </div>
+                        <span className="profile-tool-record-time">{formatTimeAgo(item.timestamp)}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* 我逛过的店 — 浏览足迹 */}
+          <div className="profile-tool-item">
+            <div className="profile-tool-header" onClick={() => toggleTool('visit')}>
+              <span className="profile-tool-icon">👣</span>
+              <span className="profile-tool-label">我逛过的店</span>
+              <span className="profile-tool-count">{visitHistory.length}家</span>
+              <span className={`profile-tool-arrow ${expandedTool === 'visit' ? 'expanded' : ''}`}>›</span>
+            </div>
+            {expandedTool === 'visit' && (
+              <div className="profile-tool-content">
+                {visitHistory.length === 0 ? (
+                  <div className="profile-tool-empty">
+                    <p>还没逛过任何店铺</p>
+                    <button className="profile-tool-go" onClick={() => navigate('/list')}>去发现好店</button>
+                  </div>
+                ) : (
+                  <div className="profile-tool-list">
+                    {visitHistory.slice(0, 10).map((item, i) => (
+                      <div key={i} className="profile-tool-record" onClick={() => navigate(`/restaurant/${item.restaurantId}`)}>
+                        <img className="profile-tool-record-img" src={item.image} alt={item.restaurantName} />
+                        <div className="profile-tool-record-info">
+                          <span className="profile-tool-record-name">{item.restaurantName}</span>
+                          <span className="profile-tool-record-meta">{item.category} · ¥{item.avgPrice}/人</span>
+                        </div>
+                        <span className="profile-tool-record-time">{formatTimeAgo(item.timestamp)}</span>
+                      </div>
+                    ))}
+                    {visitHistory.length > 10 && (
+                      <div className="profile-tool-more">还有 {visitHistory.length - 10} 家店</div>
+                    )}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
         </div>
       </div>
     </div>

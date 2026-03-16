@@ -4,6 +4,7 @@ import { University } from '../types'
 import { restaurants } from '../data/restaurants'
 import { getGroupOrders, GroupOrderPost, GroupOrderMode, GroupOrderUser, onlineTags, offlineTags } from '../data/groupOrders'
 import { getDefaultInitiator, getFriends, addFriend, isFriend } from '../services/profile'
+import { addGroupOrderHistory } from '../services/history'
 
 interface Props {
   university: University | 'all'
@@ -153,6 +154,19 @@ export default function GroupOrderPage({ university }: Props) {
     setActiveTag(null)
     setShowCreate(false)
     resetCreateForm()
+
+    // 保存拼单历史
+    addGroupOrderHistory({
+      id: newPost.id,
+      mode: newPost.mode,
+      restaurantName: newPost.restaurantName,
+      restaurantId: newPost.restaurantId,
+      targetPeople: newPost.targetPeople,
+      message: newPost.message,
+      tags: newPost.tags,
+      timestamp: Date.now(),
+    })
+
     setShowPublishToast(true)
     setTimeout(() => setShowPublishToast(false), 2000)
   }

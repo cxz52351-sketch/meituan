@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { University, Category, PriceRange, Restaurant } from '../types'
 import { restaurants } from '../data/restaurants'
 import { getMealPeriod } from '../services/ai'
+import { addRandomHistory } from '../services/history'
 
 interface Props {
   university: University | 'all'
@@ -126,6 +127,17 @@ export default function RandomPage({ university }: Props) {
       setResult(picked)
       setAiReason(getSmartReason(picked))
       setIsSpinning(false)
+
+      // 保存随机结果到历史
+      addRandomHistory({
+        restaurantId: picked.id,
+        restaurantName: picked.name,
+        category: picked.category,
+        avgPrice: picked.avgPrice,
+        rating: picked.rating,
+        image: picked.images[0],
+        timestamp: Date.now(),
+      })
     }, 2000)
   }
 
@@ -274,7 +286,7 @@ export default function RandomPage({ university }: Props) {
       {/* 底部引导到 AI */}
       <div className="random-ai-hint" onClick={() => navigate('/ai')}>
         <span>🍜</span>
-        <span>有更具体的想法？和 AI 聊聊</span>
+        <span>有更具体的想法？和团子聊聊</span>
         <span>&gt;</span>
       </div>
     </div>
