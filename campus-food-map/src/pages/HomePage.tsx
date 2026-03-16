@@ -208,6 +208,15 @@ export default function HomePage({ university }: Props) {
             >
               {hasJoined ? '已参与 ✓' : '我也去'}
             </button>
+            {hasJoined && (
+              <button
+                className="flip-btn-share"
+                style={{ background: 'var(--meituan-yellow)', color: '#111' }}
+                onClick={() => navigate(`/restaurant/${todayFlip.restaurantId}`)}
+              >
+                去下单 ¥{todayFlip.flipPrice}
+              </button>
+            )}
             <button
               className="flip-btn-share"
               onClick={() => {

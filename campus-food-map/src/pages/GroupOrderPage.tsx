@@ -353,6 +353,14 @@ export default function GroupOrderPage({ university }: Props) {
                 </button>
               )}
             </div>
+            {joinedIds.has(post.id) && (
+              <div
+                className="order-hint"
+                onClick={() => navigate(`/restaurant/${post.restaurantId}`)}
+              >
+                记得去美团下单，别忘了用满减券哦
+              </div>
+            )}
           </div>
         ))}
       </div>

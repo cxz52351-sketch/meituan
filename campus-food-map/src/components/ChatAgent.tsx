@@ -126,6 +126,66 @@ function getBudgetFilter(id: string): PriceRange | PriceRange[] | undefined {
   }
 }
 
+// placeholder 示例查询，轮换展示
+const exampleQueries = [
+  '下课后四个人，想吃辣的，人均50以内',
+  '一个人吃，不想排队，快餐就行',
+  '和女朋友约会，环境好一点的',
+  '宵夜吃什么，最好能外卖',
+  '穷鬼模式，人均20以下有啥好吃的',
+  '室友聚餐，想吃火锅，有包间吗',
+]
+
+// 根据对话上下文生成动态 placeholder（自由聊天模式）
+function getSmartPlaceholder(messages: ChatMessage[]): string {
+  if (messages.length === 0) return '想吃点什么？'
+
+  // 取最近的 assistant 消息
+  const lastAi = [...messages].reverse().find(m => m.role === 'assistant' && m.status === 'done')
+  const lastUser = [...messages].reverse().find(m => m.role === 'user')
+  if (!lastAi) return '想吃点什么？'
+
+  const aiText = lastAi.content.toLowerCase()
+  const hasResults = lastAi.restaurantResults && lastAi.restaurantResults.length > 0
+  const userText = lastUser?.content || ''
+
+  // 推荐了餐厅后 → 引导深入或换方向
+  if (hasResults) {
+    const names = lastAi.restaurantResults!.map(r => r.name)
+    const suggestions = [
+      names[0] ? `${names[0]}排队要多久？` : null,
+      '有没有更便宜的选择？',
+      '换几家看看',
+      names[0] ? `${names[0]}有什么优惠吗？` : null,
+      '哪家最不用排队？',
+      '还有别的推荐吗？',
+    ].filter(Boolean) as string[]
+    return suggestions[Math.floor(Date.now() / 5000) % suggestions.length]
+  }
+
+  // AI 回复中提到了某些话题 → 顺着话题引导
+  if (aiText.includes('辣') || aiText.includes('口味')) return '不要太辣，微辣就行'
+  if (aiText.includes('外卖') || aiText.includes('配送')) return '送到哪个宿舍楼比较快？'
+  if (aiText.includes('优惠') || aiText.includes('省钱') || aiText.includes('满减')) return '还有别的省钱方法吗？'
+  if (aiText.includes('排队') || aiText.includes('等位')) return '有没有不用排队的？'
+  if (aiText.includes('宵夜') || aiText.includes('深夜')) return '现在还有哪家没关门？'
+  if (aiText.includes('约会') || aiText.includes('环境')) return '哪家拍照好看？'
+  if (aiText.includes('聚餐') || aiText.includes('包间')) return '能坐8个人的有吗？'
+
+  // 用户之前提过的关键词 → 换个角度追问
+  if (userText.includes('火锅')) return '有鸳鸯锅的吗？'
+  if (userText.includes('奶茶') || userText.includes('饮品')) return '哪家奶茶性价比最高？'
+  if (userText.includes('一个人')) return '有没有适合一个人的小馆子？'
+
+  // 兜底：根据时段给不同默认语
+  const hour = new Date().getHours()
+  if (hour < 10) return '早上吃点什么好？'
+  if (hour < 14) return '午饭有什么推荐？'
+  if (hour < 17) return '下午茶喝点什么？'
+  if (hour < 21) return '晚饭吃什么好？'
+  return '这么晚了吃点什么宵夜？'
+}
+
 let _msgIdCounter = 0
 function nextMsgId(): string {
   return `guide-${Date.now()}-${_msgIdCounter++}`
@@ -144,6 +204,22 @@ export default function ChatAgent({ university }: Props) {
   const navigate = useNavigate()
 
   const { greeting } = getMealPeriod()
+
+  // placeholder 轮换
+  const [placeholderIdx, setPlaceholderIdx] = useState(
+    () => Math.floor(Math.random() * exampleQueries.length)
+  )
+  useEffect(() => {
+    if (guideState.step === 'chat') return
+    const timer = setInterval(() => {
+      setPlaceholderIdx(prev => (prev + 1) % exampleQueries.length)
+    }, 4000)
+    return () => clearInterval(timer)
+  }, [guideState.step])
+
+  const currentPlaceholder = guideState.step === 'chat'
+    ? getSmartPlaceholder(messages)
+    : `试试输入："${exampleQueries[placeholderIdx]}"   按Tab填充`
 
   // 自动滚动到底部
   useEffect(() => {
@@ -524,6 +600,18 @@ export default function ChatAgent({ university }: Props) {
   }, [input, isLoading, university, guideState.step])
 
   function handleKeyDown(e: React.KeyboardEvent) {
+    if (e.key === 'Tab' && !input.trim()) {
+      e.preventDefault()
+      if (guideState.step === 'chat') {
+        // 聊天模式：填充动态建议
+        setInput(getSmartPlaceholder(messages))
+      } else {
+        // 引导模式：填充示例查询
+        setInput(exampleQueries[placeholderIdx])
+        setPlaceholderIdx(prev => (prev + 1) % exampleQueries.length)
+      }
+      return
+    }
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault()
       handleSend()
@@ -621,7 +709,7 @@ export default function ChatAgent({ university }: Props) {
           ref={inputRef}
           className="chat-input"
           type="text"
-          placeholder={guideState.step === 'chat' ? '想吃点什么？' : '也可以直接输入问团子...'}
+          placeholder={currentPlaceholder}
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={handleKeyDown}

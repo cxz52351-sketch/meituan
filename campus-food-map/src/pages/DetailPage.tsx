@@ -23,6 +23,10 @@ export default function DetailPage() {
     return id ? getSavingsPlan(id) : undefined
   }, [id])
 
+  // 下单弹窗状态
+  const [showOrderSheet, setShowOrderSheet] = useState(false)
+  const [showOrderToast, setShowOrderToast] = useState(false)
+
   // 请Ta吃 状态
   const [showGiftFlow, setShowGiftFlow] = useState(false)
   const [giftStep, setGiftStep] = useState<'dish' | 'friend' | 'success'>('dish')
@@ -450,13 +454,78 @@ export default function DetailPage() {
         </button>
         <button
           className="detail-action-btn primary"
-          onClick={() => {
-            alert(`即将导航至：${restaurant.address}`)
-          }}
+          onClick={() => setShowOrderSheet(true)}
         >
-          导航前往
+          去美团下单
         </button>
       </div>
+
+      {/* 下单弹窗 */}
+      {showOrderSheet && (
+        <div className="order-sheet-overlay" onClick={() => setShowOrderSheet(false)}>
+          <div className="order-sheet" onClick={e => e.stopPropagation()}>
+            <div className="order-sheet-header">
+              <img src={restaurant.images[0]} alt={restaurant.name} />
+              <div className="order-sheet-header-info">
+                <div className="order-sheet-header-name">{restaurant.name}</div>
+                <div className="order-sheet-header-rating">
+                  ★ {restaurant.rating} · {restaurant.category} · ¥{restaurant.avgPrice}/人
+                </div>
+              </div>
+              <span className="order-sheet-close" onClick={() => setShowOrderSheet(false)}>✕</span>
+            </div>
+
+            {savingsPlan && (savingsPlan.coupons.length > 0 || savingsPlan.groupOrder || savingsPlan.selfPickupSave > 0) && (
+              <div className="order-sheet-coupons">
+                <div className="order-sheet-coupons-title">可用优惠</div>
+                {savingsPlan.coupons.map(coupon => (
+                  <div key={coupon.id} className="order-sheet-coupon">
+                    <span className="order-sheet-coupon-text">
+                      {coupon.isNew && '🆕 '}{coupon.title}
+                    </span>
+                    <span className="order-sheet-coupon-value">-¥{coupon.discount}</span>
+                  </div>
+                ))}
+                {savingsPlan.groupOrder && (
+                  <div className="order-sheet-coupon">
+                    <span className="order-sheet-coupon-text">拼单 · {savingsPlan.groupOrder.discountDesc}</span>
+                    <span className="order-sheet-coupon-value">-¥{savingsPlan.groupOrder.savings}</span>
+                  </div>
+                )}
+                {savingsPlan.selfPickupSave > 0 && (
+                  <div className="order-sheet-coupon">
+                    <span className="order-sheet-coupon-text">到店自取免配送费</span>
+                    <span className="order-sheet-coupon-value">-¥{savingsPlan.selfPickupSave}</span>
+                  </div>
+                )}
+              </div>
+            )}
+
+            <div className="order-sheet-price">
+              <span className="order-sheet-price-label">预估实付</span>
+              <span className="order-sheet-price-value">{restaurant.actualPayPrice}</span>
+            </div>
+
+            <button
+              className="order-sheet-btn"
+              onClick={() => {
+                setShowOrderToast(true)
+                setTimeout(() => {
+                  setShowOrderToast(false)
+                  setShowOrderSheet(false)
+                }, 2000)
+              }}
+            >
+              打开美团APP下单
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* 下单跳转toast */}
+      {showOrderToast && (
+        <div className="toast">正在跳转美团APP...</div>
+      )}
     </div>
   )
 }
