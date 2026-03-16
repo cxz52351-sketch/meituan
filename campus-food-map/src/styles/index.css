@@ -1971,13 +1971,10 @@ ul, ol {
 
 .chat-avatar {
   width: 32px;
-  height: 32px;
-  border-radius: var(--radius-full);
-  background: var(--meituan-yellow-light);
+  height: 36px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 1rem;
   flex-shrink: 0;
 }
 
