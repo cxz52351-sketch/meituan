@@ -5,7 +5,7 @@ import { restaurants } from '../data/restaurants'
 import { getGroupOrders, GroupOrderPost, GroupOrderMode, GroupOrderUser, onlineTags, offlineTags } from '../data/groupOrders'
 import { getDefaultInitiator, getFriends, addFriend, isFriend } from '../services/profile'
 import { addGroupOrderHistory } from '../services/history'
-import { getUnifiedFeed, formatFeedTime } from '../data/socialFeed'
+import { getUnifiedFeed, formatFeedTime, type UnifiedFeedItem } from '../data/socialFeed'
 
 interface Props {
   university: University | 'all'
@@ -36,6 +36,7 @@ export default function GroupOrderPage({ university }: Props) {
   const [createLocation, setCreateLocation] = useState('')
   const [createTags, setCreateTags] = useState<Set<string>>(new Set())
   const [showPublishToast, setShowPublishToast] = useState(false)
+  const [activeFeedItem, setActiveFeedItem] = useState<UnifiedFeedItem | null>(null)
 
   const availableRestaurants = useMemo(() => {
     if (university === 'all') return restaurants
@@ -267,7 +268,7 @@ export default function GroupOrderPage({ university }: Props) {
               <div
                 key={item.id}
                 className="group-social-chip"
-                onClick={() => navigate(`/restaurant/${item.restaurantId}`)}
+                onClick={() => setActiveFeedItem(item)}
               >
                 <span className="group-social-chip-avatar">{item.user.avatar}</span>
                 <div className="group-social-chip-content">
@@ -557,6 +558,88 @@ export default function GroupOrderPage({ university }: Props) {
       {/* 发布成功提示 */}
       {showPublishToast && (
         <div className="toast">拼单发布成功！同校同学已收到通知</div>
+      )}
+
+      {/* 动态详情弹窗 */}
+      {activeFeedItem && (
+        <div className="feed-detail-overlay" onClick={() => setActiveFeedItem(null)}>
+          <div className="feed-detail-sheet" onClick={e => e.stopPropagation()}>
+            <div className="feed-detail-handle" />
+
+            {/* 用户信息 */}
+            <div className="feed-detail-user">
+              <span className="feed-detail-avatar">{activeFeedItem.user.avatar}</span>
+              <div className="feed-detail-user-info">
+                <span className="feed-detail-name">{activeFeedItem.user.name}</span>
+                <span className="feed-detail-meta">
+                  {activeFeedItem.user.university} · {activeFeedItem.user.major}
+                </span>
+              </div>
+              <span className="feed-detail-time">{formatFeedTime(activeFeedItem.minutesAgo)}</span>
+            </div>
+
+            {/* 动态内容 */}
+            <div className="feed-detail-body">
+              {activeFeedItem.source === 'social' && activeFeedItem.feedType === 'checkin' && (
+                <>
+                  <div className="feed-detail-action">📍 在 <strong>{activeFeedItem.restaurantName}</strong> 打卡</div>
+                  {activeFeedItem.dish && <div className="feed-detail-dish">🍽️ {activeFeedItem.dish}</div>}
+                  {activeFeedItem.rating && (
+                    <div className="feed-detail-rating">
+                      {'⭐'.repeat(activeFeedItem.rating)}
+                    </div>
+                  )}
+                  {activeFeedItem.comment && <div className="feed-detail-comment">"{activeFeedItem.comment}"</div>}
+                </>
+              )}
+              {activeFeedItem.source === 'social' && activeFeedItem.feedType === 'gift' && (
+                <>
+                  <div className="feed-detail-action">🎁 请 <strong>{activeFeedItem.giftTo}</strong> 吃</div>
+                  {activeFeedItem.giftDish && <div className="feed-detail-dish">🍽️ {activeFeedItem.giftDish}</div>}
+                  <div className="feed-detail-comment">来自 {activeFeedItem.restaurantName}</div>
+                </>
+              )}
+              {activeFeedItem.source === 'social' && activeFeedItem.feedType === 'spin' && (
+                <>
+                  <div className="feed-detail-action">🎰 转盘选中了 <strong>{activeFeedItem.restaurantName}</strong></div>
+                  {activeFeedItem.comment && <div className="feed-detail-comment">"{activeFeedItem.comment}"</div>}
+                </>
+              )}
+              {activeFeedItem.source === 'review' && (
+                <>
+                  <div className="feed-detail-action">✏️ 评价了 <strong>{activeFeedItem.restaurantName}</strong></div>
+                  {activeFeedItem.rating && (
+                    <div className="feed-detail-rating">
+                      {'⭐'.repeat(activeFeedItem.rating)}
+                    </div>
+                  )}
+                  {activeFeedItem.reviewContent && <div className="feed-detail-comment">"{activeFeedItem.reviewContent}"</div>}
+                  {activeFeedItem.reviewTags && activeFeedItem.reviewTags.length > 0 && (
+                    <div className="feed-detail-tags">
+                      {activeFeedItem.reviewTags.map(tag => (
+                        <span key={tag} className="feed-detail-tag">{tag}</span>
+                      ))}
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
+
+            {/* 点赞 */}
+            <div className="feed-detail-likes">❤️ {activeFeedItem.likes} 人觉得有帮助</div>
+
+            {/* 底部操作 */}
+            <button
+              className="feed-detail-goto"
+              onClick={() => {
+                setActiveFeedItem(null)
+                navigate(`/restaurant/${activeFeedItem.restaurantId}`)
+              }}
+            >
+              查看餐厅详情 ›
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )
