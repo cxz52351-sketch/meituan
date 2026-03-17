@@ -3,7 +3,6 @@ import { GroupOrderUser } from '../data/groupOrders'
 
 const PROFILE_KEY = 'campus_food_profile'
 const FRIENDS_KEY = 'campus_food_friends'
-const MEAL_STATUS_KEY = 'campus_food_meal_status'
 
 // ---- 用户资料 ----
 
@@ -96,70 +95,3 @@ export function getDefaultInitiator(university: University | 'all'): GroupOrderU
   }
 }
 
-// ---- 干饭状态（类似微信状态） ----
-
-export interface MealStatus {
-  restaurantId: string
-  restaurantName: string
-  restaurantImage: string
-  text: string             // 用户配的话
-  mood: string             // 心情 emoji
-  timestamp: number
-}
-
-export function getMealStatus(): MealStatus | null {
-  const raw = localStorage.getItem(MEAL_STATUS_KEY)
-  if (!raw) return null
-  try {
-    const status = JSON.parse(raw) as MealStatus
-    // 状态 24 小时过期
-    if (Date.now() - status.timestamp > 24 * 60 * 60 * 1000) {
-      localStorage.removeItem(MEAL_STATUS_KEY)
-      return null
-    }
-    return status
-  } catch {
-    return null
-  }
-}
-
-export function setMealStatus(status: MealStatus): void {
-  localStorage.setItem(MEAL_STATUS_KEY, JSON.stringify(status))
-}
-
-export function clearMealStatus(): void {
-  localStorage.removeItem(MEAL_STATUS_KEY)
-}
-
-// 模拟好友的干饭状态
-export function getMockFriendStatuses(): Array<{ friendId: string; status: MealStatus }> {
-  const friends = getFriends()
-  if (friends.length === 0) return []
-
-  const mockStatuses: Array<{ text: string; mood: string; restaurantName: string; restaurantId: string }> = [
-    { text: '今天的拉面绝了', mood: '😋', restaurantName: '一兰拉面·学府店', restaurantId: '3' },
-    { text: '和闺蜜下午茶', mood: '☕', restaurantName: '喜茶·五道口店', restaurantId: '5' },
-    { text: '食堂yyds', mood: '👍', restaurantName: '人大食堂风味馆', restaurantId: '6' },
-    { text: '深夜放毒', mood: '🌙', restaurantName: '深夜食堂·居酒屋', restaurantId: '8' },
-    { text: '减肥从明天开始', mood: '😭', restaurantName: '老王麻辣烫', restaurantId: '1' },
-  ]
-
-  // 随机给部分好友分配状态（约一半）
-  return friends
-    .filter((_, i) => i % 2 === 0)
-    .slice(0, 3)
-    .map((f, i) => {
-      const mock = mockStatuses[i % mockStatuses.length]
-      return {
-        friendId: f.id,
-        status: {
-          restaurantId: mock.restaurantId,
-          restaurantName: mock.restaurantName,
-          restaurantImage: '',
-          text: mock.text,
-          mood: mock.mood,
-          timestamp: Date.now() - (i + 1) * 3600000 * (1 + Math.random() * 3),
-        }
-      }
-    })
-}

@@ -1,5 +1,7 @@
-import { useMemo } from 'react'
+import { useMemo, useEffect, useRef } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import L from 'leaflet'
+import 'leaflet/dist/leaflet.css'
 import { University, Restaurant } from '../types'
 import { restaurants, rankLists } from '../data/restaurants'
 import { getMealPeriod } from '../services/ai'
@@ -91,6 +93,8 @@ export default function RankPage({ university }: Props) {
 
   const currentRankId = rankId || 'rating'
   const currentRank = rankLists.find((r) => r.id === currentRankId) || rankLists[6]
+  const mapRef = useRef<HTMLDivElement>(null)
+  const mapInstanceRef = useRef<L.Map | null>(null)
 
   const filteredRestaurants = useMemo(() => {
     const baseList = university === 'all'
@@ -99,6 +103,60 @@ export default function RankPage({ university }: Props) {
 
     return getRankRestaurants(currentRankId, baseList).slice(0, 10)
   }, [university, currentRankId])
+
+  useEffect(() => {
+    if (!mapRef.current || filteredRestaurants.length === 0) return
+
+    // 如果地图已存在，先销毁
+    if (mapInstanceRef.current) {
+      mapInstanceRef.current.remove()
+      mapInstanceRef.current = null
+    }
+
+    const map = L.map(mapRef.current, {
+      zoomControl: true,
+      attributionControl: false,
+      dragging: true,
+      scrollWheelZoom: true,
+      pinchZoom: true,
+      touchZoom: true,
+      doubleClickZoom: true,
+    })
+    mapInstanceRef.current = map
+
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
+
+    const bounds = L.latLngBounds([])
+
+    filteredRestaurants.forEach((r, index) => {
+      const latlng = L.latLng(r.coordinates.lat, r.coordinates.lng)
+      bounds.extend(latlng)
+
+      const marker = L.marker(latlng, {
+        icon: L.divIcon({
+          className: 'rank-map-marker',
+          html: `<div class="rank-map-marker-inner" style="background:${index < 3 ? '#FFD100' : '#FF6B35'}">${index + 1}</div>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14],
+        }),
+      }).addTo(map)
+
+      marker.bindPopup(`<b>${r.name}</b><br/>${r.rating}分 · ¥${r.avgPrice}/人`, {
+        closeButton: false,
+        className: 'rank-map-popup',
+      })
+      marker.on('click', () => navigate(`/restaurant/${r.id}`))
+    })
+
+    map.fitBounds(bounds, { padding: [30, 30], maxZoom: 15 })
+
+    return () => {
+      if (mapInstanceRef.current) {
+        mapInstanceRef.current.remove()
+        mapInstanceRef.current = null
+      }
+    }
+  }, [filteredRestaurants, navigate])
 
   return (
     <div className="page">
@@ -115,11 +173,13 @@ export default function RankPage({ university }: Props) {
         ))}
       </div>
 
-      {/* 榜单头部 */}
-      <div className="rank-header" style={{ background: `${currentRank.color}10` }}>
-        <div className="icon">{currentRank.icon}</div>
-        <div className="title">{currentRank.title}</div>
-        <div className="desc">{currentRank.description}</div>
+      {/* 榜单地图 */}
+      <div className="rank-map-container">
+        <div ref={mapRef} className="rank-map" />
+        <div className="rank-map-title">
+          <span className="rank-map-icon">{currentRank.icon}</span>
+          {currentRank.title} · {filteredRestaurants.length}家上榜
+        </div>
       </div>
 
       {/* AI 榜单洞察 */}
