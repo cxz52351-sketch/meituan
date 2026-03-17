@@ -1,27 +1,27 @@
 /* CSS Variables - 美团风格 */
 :root {
   /* 美团主色调 */
-  --meituan-yellow: #FFD100;
-  --meituan-yellow-dark: #F5C400;
-  --meituan-yellow-light: #FFF8DC;
+  --meituan-yellow: #ffd100;
+  --meituan-yellow-dark: #f5c400;
+  --meituan-yellow-light: #fff8dc;
   --meituan-black: #111111;
-  --meituan-green: #06C167;
+  --meituan-green: #06c167;
 
-  --primary: #FFD100;
-  --primary-dark: #F5C400;
-  --primary-light: #FFF8DC;
+  --primary: #ffd100;
+  --primary-dark: #f5c400;
+  --primary-light: #fff8dc;
   --secondary: #111111;
-  --accent: #06C167;
-  --warning: #FF6633;
-  --danger: #FF4D4F;
-  --star-color: #FF6633;
+  --accent: #06c167;
+  --warning: #ff6633;
+  --danger: #ff4d4f;
+  --star-color: #ff6633;
 
-  --gray-50: #FAFAFA;
-  --gray-100: #F5F5F5;
-  --gray-200: #EEEEEE;
-  --gray-300: #E0E0E0;
-  --gray-400: #BDBDBD;
-  --gray-500: #9E9E9E;
+  --gray-50: #fafafa;
+  --gray-100: #f5f5f5;
+  --gray-200: #eeeeee;
+  --gray-300: #e0e0e0;
+  --gray-400: #bdbdbd;
+  --gray-500: #9e9e9e;
   --gray-600: #757575;
   --gray-700: #616161;
   --gray-800: #333333;
@@ -39,11 +39,15 @@
   --shadow-xl: 0 8px 24px rgba(0, 0, 0, 0.12);
 
   /* 美团官网字体栈 */
-  --font-sans: 'PingFang SC', 'Microsoft YaHei UI', 'Microsoft YaHei', 'Source Han Sans CN', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  --font-sans:
+    "PingFang SC", "Microsoft YaHei UI", "Microsoft YaHei",
+    "Source Han Sans CN", "Helvetica Neue", Helvetica, Arial, sans-serif;
 }
 
 /* Reset */
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -80,7 +84,8 @@ img {
   display: block;
 }
 
-ul, ol {
+ul,
+ol {
   list-style: none;
 }
 
@@ -113,7 +118,7 @@ ul, ol {
 }
 
 .header:hover {
-  background-color: rgba(255, 255, 255, 0.90);
+  background-color: rgba(255, 255, 255, 0.9);
 }
 
 .header-content {
@@ -240,7 +245,7 @@ ul, ol {
 }
 
 .nav-item.active::after {
-  content: '';
+  content: "";
   position: absolute;
   bottom: -4px;
   left: 50%;
@@ -289,13 +294,15 @@ ul, ol {
   color: var(--gray-900);
   text-align: center;
   cursor: pointer;
-  transition: transform 0.2s, box-shadow 0.2s;
+  transition:
+    transform 0.2s,
+    box-shadow 0.2s;
   position: relative;
   overflow: hidden;
 }
 
 .quick-action-card::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -20px;
   right: -20px;
@@ -311,7 +318,7 @@ ul, ol {
 }
 
 .quick-action-card.secondary {
-  background: linear-gradient(135deg, #2B2B2B, #1A1A1A);
+  background: linear-gradient(135deg, #2b2b2b, #1a1a1a);
   color: white;
 }
 
@@ -320,7 +327,7 @@ ul, ol {
 }
 
 .quick-action-card.tertiary {
-  background: linear-gradient(135deg, var(--meituan-green), #05A859);
+  background: linear-gradient(135deg, var(--meituan-green), #05a859);
   color: white;
 }
 
@@ -474,7 +481,7 @@ ul, ol {
   font-size: 0.65rem;
   padding: 2px 5px;
   background: var(--meituan-yellow-light);
-  color: #B8860B;
+  color: #b8860b;
   border-radius: var(--radius-sm);
   font-weight: 500;
   flex-shrink: 0;
@@ -699,13 +706,21 @@ ul, ol {
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 /* Filter Modal */
@@ -831,7 +846,7 @@ ul, ol {
 }
 
 .spin-mode-tab.active {
-  background: #FFF8E1;
+  background: #fff8e1;
   border-color: var(--meituan-yellow);
   color: var(--gray-900);
   font-weight: 600;
@@ -853,7 +868,7 @@ ul, ol {
   align-items: center;
   gap: 8px;
   padding: 10px 16px;
-  background: linear-gradient(135deg, #FFF8E1, #FFF3CD);
+  background: linear-gradient(135deg, #fff8e1, #fff3cd);
   border-radius: var(--radius-lg);
   font-size: 0.8rem;
   color: var(--gray-700);
@@ -887,16 +902,19 @@ ul, ol {
   left: 50%;
   transform: translateX(-50%);
   font-size: 1.6rem;
-  color: #E74C3C;
+  color: #e74c3c;
   z-index: 10;
-  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
 }
 
 .spin-wheel-svg {
   width: 280px;
   height: 280px;
   border-radius: 50%;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15), 0 0 0 4px #fff, 0 0 0 6px var(--meituan-yellow);
+  box-shadow:
+    0 8px 32px rgba(0, 0, 0, 0.15),
+    0 0 0 4px #fff,
+    0 0 0 6px var(--meituan-yellow);
 }
 
 .spin-wheel-empty {
@@ -939,8 +957,13 @@ ul, ol {
 }
 
 @keyframes pulse {
-  0%, 100% { transform: scale(1); }
-  50% { transform: scale(1.05); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
 }
 
 .random-result {
@@ -955,10 +978,10 @@ ul, ol {
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background: #FFF3E0;
+  background: #fff3e0;
   border-radius: var(--radius-md);
   font-size: 0.82rem;
-  color: #E65100;
+  color: #e65100;
   margin-top: 10px;
 }
 
@@ -1039,9 +1062,17 @@ ul, ol {
 }
 
 @keyframes bounceIn {
-  0% { transform: scale(0.3); opacity: 0; }
-  50% { transform: scale(1.05); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 .coupon-modal-header {
@@ -1105,10 +1136,10 @@ ul, ol {
   align-items: center;
   gap: 6px;
   padding: 8px 12px;
-  background: #FFF8E1;
+  background: #fff8e1;
   border-radius: var(--radius-md);
   font-size: 0.82rem;
-  color: #F57F17;
+  color: #f57f17;
   margin-bottom: 16px;
 }
 
@@ -1160,7 +1191,7 @@ ul, ol {
 
 .group-mate-row.active {
   border-color: var(--meituan-yellow);
-  background: #FFFDE7;
+  background: #fffde7;
   box-shadow: 0 2px 8px rgba(255, 209, 0, 0.2);
 }
 
@@ -1215,11 +1246,11 @@ ul, ol {
 
 .group-ready-hint {
   padding: 12px 20px;
-  background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
   border-radius: var(--radius-lg);
   font-size: 0.9rem;
   font-weight: 600;
-  color: #2E7D32;
+  color: #2e7d32;
   margin-bottom: 16px;
   animation: fadeIn 0.3s ease;
 }
@@ -1259,7 +1290,7 @@ ul, ol {
 
 .my-pick-item:active {
   border-color: var(--meituan-yellow);
-  background: #FFFDE7;
+  background: #fffde7;
   transform: scale(0.96);
 }
 
@@ -1302,7 +1333,7 @@ ul, ol {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #FFF8DC, #FFFACD);
+  background: linear-gradient(135deg, #fff8dc, #fffacd);
 }
 
 .map-placeholder .icon {
@@ -1376,7 +1407,7 @@ ul, ol {
   position: relative;
   width: 100%;
   height: 100%;
-  background: linear-gradient(135deg, #E8F5E9 0%, #E3F2FD 50%, #FFF3E0 100%);
+  background: linear-gradient(135deg, #e8f5e9 0%, #e3f2fd 50%, #fff3e0 100%);
 }
 
 .mini-map-grid {
@@ -1407,7 +1438,7 @@ ul, ol {
   font-weight: 700;
   font-size: 0.75rem;
   color: var(--gray-900);
-  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 .mini-map-uni-name {
@@ -1415,7 +1446,7 @@ ul, ol {
   font-weight: 600;
   color: var(--gray-700);
   white-space: nowrap;
-  background: rgba(255,255,255,0.85);
+  background: rgba(255, 255, 255, 0.85);
   padding: 1px 6px;
   border-radius: var(--radius-sm);
 }
@@ -1424,13 +1455,13 @@ ul, ol {
   position: absolute;
   width: 28px;
   height: 28px;
-  background: #FF6B35;
+  background: #ff6b35;
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.15);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.15);
   z-index: 2;
   transition: transform 0.2s;
 }
@@ -1460,7 +1491,7 @@ ul, ol {
 }
 
 .mini-map-footer-action {
-  color: #FF6B35;
+  color: #ff6b35;
   font-weight: 600;
 }
 
@@ -1514,7 +1545,7 @@ ul, ol {
   display: inline-block;
   padding: 4px 10px;
   background: var(--meituan-yellow-light);
-  color: #B8860B;
+  color: #b8860b;
   border-radius: var(--radius-full);
   font-size: 0.75rem;
   font-weight: 500;
@@ -1688,8 +1719,12 @@ ul, ol {
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 .gift-modal-header {
@@ -1738,7 +1773,7 @@ ul, ol {
 
 .gift-dish-item:active {
   border-color: var(--meituan-green);
-  background: #E8F5E9;
+  background: #e8f5e9;
 }
 
 .gift-dish-name {
@@ -1755,10 +1790,10 @@ ul, ol {
 
 .gift-selected-dish {
   padding: 10px 14px;
-  background: #E8F5E9;
+  background: #e8f5e9;
   border-radius: var(--radius-md);
   font-size: 0.82rem;
-  color: #2E7D32;
+  color: #2e7d32;
   margin-bottom: 16px;
 }
 
@@ -1780,7 +1815,7 @@ ul, ol {
 }
 
 .gift-friend-item:active {
-  background: #E8F5E9;
+  background: #e8f5e9;
 }
 
 .gift-friend-avatar {
@@ -1901,10 +1936,10 @@ ul, ol {
   align-items: center;
   gap: 6px;
   padding: 8px 16px;
-  background: #E8F5E9;
+  background: #e8f5e9;
   border-radius: var(--radius-full);
   font-weight: 600;
-  color: #2E7D32;
+  color: #2e7d32;
 }
 
 .gift-success-to-avatar {
@@ -2021,7 +2056,7 @@ ul, ol {
 }
 
 .social-feed-rating {
-  color: #F59E0B;
+  color: #f59e0b;
   font-size: 0.8rem;
   margin-left: 6px;
 }
@@ -2034,7 +2069,7 @@ ul, ol {
 .social-feed-gift-tag {
   display: inline-block;
   padding: 1px 8px;
-  background: #E8F5E9;
+  background: #e8f5e9;
   color: var(--meituan-green);
   border-radius: var(--radius-full);
   font-size: 0.7rem;
@@ -2255,16 +2290,16 @@ ul, ol {
 }
 
 .rank-item:nth-child(2) .rank-number {
-  background: linear-gradient(135deg, #C0C0C0, #A8A8A8);
+  background: linear-gradient(135deg, #c0c0c0, #a8a8a8);
   color: white;
 }
 
 .rank-item:nth-child(3) .rank-number {
-  background: linear-gradient(135deg, #CD7F32, #B8712D);
+  background: linear-gradient(135deg, #cd7f32, #b8712d);
   color: white;
 }
 
-.rank-item:nth-child(n+4) .rank-number {
+.rank-item:nth-child(n + 4) .rank-number {
   background: var(--gray-100);
   color: var(--gray-600);
 }
@@ -2342,7 +2377,9 @@ ul, ol {
 }
 
 @keyframes spin {
-  to { transform: rotate(360deg); }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 /* Scroll Horizontal - 美团风格 */
@@ -2459,7 +2496,7 @@ ul, ol {
   align-items: center;
   gap: 2px;
   padding: 2px 6px;
-  background: linear-gradient(135deg, #FF6633, #FF4444);
+  background: linear-gradient(135deg, #ff6633, #ff4444);
   color: white;
   font-size: 0.6rem;
   font-weight: 500;
@@ -2505,11 +2542,11 @@ ul, ol {
   display: inline-flex;
   align-items: center;
   padding: 2px 6px;
-  background: #FFF0E6;
+  background: #fff0e6;
   color: var(--star-color);
   font-size: 0.65rem;
   font-weight: 500;
-  border: 1px solid #FFD4C0;
+  border: 1px solid #ffd4c0;
   border-radius: 2px;
 }
 
@@ -2541,7 +2578,7 @@ ul, ol {
   align-items: flex-start;
   gap: 8px;
   padding: 10px 14px;
-  background: linear-gradient(135deg, #FFF8E1, #FFF3CD);
+  background: linear-gradient(135deg, #fff8e1, #fff3cd);
   border-radius: var(--radius-lg);
   margin-bottom: 14px;
 }
@@ -2551,7 +2588,7 @@ ul, ol {
   font-size: 0.6rem;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(135deg, #667EEA, #764BA2);
+  background: linear-gradient(135deg, #667eea, #764ba2);
   padding: 2px 8px;
   border-radius: var(--radius-sm);
 }
@@ -2569,7 +2606,7 @@ ul, ol {
   align-items: flex-start;
   gap: 8px;
   padding: 10px 14px;
-  background: linear-gradient(135deg, #FFF8E1, #FFF3CD);
+  background: linear-gradient(135deg, #fff8e1, #fff3cd);
   border-radius: var(--radius-lg);
   margin-bottom: 14px;
 }
@@ -2579,7 +2616,7 @@ ul, ol {
   font-size: 0.6rem;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(135deg, #667EEA, #764BA2);
+  background: linear-gradient(135deg, #667eea, #764ba2);
   padding: 2px 8px;
   border-radius: var(--radius-sm);
 }
@@ -2660,9 +2697,10 @@ ul, ol {
 /* ========== 团子专区容器 ========== */
 
 .tuanzi-zone {
-  background: linear-gradient(135deg, #FFF8E1 0%, #FFF3E0 40%, #F3E8FF 100%);
+  background: linear-gradient(135deg, #fff8e1 0%, #fff3e0 40%, #f3e8ff 100%);
   border-radius: var(--radius-xl);
   padding: 4px 0;
+  margin-top: -12px;
   margin-bottom: 8px;
   box-shadow: var(--shadow-sm);
   overflow: hidden;
@@ -2729,7 +2767,7 @@ ul, ol {
 }
 
 .ai-search-card-btn {
-  background: #FF6B35;
+  background: #ff6b35;
   color: white;
   font-size: 0.8rem;
   font-weight: 600;
@@ -2855,7 +2893,7 @@ ul, ol {
 .ai-messages {
   flex: 1;
   overflow-y: auto;
-  padding: 16px;
+  padding: 50px 16px 16px;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -2864,7 +2902,7 @@ ul, ol {
 /* 欢迎页 */
 .ai-welcome {
   text-align: center;
-  padding: 40px 20px 20px;
+  padding: 80px 20px 20px;
 }
 
 .ai-welcome-avatar {
@@ -3067,7 +3105,9 @@ ul, ol {
 }
 
 @keyframes chatBounce {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: scale(0.6);
     opacity: 0.4;
   }
@@ -3079,13 +3119,15 @@ ul, ol {
 
 /* Streaming 光标 */
 .chat-bubble-streaming::after {
-  content: '▋';
+  content: "▋";
   animation: chatBlink 1s step-end infinite;
   color: var(--gray-400);
 }
 
 @keyframes chatBlink {
-  50% { opacity: 0; }
+  50% {
+    opacity: 0;
+  }
 }
 
 /* 工具调用状态 */
@@ -3200,7 +3242,7 @@ ul, ol {
   color: #fff;
   background-size: cover;
   background-position: center;
-  background-color: #FF6B35;
+  background-color: #ff6b35;
   position: relative;
   min-height: 200px;
   display: flex;
@@ -3218,7 +3260,7 @@ ul, ol {
 
 .flip-hero-participants {
   font-size: 0.75rem;
-  background: rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.25);
   padding: 3px 10px;
   border-radius: var(--radius-full);
 }
@@ -3238,14 +3280,14 @@ ul, ol {
 .flip-hero-name {
   font-size: 1.35rem;
   font-weight: 800;
-  text-shadow: 0 1px 4px rgba(0,0,0,0.3);
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.3);
   margin-bottom: 4px;
 }
 
 .flip-hero-dish {
   font-size: 0.88rem;
   opacity: 0.92;
-  text-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .flip-hero-price {
@@ -3264,7 +3306,7 @@ ul, ol {
 .flip-hero-price .flip-price-deal {
   font-size: 1.8rem;
   font-weight: 900;
-  text-shadow: 0 2px 6px rgba(0,0,0,0.3);
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
 }
 
 .flip-hero-bottom {
@@ -3454,7 +3496,7 @@ ul, ol {
 
 .detail-review-rating {
   font-size: 0.75rem;
-  color: #F59E0B;
+  color: #f59e0b;
   letter-spacing: 1px;
 }
 
@@ -3496,13 +3538,13 @@ ul, ol {
 }
 
 .detail-review-likes:active {
-  color: var(--meituan-yellow-dark, #E6A800);
+  color: var(--meituan-yellow-dark, #e6a800);
 }
 
 /* 榜单交易数据 */
 .rank-discount {
   font-size: 0.75rem;
-  color: #FF6B35;
+  color: #ff6b35;
   margin-top: 4px;
 }
 
@@ -3518,7 +3560,7 @@ ul, ol {
   align-items: center;
   gap: 8px;
   padding: 10px 14px;
-  background: #FFF9E6;
+  background: #fff9e6;
   border-radius: var(--radius-md);
   margin-bottom: 16px;
   animation: fadeIn 0.4s ease;
@@ -3529,14 +3571,19 @@ ul, ol {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #10B981;
+  background: #10b981;
   flex-shrink: 0;
   animation: livePulse 2s ease-in-out infinite;
 }
 
 @keyframes livePulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.3; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.3;
+  }
 }
 
 .live-text {
@@ -3563,9 +3610,9 @@ ul, ol {
 .detail-transaction {
   margin: 16px 0;
   padding: 14px;
-  background: linear-gradient(135deg, #FFF9E6 0%, #FFF3D6 100%);
+  background: linear-gradient(135deg, #fff9e6 0%, #fff3d6 100%);
   border-radius: var(--radius-md);
-  border: 1px solid #FFE8A3;
+  border: 1px solid #ffe8a3;
 }
 
 .detail-transaction-row {
@@ -3588,7 +3635,7 @@ ul, ol {
 }
 
 .detail-transaction-value.highlight {
-  color: #FF6B35;
+  color: #ff6b35;
 }
 
 .detail-transaction-label {
@@ -3599,7 +3646,7 @@ ul, ol {
 .detail-discount-banner {
   margin-top: 10px;
   padding: 8px 12px;
-  background: #FF6B35;
+  background: #ff6b35;
   color: #fff;
   border-radius: var(--radius-sm);
   font-size: 0.82rem;
@@ -3611,9 +3658,9 @@ ul, ol {
 .savings-max {
   font-size: 0.78rem;
   font-weight: 600;
-  color: #FF6B35;
+  color: #ff6b35;
   margin-left: 8px;
-  background: #FFF0EB;
+  background: #fff0eb;
   padding: 2px 8px;
   border-radius: var(--radius-full);
 }
@@ -3631,17 +3678,17 @@ ul, ol {
   padding: 12px 14px;
   border-radius: var(--radius-md);
   background: #fff;
-  border: 1px dashed #FFD100;
+  border: 1px dashed #ffd100;
   position: relative;
   overflow: hidden;
 }
 
 .savings-card.new::before {
-  content: '新人';
+  content: "新人";
   position: absolute;
   top: 0;
   right: 0;
-  background: #FF6B35;
+  background: #ff6b35;
   color: #fff;
   font-size: 0.65rem;
   padding: 1px 8px;
@@ -3649,7 +3696,7 @@ ul, ol {
 }
 
 .savings-card.group {
-  border-color: #10B981;
+  border-color: #10b981;
 }
 
 .savings-card.pickup {
@@ -3666,11 +3713,11 @@ ul, ol {
 .savings-amount {
   font-size: 1rem;
   font-weight: 700;
-  color: #FF6B35;
+  color: #ff6b35;
 }
 
 .savings-card.group .savings-amount {
-  color: #10B981;
+  color: #10b981;
 }
 
 .savings-card.pickup .savings-amount {
@@ -3696,25 +3743,25 @@ ul, ol {
 
 .savings-btn {
   padding: 4px 14px;
-  border: 1.5px solid #FF6B35;
+  border: 1.5px solid #ff6b35;
   border-radius: var(--radius-full);
   background: transparent;
-  color: #FF6B35;
+  color: #ff6b35;
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
 }
 
 .savings-card.group .savings-btn {
-  border-color: #10B981;
-  color: #10B981;
+  border-color: #10b981;
+  color: #10b981;
 }
 
 /* 翻牌共用元素 */
 
 .flip-badge {
   font-size: 0.78rem;
-  background: rgba(255,255,255,0.25);
+  background: rgba(255, 255, 255, 0.25);
   padding: 3px 10px;
   border-radius: var(--radius-full);
   font-weight: 600;
@@ -3728,13 +3775,13 @@ ul, ol {
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   font-size: 0.7rem;
   margin-left: -6px;
-  border: 2px solid rgba(255,255,255,0.4);
+  border: 2px solid rgba(255, 255, 255, 0.4);
 }
 
 .flip-avatar:first-child {
@@ -3744,7 +3791,7 @@ ul, ol {
 .flip-avatar.more {
   font-size: 0.6rem;
   font-weight: 600;
-  background: rgba(255,255,255,0.35);
+  background: rgba(255, 255, 255, 0.35);
 }
 
 .flip-btn-join {
@@ -3752,7 +3799,7 @@ ul, ol {
   border: none;
   border-radius: var(--radius-md);
   background: #fff;
-  color: #FF6B35;
+  color: #ff6b35;
   font-size: 0.85rem;
   font-weight: 700;
   cursor: pointer;
@@ -3765,13 +3812,13 @@ ul, ol {
 }
 
 .flip-btn-join.joined {
-  background: rgba(255,255,255,0.2);
+  background: rgba(255, 255, 255, 0.2);
   color: #fff;
 }
 
 .flip-btn-share {
   padding: 8px 14px;
-  border: 2px solid rgba(255,255,255,0.5);
+  border: 2px solid rgba(255, 255, 255, 0.5);
   border-radius: var(--radius-md);
   background: transparent;
   color: #fff;
@@ -3783,7 +3830,7 @@ ul, ol {
 }
 
 .flip-btn-share:active {
-  background: rgba(255,255,255,0.15);
+  background: rgba(255, 255, 255, 0.15);
   transform: scale(0.96);
 }
 
@@ -3793,7 +3840,7 @@ ul, ol {
   align-items: center;
   gap: 8px;
   margin: 0 16px;
-  padding: 10px 14px;
+  padding: 10px 0px;
   background: transparent;
   border-radius: 10px;
   cursor: pointer;
@@ -3841,12 +3888,12 @@ ul, ol {
 
 .flip-vote-nominate-btn {
   font-size: 0.78rem;
-  color: #FF6B35;
+  color: #ff6b35;
   font-weight: 600;
   cursor: pointer;
   padding: 4px 10px;
   border-radius: var(--radius-full);
-  border: 1px solid #FF6B35;
+  border: 1px solid #ff6b35;
 }
 
 .flip-vote-nominate-btn.nominate-full {
@@ -3856,7 +3903,7 @@ ul, ol {
 }
 
 .flip-nominate-modal .group-order-create-btn {
-  background: linear-gradient(135deg, #FF6B35 0%, #FF8F5E 100%);
+  background: linear-gradient(135deg, #ff6b35 0%, #ff8f5e 100%);
 }
 
 .flip-vote-list {
@@ -3882,8 +3929,8 @@ ul, ol {
 }
 
 .flip-vote-item.voted {
-  border-color: #FF6B35;
-  background: #FFF8F5;
+  border-color: #ff6b35;
+  background: #fff8f5;
 }
 
 .flip-vote-name {
@@ -3911,7 +3958,7 @@ ul, ol {
 
 .flip-vote-bar {
   height: 100%;
-  background: linear-gradient(90deg, #FFD100, #FF6B35);
+  background: linear-gradient(90deg, #ffd100, #ff6b35);
   border-radius: 3px;
   transition: width 0.3s ease;
 }
@@ -3925,7 +3972,7 @@ ul, ol {
 }
 
 .flip-vote-item.voted .flip-vote-count {
-  color: #FF6B35;
+  color: #ff6b35;
   font-weight: 600;
 }
 
@@ -3935,7 +3982,7 @@ ul, ol {
   bottom: 80px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(0,0,0,0.75);
+  background: rgba(0, 0, 0, 0.75);
   color: #fff;
   padding: 10px 20px;
   border-radius: var(--radius-full);
@@ -3951,7 +3998,7 @@ ul, ol {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   z-index: 100;
   display: flex;
   align-items: flex-end;
@@ -3969,8 +4016,12 @@ ul, ol {
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 .order-sheet-header {
@@ -4027,7 +4078,7 @@ ul, ol {
   align-items: center;
   justify-content: space-between;
   padding: 8px 10px;
-  background: #FFF9E6;
+  background: #fff9e6;
   border-radius: 8px;
   margin-bottom: 6px;
   font-size: 0.82rem;
@@ -4038,7 +4089,7 @@ ul, ol {
 }
 
 .order-sheet-coupon-value {
-  color: #FF6B35;
+  color: #ff6b35;
   font-weight: 600;
 }
 
@@ -4058,11 +4109,11 @@ ul, ol {
 .order-sheet-price-value {
   font-size: 1.4rem;
   font-weight: 700;
-  color: #FF6B35;
+  color: #ff6b35;
 }
 
 .order-sheet-price-value::before {
-  content: '¥';
+  content: "¥";
   font-size: 0.9rem;
 }
 
@@ -4090,19 +4141,19 @@ ul, ol {
   gap: 6px;
   margin-top: 8px;
   padding: 8px 10px;
-  background: #FFF9E6;
+  background: #fff9e6;
   border-radius: 8px;
   font-size: 0.78rem;
-  color: #B8860B;
+  color: #b8860b;
   cursor: pointer;
 }
 
 .order-hint::before {
-  content: '💡';
+  content: "💡";
 }
 
 .order-hint:active {
-  background: #FFF0CC;
+  background: #fff0cc;
 }
 
 /* ========================== */
@@ -4152,8 +4203,8 @@ ul, ol {
 }
 
 .group-mode-tab.active {
-  border-color: #10B981;
-  background: #F0FDF4;
+  border-color: #10b981;
+  background: #f0fdf4;
 }
 
 .group-mode-icon {
@@ -4189,7 +4240,9 @@ ul, ol {
   -webkit-overflow-scrolling: touch;
 }
 
-.group-order-tags-bar::-webkit-scrollbar { display: none; }
+.group-order-tags-bar::-webkit-scrollbar {
+  display: none;
+}
 
 /* 同学圈横滑动态条 */
 .group-social-strip {
@@ -4204,13 +4257,13 @@ ul, ol {
 .group-social-strip-title {
   font-size: 0.85rem;
   font-weight: 600;
-  color: #2D3748;
+  color: #2d3748;
 }
 .group-social-strip-tag {
   font-size: 0.7rem;
   padding: 1px 6px;
-  background: #E8F5E9;
-  color: #06C167;
+  background: #e8f5e9;
+  color: #06c167;
   border-radius: 4px;
   font-weight: 500;
 }
@@ -4222,7 +4275,9 @@ ul, ol {
   -webkit-overflow-scrolling: touch;
   padding-bottom: 4px;
 }
-.group-social-strip-scroll::-webkit-scrollbar { display: none; }
+.group-social-strip-scroll::-webkit-scrollbar {
+  display: none;
+}
 .group-social-chip {
   display: flex;
   align-items: center;
@@ -4230,15 +4285,15 @@ ul, ol {
   min-width: 220px;
   max-width: 260px;
   padding: 8px 12px;
-  background: #F7FAFC;
+  background: #f7fafc;
   border-radius: 10px;
-  border: 1px solid #EDF2F7;
+  border: 1px solid #edf2f7;
   cursor: pointer;
   scroll-snap-align: start;
   flex-shrink: 0;
 }
 .group-social-chip:active {
-  background: #EDF2F7;
+  background: #edf2f7;
 }
 .group-social-chip-avatar {
   font-size: 1.3rem;
@@ -4254,7 +4309,7 @@ ul, ol {
 .group-social-chip-name {
   font-size: 0.75rem;
   font-weight: 600;
-  color: #2D3748;
+  color: #2d3748;
 }
 .group-social-chip-text {
   font-size: 0.72rem;
@@ -4265,7 +4320,7 @@ ul, ol {
 }
 .group-social-chip-time {
   font-size: 0.68rem;
-  color: #A0AEC0;
+  color: #a0aec0;
   white-space: nowrap;
   flex-shrink: 0;
 }
@@ -4294,8 +4349,12 @@ ul, ol {
 }
 
 @keyframes slideUp {
-  from { transform: translateY(100%); }
-  to { transform: translateY(0); }
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
 }
 
 .feed-detail-handle {
@@ -4375,7 +4434,7 @@ ul, ol {
   font-size: 0.85rem;
   color: var(--gray-600);
   padding: 6px 10px;
-  background: #FFF8E1;
+  background: #fff8e1;
   border-radius: var(--radius-md);
   display: inline-block;
   align-self: flex-start;
@@ -4484,22 +4543,22 @@ ul, ol {
 }
 
 .group-order-mode-badge.offline {
-  background: #FEF3C7;
-  color: #92400E;
+  background: #fef3c7;
+  color: #92400e;
 }
 
 .group-order-mode-badge.online {
-  background: #DBEAFE;
-  color: #1E40AF;
+  background: #dbeafe;
+  color: #1e40af;
 }
 
 /* 我发起的标签 */
 .group-order-my-post {
   font-size: 0.8rem;
-  color: #10B981;
+  color: #10b981;
   font-weight: 600;
   padding: 8px 16px;
-  background: #F0FDF4;
+  background: #f0fdf4;
   border-radius: var(--radius-full);
 }
 
@@ -4587,8 +4646,8 @@ ul, ol {
   font-size: 0.72rem;
   padding: 2px 10px;
   border-radius: var(--radius-full);
-  background: #E8F5E9;
-  color: #2E7D32;
+  background: #e8f5e9;
+  color: #2e7d32;
 }
 
 .group-order-restaurant {
@@ -4614,7 +4673,7 @@ ul, ol {
 
 .group-order-restaurant-deal {
   font-size: 0.78rem;
-  color: #FF6B35;
+  color: #ff6b35;
   font-weight: 600;
 }
 
@@ -4680,7 +4739,7 @@ ul, ol {
   padding: 8px 20px;
   border: none;
   border-radius: var(--radius-full);
-  background: #10B981;
+  background: #10b981;
   color: #fff;
   font-size: 0.85rem;
   font-weight: 600;
@@ -4712,7 +4771,7 @@ ul, ol {
   align-items: center;
   gap: 6px;
   padding: 12px 20px;
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #fff;
   border-radius: var(--radius-full);
   font-size: 0.9rem;
@@ -4736,7 +4795,7 @@ ul, ol {
 .group-order-create-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0,0,0,0.5);
+  background: rgba(0, 0, 0, 0.5);
   z-index: 200;
   display: flex;
   align-items: flex-end;
@@ -4777,7 +4836,7 @@ ul, ol {
 
 .group-order-create-hint {
   font-size: 0.78rem;
-  color: #10B981;
+  color: #10b981;
   margin-bottom: 14px;
 }
 
@@ -4815,7 +4874,7 @@ ul, ol {
 .group-order-create-field select:focus,
 .group-order-create-field input:focus,
 .group-order-create-field textarea:focus {
-  border-color: #10B981;
+  border-color: #10b981;
 }
 
 /* 模式选择按钮 */
@@ -4849,13 +4908,13 @@ ul, ol {
 }
 
 .create-mode-btn.active {
-  border-color: #10B981;
-  background: #F0FDF4;
+  border-color: #10b981;
+  background: #f0fdf4;
   color: #059669;
 }
 
 .create-mode-btn.active span {
-  color: #10B981;
+  color: #10b981;
 }
 
 /* 标签选择 */
@@ -4876,9 +4935,9 @@ ul, ol {
 }
 
 .group-order-create-tag.selected {
-  background: #E8F5E9;
-  border-color: #10B981;
-  color: #2E7D32;
+  background: #e8f5e9;
+  border-color: #10b981;
+  color: #2e7d32;
   font-weight: 600;
 }
 
@@ -4887,7 +4946,7 @@ ul, ol {
   padding: 12px;
   border: none;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, #10B981 0%, #059669 100%);
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
   color: #fff;
   font-size: 0.95rem;
   font-weight: 700;
@@ -5073,7 +5132,11 @@ ul, ol {
 
 /* 用户信息卡 */
 .profile-info-card {
-  background: linear-gradient(135deg, var(--meituan-yellow-light) 0%, #fff 100%);
+  background: linear-gradient(
+    135deg,
+    var(--meituan-yellow-light) 0%,
+    #fff 100%
+  );
   border-radius: var(--radius-xl);
   padding: 14px 16px;
   margin-top: 10px;
@@ -5145,11 +5208,11 @@ ul, ol {
   align-items: center;
   gap: 3px;
   padding: 2px 10px;
-  background: linear-gradient(135deg, #E8F5E9, #C8E6C9);
+  background: linear-gradient(135deg, #e8f5e9, #c8e6c9);
   border-radius: var(--radius-full);
   font-size: 0.7rem;
   font-weight: 600;
-  color: #2E7D32;
+  color: #2e7d32;
   width: fit-content;
 }
 
@@ -5161,7 +5224,7 @@ ul, ol {
 .profile-bio-card {
   margin-top: 10px;
   padding: 10px 14px;
-  background: linear-gradient(135deg, #FFF8E1 0%, #FFF3E0 100%);
+  background: linear-gradient(135deg, #fff8e1 0%, #fff3e0 100%);
   border-radius: var(--radius-lg);
   display: flex;
   align-items: center;
@@ -5191,7 +5254,7 @@ ul, ol {
 .profile-persona-tag {
   padding: 5px 14px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--meituan-yellow-light), #FFF8DC);
+  background: linear-gradient(135deg, var(--meituan-yellow-light), #fff8dc);
   border: 1px solid rgba(255, 209, 0, 0.3);
   font-size: 0.8rem;
   color: var(--gray-800);
@@ -5408,7 +5471,7 @@ ul, ol {
 .profile-tool-count {
   font-size: 0.75rem;
   color: var(--accent);
-  background: #FFF5E6;
+  background: #fff5e6;
   padding: 2px 8px;
   border-radius: var(--radius-full);
   font-weight: 500;
@@ -5431,8 +5494,14 @@ ul, ol {
 }
 
 @keyframes toolSlideDown {
-  from { opacity: 0; max-height: 0; }
-  to { opacity: 1; max-height: 600px; }
+  from {
+    opacity: 0;
+    max-height: 0;
+  }
+  to {
+    opacity: 1;
+    max-height: 600px;
+  }
 }
 
 .profile-tool-empty {
@@ -5493,12 +5562,12 @@ ul, ol {
 }
 
 .profile-tool-record-mode.offline {
-  background: #FFF0EB;
-  color: #FF6B35;
+  background: #fff0eb;
+  color: #ff6b35;
 }
 
 .profile-tool-record-mode.online {
-  background: #E8F8EF;
+  background: #e8f8ef;
   color: var(--green);
 }
 
@@ -5511,18 +5580,18 @@ ul, ol {
 }
 
 .profile-tool-record-action.join {
-  background: #FFF5E6;
-  color: #E6A000;
+  background: #fff5e6;
+  color: #e6a000;
 }
 
 .profile-tool-record-action.vote {
-  background: #EBF0FF;
-  color: #4A6CF7;
+  background: #ebf0ff;
+  color: #4a6cf7;
 }
 
 .profile-tool-record-action.nominate {
-  background: #FCE8F3;
-  color: #D946A8;
+  background: #fce8f3;
+  color: #d946a8;
 }
 
 .profile-tool-record-info {
@@ -5570,7 +5639,7 @@ ul, ol {
   font-size: 0.65rem;
   font-weight: 600;
   color: #fff;
-  background: linear-gradient(135deg, #667EEA, #764BA2);
+  background: linear-gradient(135deg, #667eea, #764ba2);
   padding: 2px 10px;
   border-radius: var(--radius-full);
 }
@@ -5600,12 +5669,12 @@ ul, ol {
 
 .profile-taste-label {
   padding: 3px 10px;
-  background: linear-gradient(135deg, #FFF5E6, #FFF0D4);
-  border: 1px solid #FFE082;
+  background: linear-gradient(135deg, #fff5e6, #fff0d4);
+  border: 1px solid #ffe082;
   border-radius: var(--radius-full);
   font-size: 0.72rem;
   font-weight: 600;
-  color: #B8860B;
+  color: #b8860b;
 }
 
 .profile-taste-summary {
@@ -5614,7 +5683,7 @@ ul, ol {
   gap: 8px;
   margin-top: 10px;
   padding: 10px;
-  background: linear-gradient(135deg, #F5F3FF, #EEF2FF);
+  background: linear-gradient(135deg, #f5f3ff, #eef2ff);
   border-radius: var(--radius-lg);
 }
 
@@ -5623,14 +5692,14 @@ ul, ol {
   font-size: 0.6rem;
   font-weight: 800;
   color: #fff;
-  background: linear-gradient(135deg, #667EEA, #764BA2);
+  background: linear-gradient(135deg, #667eea, #764ba2);
   padding: 2px 6px;
   border-radius: var(--radius-sm);
 }
 
 .profile-taste-summary-text {
   font-size: 0.82rem;
-  color: #4A5568;
+  color: #4a5568;
   line-height: 1.5;
 }
 
@@ -5672,7 +5741,7 @@ ul, ol {
   align-items: center;
   justify-content: space-between;
   padding: 12px 14px;
-  background: linear-gradient(135deg, #1A1A2E, #16213E);
+  background: linear-gradient(135deg, #1a1a2e, #16213e);
   border-radius: var(--radius-xl);
   cursor: pointer;
   transition: transform 0.15s;
@@ -5681,13 +5750,17 @@ ul, ol {
 }
 
 .profile-ai-advisor::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -50%;
   right: -20%;
   width: 120px;
   height: 120px;
-  background: radial-gradient(circle, rgba(255,209,0,0.15) 0%, transparent 70%);
+  background: radial-gradient(
+    circle,
+    rgba(255, 209, 0, 0.15) 0%,
+    transparent 70%
+  );
   pointer-events: none;
 }
 
@@ -5725,7 +5798,7 @@ ul, ol {
 
 .profile-ai-advisor-desc {
   font-size: 0.72rem;
-  color: rgba(255,255,255,0.6);
+  color: rgba(255, 255, 255, 0.6);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -5737,7 +5810,7 @@ ul, ol {
   font-weight: 600;
   color: var(--brand);
   padding: 6px 14px;
-  background: rgba(255,209,0,0.15);
+  background: rgba(255, 209, 0, 0.15);
   border-radius: var(--radius-full);
 }
 
@@ -5745,10 +5818,10 @@ ul, ol {
 
 .profile-meituan-card {
   margin-top: 14px;
-  background: linear-gradient(135deg, #FFF8E1 0%, #FFFDF5 100%);
+  background: linear-gradient(135deg, #fff8e1 0%, #fffdf5 100%);
   border-radius: var(--radius-xl);
   padding: 14px;
-  border: 1.5px solid #FFE082;
+  border: 1.5px solid #ffe082;
 }
 
 .profile-meituan-header {
@@ -5796,14 +5869,19 @@ ul, ol {
 }
 
 @keyframes meituanPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 209, 0, 0.4); }
-  50% { box-shadow: 0 0 0 8px rgba(255, 209, 0, 0); }
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(255, 209, 0, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 0 8px rgba(255, 209, 0, 0);
+  }
 }
 
 .profile-meituan-bound {
   font-size: 0.75rem;
   color: var(--green);
-  background: #E8F8EF;
+  background: #e8f8ef;
   padding: 4px 12px;
   border-radius: var(--radius-full);
   font-weight: 500;
@@ -5865,15 +5943,15 @@ ul, ol {
   align-items: center;
   gap: 10px;
   padding: 8px;
-  background: #FFFBF0;
+  background: #fffbf0;
   border-radius: var(--radius-lg);
-  border: 1px solid #FFE8A3;
+  border: 1px solid #ffe8a3;
 }
 
 .profile-coupon-left {
   width: 44px;
   height: 44px;
-  background: linear-gradient(135deg, #FF6B35, #FF8F60);
+  background: linear-gradient(135deg, #ff6b35, #ff8f60);
   border-radius: var(--radius-md);
   display: flex;
   align-items: center;
@@ -5882,11 +5960,11 @@ ul, ol {
 }
 
 .profile-coupon-left.monthly {
-  background: linear-gradient(135deg, #06C167, #2FD889);
+  background: linear-gradient(135deg, #06c167, #2fd889);
 }
 
 .profile-coupon-left.group {
-  background: linear-gradient(135deg, #4A6CF7, #7B93FA);
+  background: linear-gradient(135deg, #4a6cf7, #7b93fa);
 }
 
 .profile-coupon-amount {
@@ -5921,7 +5999,7 @@ ul, ol {
 
 .profile-coupon-expire {
   font-size: 0.65rem;
-  color: #FF6B35;
+  color: #ff6b35;
 }
 
 .profile-coupon-btn {
@@ -5949,16 +6027,16 @@ ul, ol {
   gap: 10px;
   padding: 10px;
   margin-top: 8px;
-  background: #F8F9FE;
+  background: #f8f9fe;
   border-radius: var(--radius-lg);
-  border: 1.5px dashed #C5CAE9;
+  border: 1.5px dashed #c5cae9;
   cursor: pointer;
   transition: all 0.2s;
 }
 
 .profile-import-card:hover {
-  border-color: #7986CB;
-  background: #F0F2FA;
+  border-color: #7986cb;
+  background: #f0f2fa;
 }
 
 .profile-import-icons {
@@ -5985,7 +6063,7 @@ ul, ol {
 }
 
 .profile-import-icon.dianping {
-  background: #FF6633;
+  background: #ff6633;
 }
 
 .profile-import-text {
@@ -6010,7 +6088,7 @@ ul, ol {
 .profile-import-arrow {
   font-size: 0.8rem;
   font-weight: 600;
-  color: #4A6CF7;
+  color: #4a6cf7;
   flex-shrink: 0;
 }
 
@@ -6055,7 +6133,7 @@ ul, ol {
   width: 22px;
   height: 22px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+  background: linear-gradient(135deg, #8b5cf6, #a78bfa);
   color: #fff;
   font-size: 0.6rem;
   font-weight: 700;
@@ -6065,7 +6143,7 @@ ul, ol {
 .taste-dna-mini-title {
   font-size: 0.82rem;
   font-weight: 600;
-  color: #4C1D95;
+  color: #4c1d95;
 }
 
 .taste-dna-mini-labels {
@@ -6081,7 +6159,7 @@ ul, ol {
   background: rgba(139, 92, 246, 0.12);
   border-radius: var(--radius-full);
   font-size: 0.7rem;
-  color: #6D28D9;
+  color: #6d28d9;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -6089,7 +6167,7 @@ ul, ol {
 .taste-dna-mini-arrow {
   margin-left: auto;
   font-size: 0.72rem;
-  color: #7C3AED;
+  color: #7c3aed;
   font-weight: 500;
   flex-shrink: 0;
   white-space: nowrap;
@@ -6104,7 +6182,7 @@ ul, ol {
   gap: 4px;
   padding: 8px 0 2px;
   font-size: 0.76rem;
-  color: #B8860B;
+  color: #b8860b;
   font-weight: 500;
   cursor: pointer;
   border-top: 1px solid rgba(255, 224, 130, 0.5);
@@ -6145,7 +6223,7 @@ ul, ol {
 }
 
 .group-order-add-friend:hover {
-  background: #F0FDF4;
+  background: #f0fdf4;
 }
 
 .group-order-add-friend.added {
@@ -6180,7 +6258,7 @@ ul, ol {
 
 .invite-friend-chip.selected {
   border-color: var(--accent);
-  background: #F0FDF4;
+  background: #f0fdf4;
   color: var(--accent);
   font-weight: 600;
 }
@@ -6188,4 +6266,3 @@ ul, ol {
 .invite-friend-chip-avatar {
   font-size: 1rem;
 }
-
