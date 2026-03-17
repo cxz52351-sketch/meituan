@@ -2,7 +2,9 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { University, PriceRange, Category } from '../types'
 import { ChatMessage, APIMessage, GuideOption } from '../types/chat'
-import { sendMessageStream, getMealPeriod, getGuideRecommendation, DiningMode } from '../services/ai'
+import { sendMessageStream, getMealPeriod, getGuideRecommendation, DiningMode, PersonalContext } from '../services/ai'
+import { getProfile } from '../services/profile'
+import { computeTasteDNA } from '../services/tasteDNA'
 import RestaurantListItem from './RestaurantListItem'
 
 interface Props {
@@ -259,6 +261,13 @@ export default function ChatAgent({ university }: Props) {
     }
   }, [location.state])
 
+  // 获取用户个性化上下文
+  const getPersonalContext = useCallback((): PersonalContext => {
+    const profile = getProfile()
+    const dna = computeTasteDNA(profile)
+    return { profile, tasteDNA: dna }
+  }, [])
+
   // 处理引导选项点击
   const handleGuideSelect = useCallback((step: GuideStep, optionId: string) => {
     if (step === 'mode') {
@@ -315,6 +324,7 @@ export default function ChatAgent({ university }: Props) {
           mode: guideState.mode,
           mealTime: guideState.mealTime,
           university,
+          personal: getPersonalContext(),
         })
         const resultMsg: ChatMessage = {
           id: nextMsgId(),
@@ -409,6 +419,7 @@ export default function ChatAgent({ university }: Props) {
         priceRange: guideState.budget,
         category: taste,
         university,
+        personal: getPersonalContext(),
       }
       const result = getGuideRecommendation(filters)
 
@@ -456,6 +467,7 @@ export default function ChatAgent({ university }: Props) {
           category: guideState.taste,
           university,
           excludeIds: guideState.excludeIds,
+          personal: getPersonalContext(),
         })
         const resultMsg: ChatMessage = {
           id: nextMsgId(),

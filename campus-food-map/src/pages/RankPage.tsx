@@ -167,7 +167,7 @@ export default function RankPage({ university }: Props) {
             className={`rank-tab ${currentRankId === rank.id ? 'active' : ''}`}
             onClick={() => navigate(`/rank/${rank.id}`)}
           >
-            {rank.icon} {rank.title}
+            {rank.title}
           </button>
         ))}
       </div>

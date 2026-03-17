@@ -333,44 +333,47 @@ export default function HomePage({ university }: Props) {
         </div>
       )}
 
-      {/* AI 搜索入口 */}
-      <div className="ai-search-card" onClick={() => navigate('/ai')}>
-        <div className="ai-search-card-left">
-          <div className="ai-search-card-icon">
-            <img src="/tuanzi.png" alt="团子" className="tuanzi-icon" />
+      {/* 团子专区：AI入口 + 口味DNA */}
+      <div className="tuanzi-zone">
+        <div className="ai-search-card" onClick={() => navigate('/ai')}>
+          <div className="ai-search-card-left">
+            <div className="ai-search-card-icon">
+              <img src="/tuanzi.png" alt="团子" className="tuanzi-icon" />
+            </div>
+            <div className="ai-search-card-content">
+              <div className="ai-search-card-title">不知道吃什么？问团子</div>
+              <div className="ai-search-card-desc">告诉我你的口味，帮你秒选</div>
+            </div>
           </div>
-          <div className="ai-search-card-content">
-            <div className="ai-search-card-title">不知道吃什么？问团子</div>
-            <div className="ai-search-card-desc">告诉我你的口味，帮你秒选</div>
-          </div>
+          <span className="ai-search-card-btn">试一试</span>
         </div>
-        <span className="ai-search-card-btn">试一试</span>
-      </div>
 
-      {/* 口味DNA迷你卡片 */}
-      <div className="taste-dna-mini" onClick={() => navigate('/profile')}>
-        {tasteDNA ? (
-          <>
-            <div className="taste-dna-mini-left">
-              <span className="taste-dna-mini-badge">团子</span>
-              <span className="taste-dna-mini-title">你的口味基因</span>
-            </div>
-            <div className="taste-dna-mini-labels">
-              {tasteDNA.labels.slice(0, 3).map(label => (
-                <span key={label} className="taste-dna-mini-chip">{label}</span>
-              ))}
-            </div>
-            <span className="taste-dna-mini-arrow">查看完整DNA ›</span>
-          </>
-        ) : (
-          <>
-            <div className="taste-dna-mini-left">
-              <span className="taste-dna-mini-badge">团子</span>
-              <span className="taste-dna-mini-title">团子还不了解你</span>
-            </div>
-            <span className="taste-dna-mini-arrow">多逛逛解锁口味DNA ›</span>
-          </>
-        )}
+        <div className="tuanzi-zone-divider" />
+
+        <div className="taste-dna-mini" onClick={() => navigate('/profile')}>
+          {tasteDNA ? (
+            <>
+              <div className="taste-dna-mini-left">
+                <span className="taste-dna-mini-badge">团子</span>
+                <span className="taste-dna-mini-title">你的口味基因</span>
+              </div>
+              <div className="taste-dna-mini-labels">
+                {tasteDNA.labels.slice(0, 3).map(label => (
+                  <span key={label} className="taste-dna-mini-chip">{label}</span>
+                ))}
+              </div>
+              <span className="taste-dna-mini-arrow">查看完整DNA ›</span>
+            </>
+          ) : (
+            <>
+              <div className="taste-dna-mini-left">
+                <span className="taste-dna-mini-badge">团子</span>
+                <span className="taste-dna-mini-title">团子还不了解你</span>
+              </div>
+              <span className="taste-dna-mini-arrow">多逛逛解锁口味DNA ›</span>
+            </>
+          )}
+        </div>
       </div>
 
       {/* 同学在点 - 实时订单动态 */}

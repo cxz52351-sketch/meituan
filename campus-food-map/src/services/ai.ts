@@ -1,7 +1,9 @@
 import { restaurants } from '../data/restaurants'
-import { Restaurant, University, PriceRange, Category } from '../types'
+import { Restaurant, University, PriceRange, Category, UserProfile } from '../types'
 import { APIMessage, ToolCall, StreamDelta } from '../types/chat'
 import { getSavingsPlan } from '../data/deals'
+import { TasteDNAResult } from './tasteDNA'
+import { getRandomHistory, getVisitHistory } from './history'
 
 // ========== Time Awareness ==========
 
@@ -51,14 +53,15 @@ function buildSystemPrompt(university: University | 'all'): string {
 - 如果用户说"随便"、"都行"，就果断用 smart_random 工具帮他选，不要再追问
 
 ### 推荐策略
-1. 调用工具搜索后，**精选2-3家**，用自然语言介绍，不要列表式输出
-2. 每家给一句**基于数据的推荐理由**，例如：
-   - "同学复购率62%，回头客超多"
-   - "本周347位同学下单，是热门店"
-   - "满减后实付只要14元，比标价便宜一截"
-   - "学生证69折，人均实付59元"
-3. 当前是${period}时段，**优先推荐当前在营业的**
-4. 不要给太多选择，帮用户简化决策
+1. 调用工具搜索后，**精选2-3家**，直接输出工具返回的推荐理由（已包含结构化格式）
+2. 工具返回的理由格式为：
+   📍 **餐厅名**
+   💡 个性化理由（如果有）
+   📊 数据亮点
+   💰 省钱信息
+3. 不要修改工具返回的格式，直接展示即可
+4. 当前是${period}时段，工具已自动优先推荐营业中的餐厅
+5. 推荐后可以追问："就去这家？还是你有别的想法？"
 
 ### 决策辅助
 - 用户犹豫时用排除法，给出选项让用户点选
@@ -388,6 +391,11 @@ function getToolDisplayName(name: string): string {
 
 export type DiningMode = 'delivery' | 'dinein' | 'pickup'
 
+export interface PersonalContext {
+  profile?: UserProfile | null
+  tasteDNA?: TasteDNAResult | null
+}
+
 export interface GuideFilters {
   mode?: DiningMode
   mealTime?: string
@@ -396,6 +404,7 @@ export interface GuideFilters {
   category?: Category
   university: University | 'all'
   excludeIds?: string[]
+  personal?: PersonalContext
 }
 
 // 判断餐厅在指定时段是否营业
@@ -518,19 +527,119 @@ export function getGuideRecommendation(filters: GuideFilters): GuideRecommendati
     return { restaurants: [], reason: '没有找到符合条件的餐厅，试试放宽条件？' }
   }
 
-  // 生成推荐理由
+  // 获取用户近期历史
+  const recentHistory = [...getRandomHistory(), ...getVisitHistory()]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 20)
+  const recentRestIds = new Set(recentHistory.map(h => h.restaurantId))
+  const recentCats = recentHistory.map(h => h.category)
+  const recentCatsSet = new Set(recentCats)
+
+  const profile = filters.personal?.profile
+  const dna = filters.personal?.tasteDNA
+
+  // 生成个性化推荐理由，每家餐厅独立一段
   const reasons = selected.map(r => {
-    const parts: string[] = []
-    if (r.repurchaseRate > 0.5) parts.push(`同学复购率${Math.round(r.repurchaseRate * 100)}%`)
-    if (r.weeklyStudentOrders > 200) parts.push(`本周${r.weeklyStudentOrders}人下单`)
+    const lines: string[] = []
+
+    // 个性化理由（基于用户画像）— 放在最前面突出显示
+    const personalPart = buildPersonalReason(r, profile, dna, recentRestIds, recentCats)
+
+    // 数据亮点（取最有说服力的1-2条）
+    const dataPoints: string[] = []
+    if (r.repurchaseRate > 0.5) dataPoints.push(`同学复购率${Math.round(r.repurchaseRate * 100)}%`)
+    if (r.weeklyStudentOrders > 200) dataPoints.push(`本周${r.weeklyStudentOrders}人下单`)
+    if (dataPoints.length === 0) dataPoints.push(`${r.rating}分好评`)
+
+    // 省钱信息
     const plan = getSavingsPlan(r.id)
-    if (plan && plan.coupons.length > 0) parts.push(`有${plan.coupons[0].title}`)
-    if (r.studentDiscount) parts.push(r.studentDiscount)
-    if (parts.length === 0) parts.push(`${r.rating}分好评`)
-    return `${r.name}：${parts.join('，')}，实付人均${r.actualPayPrice}元`
+    let savingPart = ''
+    if (plan && plan.coupons.length > 0) {
+      savingPart = `${plan.coupons[0].title}，实付人均${r.actualPayPrice}元`
+    } else if (r.studentDiscount) {
+      savingPart = `${r.studentDiscount}，实付人均${r.actualPayPrice}元`
+    } else {
+      savingPart = `人均${r.actualPayPrice}元`
+    }
+
+    // 组装：餐厅名 + 个性化 + 数据 + 省钱
+    lines.push(`📍 **${r.name}**`)
+    if (personalPart) lines.push(`💡 ${personalPart}`)
+    lines.push(`📊 ${dataPoints.join('，')}`)
+    lines.push(`💰 ${savingPart}`)
+
+    return lines.join('\n')
   })
 
-  return { restaurants: selected, reason: reasons.join('；') }
+  return { restaurants: selected, reason: reasons.join('\n\n') }
+}
+
+function buildPersonalReason(
+  r: Restaurant,
+  profile: UserProfile | null | undefined,
+  dna: TasteDNAResult | null | undefined,
+  recentRestIds: Set<string>,
+  recentCats: string[],
+): string | null {
+  const hints: string[] = []
+
+  // 1. 学校匹配
+  if (profile?.university && r.university === profile.university) {
+    hints.push(`就在${profile.university.replace('大学', '').replace('北京', '')}附近`)
+  }
+
+  // 2. 基于干饭人设标签
+  if (profile?.diningTags?.length) {
+    const tags = profile.diningTags
+    if (tags.some(t => t.includes('辣')) && (r.category === '火锅' || r.category === '烧烤' || r.tags.some(t => t.includes('辣')))) {
+      hints.push('适合你"无辣不欢"的口味')
+    }
+    if (tags.some(t => t.includes('穷鬼') || t.includes('性价比')) && r.features.includes('穷鬼友好')) {
+      hints.push('穷鬼友好，符合你的省钱人设')
+    }
+    if (tags.some(t => t.includes('一人食')) && r.scenes.includes('一个人')) {
+      hints.push('一人食也很舒适')
+    }
+    if (tags.some(t => t.includes('深夜')) && r.scenes.includes('深夜')) {
+      hints.push('深夜放毒专属')
+    }
+    if (tags.some(t => t.includes('奶茶')) && (r.category === '饮品' || r.category === '甜点')) {
+      hints.push('奶茶续命安排上')
+    }
+    if (tags.some(t => t.includes('火锅')) && r.category === '火锅') {
+      hints.push('火锅狂热者必冲')
+    }
+  }
+
+  // 3. 基于团子DNA标签
+  if (dna?.labels?.length) {
+    const labels = dna.labels
+    if (labels.includes('省钱小天才') && r.actualPayPrice <= 15 && hints.every(h => !h.includes('省钱'))) {
+      hints.push('省钱小天才的心水之选')
+    }
+    if (labels.includes('探店达人') && !recentRestIds.has(r.id)) {
+      hints.push('探店达人解锁新店')
+    }
+    if (labels.includes('品质美食家') && r.rating >= 4.5) {
+      hints.push('品质美食家认证好店')
+    }
+  }
+
+  // 4. 基于近期历史
+  if (recentRestIds.has(r.id)) {
+    hints.push('你之前吃过觉得不错')
+  } else if (recentCats.length >= 3) {
+    // 统计近期最常吃的品类
+    const catCount: Record<string, number> = {}
+    recentCats.forEach(c => { catCount[c] = (catCount[c] || 0) + 1 })
+    const topCat = Object.entries(catCount).sort((a, b) => b[1] - a[1])[0]
+    if (topCat && topCat[1] >= 3 && r.category !== topCat[0]) {
+      hints.push(`最近${topCat[0]}吃多了，换个口味`)
+    }
+  }
+
+  // 最多取1条个性化理由，避免太长
+  return hints.length > 0 ? hints[0] : null
 }
 
 export function getAvailableCategories(filters: Omit<GuideFilters, 'category'>): Category[] {
