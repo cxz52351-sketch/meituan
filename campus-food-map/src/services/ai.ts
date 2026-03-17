@@ -673,8 +673,44 @@ export function getAvailableCategories(filters: Omit<GuideFilters, 'category'>):
     if (priceFiltered.length > 0) candidates = priceFiltered
   }
 
-  const categories = [...new Set(candidates.map(r => r.category))]
-  return categories.slice(0, 8)
+  // 统计每个品类的餐厅数量和平均评分
+  const categoryStats: Record<string, { count: number; avgRating: number; restaurants: Restaurant[] }> = {}
+  candidates.forEach(r => {
+    if (!categoryStats[r.category]) {
+      categoryStats[r.category] = { count: 0, avgRating: 0, restaurants: [] }
+    }
+    categoryStats[r.category].count++
+    categoryStats[r.category].restaurants.push(r)
+  })
+
+  // 计算平均评分
+  Object.keys(categoryStats).forEach(cat => {
+    const rests = categoryStats[cat].restaurants
+    categoryStats[cat].avgRating = rests.reduce((sum, r) => sum + r.rating, 0) / rests.length
+  })
+
+  // 获取用户近期历史，用于排序
+  const recentHistory = [...getRandomHistory(), ...getVisitHistory()]
+    .sort((a, b) => b.timestamp - a.timestamp)
+    .slice(0, 10)
+  const recentCats = recentHistory.map(h => h.category)
+  const recentCatCount: Record<string, number> = {}
+  recentCats.forEach(c => { recentCatCount[c] = (recentCatCount[c] || 0) + 1 })
+
+  // 排序：用户常吃的 > 餐厅数量多的 > 评分高的
+  const categories = Object.keys(categoryStats).sort((a, b) => {
+    const aRecent = recentCatCount[a] || 0
+    const bRecent = recentCatCount[b] || 0
+    if (aRecent !== bRecent) return bRecent - aRecent
+
+    const aCount = categoryStats[a].count
+    const bCount = categoryStats[b].count
+    if (aCount !== bCount) return bCount - aCount
+
+    return categoryStats[b].avgRating - categoryStats[a].avgRating
+  }) as Category[]
+
+  return categories
 }
 
 // ========== SSE Stream Parser ==========

@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { University, PriceRange, Category } from '../types'
 import { ChatMessage, APIMessage, GuideOption } from '../types/chat'
-import { sendMessageStream, getMealPeriod, getGuideRecommendation, DiningMode, PersonalContext } from '../services/ai'
+import { sendMessageStream, getMealPeriod, getGuideRecommendation, getAvailableCategories, DiningMode, PersonalContext } from '../services/ai'
 import { getProfile } from '../services/profile'
 import { computeTasteDNA } from '../services/tasteDNA'
 import RestaurantListItem from './RestaurantListItem'
@@ -389,18 +389,27 @@ export default function ChatAgent({ university }: Props) {
       const newState: GuideState = { ...guideState, step: 'taste', budget }
       setGuideState(newState)
 
-      // 展示所有品类选项，让用户自由选择
-      const allCategories: Category[] = [
-        '中餐', '西餐', '日料', '韩餐',
-        '火锅', '烧烤', '小吃', '快餐',
-        '饮品', '甜点', '面食', '粥店',
-        '东南亚', '其他',
-      ]
-      const tasteOptions: GuideOption[] = allCategories.map(cat => ({
+      // 根据前面的筛选条件，获取可用的品类
+      const availableCategories = getAvailableCategories({
+        mode: guideState.mode,
+        mealTime: guideState.mealTime,
+        scene: guideState.scene,
+        priceRange: budget,
+        university,
+      })
+
+      // 限制显示4-6个品类（根据用户历史和时段智能排序）
+      const topCategories = availableCategories.slice(0, 4)
+      const tasteOptions: GuideOption[] = topCategories.map(cat => ({
         id: cat,
         emoji: getCategoryEmoji(cat),
         label: cat,
       }))
+
+      // 添加兜底选项
+      if (availableCategories.length > 4) {
+        tasteOptions.push({ id: 'other', emoji: '🔍', label: '其他', description: '看看别的品类' })
+      }
       tasteOptions.push({ id: 'any', emoji: '🤷', label: '随便都行', description: '什么都可以' })
 
       const nextMsg: ChatMessage = {
@@ -413,6 +422,35 @@ export default function ChatAgent({ university }: Props) {
       }
       setMessages(prev => [...prev, userMsg, nextMsg])
     } else if (step === 'taste') {
+      // 处理"其他"选项 - 展示剩余品类
+      if (optionId === 'other') {
+        const availableCategories = getAvailableCategories({
+          mode: guideState.mode,
+          mealTime: guideState.mealTime,
+          scene: guideState.scene,
+          priceRange: guideState.budget,
+          university,
+        })
+        const remainingCategories = availableCategories.slice(4) // 跳过前4个已展示的
+        const tasteOptions: GuideOption[] = remainingCategories.map(cat => ({
+          id: cat,
+          emoji: getCategoryEmoji(cat),
+          label: cat,
+        }))
+        tasteOptions.push({ id: 'any', emoji: '🤷', label: '随便都行', description: '什么都可以' })
+
+        const nextMsg: ChatMessage = {
+          id: nextMsgId(),
+          role: 'assistant',
+          content: '还有这些品类可选：',
+          timestamp: Date.now(),
+          status: 'done',
+          guideOptions: tasteOptions,
+        }
+        setMessages(prev => [...prev, nextMsg])
+        return
+      }
+
       const label = optionId === 'any' ? '🤷 随便都行' : `${getCategoryEmoji(optionId)} ${optionId}`
       const userMsg: ChatMessage = {
         id: nextMsgId(),
