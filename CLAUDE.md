@@ -47,8 +47,9 @@ Vite dev proxy 仅开发环境生效，生产部署需额外处理 `/api/deepsee
 - `/ai` → ChatAgent（AI美食助手）
 - `/rank` 和 `/rank/:rankId` → RankPage
 - `/restaurant/:id` → DetailPage（无 `university` prop，无底部导航和顶部header）
+- `/profile` → ProfilePage（个人中心/我的）
 
-底部导航栏5个tab：首页、拼单、随机吃、AI、榜单。
+底部导航栏6个tab：首页、拼单、随机吃、团子（AI）、榜单、我的。
 
 ### 数据层
 
@@ -60,6 +61,12 @@ Vite dev proxy 仅开发环境生效，生产部署需额外处理 `/api/deepsee
 - `groupOrders.ts` — 拼单广场数据，分线上（凑满减）和线下（社交约饭）两种模式。导出 `getGroupOrders()` 函数
 
 榜单的筛选/排序逻辑在 `RankPage.tsx` 的 `getRankRestaurants()` 函数中，通过 switch-case 按 `rankId` 分别实现。注意：`RankList` 类型定义了 `filterFn`/`sortFn`，但实际数据未使用这些字段。
+
+### 本地持久化（localStorage）
+
+- `src/services/history.ts` — 干饭工具箱历史记录：随机吃历史、拼单参与记录、翻牌记录、到店打卡记录。各自独立 localStorage key，提供增删查函数
+- `src/services/profile.ts` — 用户资料、好友列表、干饭状态（"想吃"/"在吃"/"吃饱了"）。数据存 localStorage，导出 `getProfile`/`saveProfile`/`getFriends` 等函数
+- `src/data/socialFeed.ts` — 校友圈社交动态（用餐打卡、请Ta吃、转盘结果），静态 mock 数据
 
 ### AI聊天功能
 

@@ -1,9 +1,8 @@
 import { useState, useMemo, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { University, Restaurant } from '../types'
-import { restaurants, rankLists, universities } from '../data/restaurants'
+import { restaurants, rankLists } from '../data/restaurants'
 import { getTodayFlip, getTomorrowCandidates } from '../data/deals'
-import { getUnifiedFeed, formatFeedTime } from '../data/socialFeed'
 import { getMealPeriod } from '../services/ai'
 import RestaurantCard from '../components/RestaurantCard'
 import { addFlipHistory } from '../services/history'
@@ -23,26 +22,6 @@ function isOpenNow(r: Restaurant): boolean {
     return currentMinutes >= openMinutes || currentMinutes <= closeMinutes
   }
   return currentMinutes >= openMinutes && currentMinutes <= closeMinutes
-}
-
-const getCategoryLabel = (category: string) => {
-  const labelMap: Record<string, string> = {
-    '中餐': '中', '西餐': '西', '日料': '日', '韩餐': '韩',
-    '火锅': '锅', '烧烤': '烤', '小吃': '吃', '快餐': '快',
-    '饮品': '饮', '甜点': '甜', '面食': '面', '粥店': '粥', '东南亚': '东',
-  }
-  return labelMap[category] || '食'
-}
-
-const getMiniMarkerPosition = (_restaurant: Restaurant, index: number) => {
-  const baseX = 25 + (index % 3) * 25
-  const baseY = 20 + Math.floor(index / 3) * 30
-  const offsetX = Math.sin(index * 1.5) * 10
-  const offsetY = Math.cos(index * 1.3) * 8
-  return {
-    left: `${Math.min(Math.max(baseX + offsetX, 8), 88)}%`,
-    top: `${Math.min(Math.max(baseY + offsetY, 10), 65)}%`
-  }
 }
 
 export default function HomePage({ university }: Props) {
@@ -87,6 +66,7 @@ export default function HomePage({ university }: Props) {
   const [hasJoined, setHasJoined] = useState(false)
   const [votedId, setVotedId] = useState<string | null>(null)
   const [showShareToast, setShowShareToast] = useState(false)
+  const [showVoteExpand, setShowVoteExpand] = useState(false)
   const [showNominate, setShowNominate] = useState(false)
   const [nominateId, setNominateId] = useState('')
   const [userCandidates, setUserCandidates] = useState<Array<{ restaurantId: string; restaurantName: string; dealDish: string; flipPrice: number; votes: number }>>([])
@@ -134,16 +114,6 @@ export default function HomePage({ university }: Props) {
   const nearbyRestaurants = [...filteredRestaurants]
     .sort((a, b) => a.distance - b.distance)
     .slice(0, 6)
-
-  const currentUniversity = useMemo(() => {
-    if (university === 'all') return universities[0]
-    return universities.find((u) => u.name === university) || universities[0]
-  }, [university])
-
-  // 同学圈：合并社交动态 + UGC 评论
-  const unifiedFeed = useMemo(() => {
-    return getUnifiedFeed(university === 'all' ? undefined : university, 5)
-  }, [university])
 
   // 推荐理由生成（基于美团交易数据）
   function getRecommendReason(r: Restaurant): string {
@@ -230,47 +200,59 @@ export default function HomePage({ university }: Props) {
         </div>
       </div>
 
-      {/* 明天翻牌投票 */}
-      <div className="flip-vote">
-        <div className="flip-vote-header">
-          <span className="flip-vote-title">明天翻牌哪家？投票选出来</span>
-          {tomorrowCandidates.length + userCandidates.length >= 5 ? (
-            <span className="flip-vote-nominate-btn nominate-full">名额已满</span>
-          ) : (
-            <span className="flip-vote-nominate-btn" onClick={() => setShowNominate(true)}>+ 我来提名</span>
-          )}
-        </div>
-        <div className="flip-vote-list">
-          {[...tomorrowCandidates, ...userCandidates].slice(0, 5).map(c => (
-            <div
-              key={c.restaurantId}
-              className={`flip-vote-item ${votedId === c.restaurantId ? 'voted' : ''}`}
-              onClick={() => {
-                if (votedId !== c.restaurantId) {
-                  setVotedId(c.restaurantId)
-                  addFlipHistory({
-                    action: 'vote',
-                    restaurantId: c.restaurantId,
-                    restaurantName: c.restaurantName,
-                    detail: `投票给「${c.restaurantName}」· ${c.dealDish} ¥${c.flipPrice}`,
-                    timestamp: Date.now(),
-                  })
-                }
-              }}
-            >
-              <span className="flip-vote-name">{c.restaurantName}</span>
-              <span className="flip-vote-dish">{c.dealDish} ¥{c.flipPrice}</span>
-              <div className="flip-vote-bar-wrap">
-                <div
-                  className="flip-vote-bar"
-                  style={{ width: `${Math.min((c.votes + (votedId === c.restaurantId ? 1 : 0)) / 2.5, 100)}%` }}
-                />
-              </div>
-              <span className="flip-vote-count">{c.votes + (votedId === c.restaurantId ? 1 : 0)}票</span>
-            </div>
-          ))}
-        </div>
+      {/* 明天翻牌投票 - 收起式入口 */}
+      <div className="flip-vote-collapsed" onClick={() => setShowVoteExpand(!showVoteExpand)}>
+        <span className="flip-vote-collapsed-text">
+          🗳️ 明天翻牌哪家？{votedId ? '已投票' : '去投票'}
+        </span>
+        <span className="flip-vote-collapsed-count">
+          {[...tomorrowCandidates, ...userCandidates].length}家候选
+        </span>
+        <span className={`flip-vote-collapsed-arrow ${showVoteExpand ? 'expanded' : ''}`}>›</span>
       </div>
+
+      {showVoteExpand && (
+        <div className="flip-vote">
+          <div className="flip-vote-header">
+            <span className="flip-vote-title">投票选出明天的翻牌特价</span>
+            {tomorrowCandidates.length + userCandidates.length >= 5 ? (
+              <span className="flip-vote-nominate-btn nominate-full">名额已满</span>
+            ) : (
+              <span className="flip-vote-nominate-btn" onClick={() => setShowNominate(true)}>+ 我来提名</span>
+            )}
+          </div>
+          <div className="flip-vote-list">
+            {[...tomorrowCandidates, ...userCandidates].slice(0, 5).map(c => (
+              <div
+                key={c.restaurantId}
+                className={`flip-vote-item ${votedId === c.restaurantId ? 'voted' : ''}`}
+                onClick={() => {
+                  if (votedId !== c.restaurantId) {
+                    setVotedId(c.restaurantId)
+                    addFlipHistory({
+                      action: 'vote',
+                      restaurantId: c.restaurantId,
+                      restaurantName: c.restaurantName,
+                      detail: `投票给「${c.restaurantName}」· ${c.dealDish} ¥${c.flipPrice}`,
+                      timestamp: Date.now(),
+                    })
+                  }
+                }}
+              >
+                <span className="flip-vote-name">{c.restaurantName}</span>
+                <span className="flip-vote-dish">{c.dealDish} ¥{c.flipPrice}</span>
+                <div className="flip-vote-bar-wrap">
+                  <div
+                    className="flip-vote-bar"
+                    style={{ width: `${Math.min((c.votes + (votedId === c.restaurantId ? 1 : 0)) / 2.5, 100)}%` }}
+                  />
+                </div>
+                <span className="flip-vote-count">{c.votes + (votedId === c.restaurantId ? 1 : 0)}票</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 提名弹窗 */}
       {showNominate && (
@@ -429,58 +411,6 @@ export default function HomePage({ university }: Props) {
         <div className="toast">已复制分享链接，快去宿舍群粘贴吧！</div>
       )}
 
-      {/* 📍 大学城美食地图 */}
-      <section className="section">
-        <div className="section-header">
-          <h2 className="section-title">📍 大学城美食地图</h2>
-          <button className="section-more" onClick={() => navigate('/map')}>
-            查看完整地图 &gt;
-          </button>
-        </div>
-        <div className="mini-map" onClick={() => navigate('/map')}>
-          <div className="mini-map-bg">
-            <svg className="mini-map-grid" xmlns="http://www.w3.org/2000/svg">
-              <defs>
-                <pattern id="mini-grid" width="30" height="30" patternUnits="userSpaceOnUse">
-                  <path d="M 30 0 L 0 0 0 30" fill="none" stroke="rgba(0,0,0,0.04)" strokeWidth="1"/>
-                </pattern>
-              </defs>
-              <rect width="100%" height="100%" fill="url(#mini-grid)" />
-              <line x1="0" y1="50%" x2="100%" y2="50%" stroke="rgba(255,255,255,0.7)" strokeWidth="5" />
-              <line x1="50%" y1="0" x2="50%" y2="100%" stroke="rgba(255,255,255,0.7)" strokeWidth="5" />
-            </svg>
-
-            {/* 大学标记 */}
-            <div className="mini-map-university">
-              <div className="mini-map-uni-dot">校</div>
-              <div className="mini-map-uni-name">
-                {university === 'all' ? '大学城' : currentUniversity.shortName}
-              </div>
-            </div>
-
-            {/* 餐厅 markers */}
-            {nearbyRestaurants.map((r, index) => {
-              const pos = getMiniMarkerPosition(r, index)
-              return (
-                <div
-                  key={r.id}
-                  className="mini-map-marker"
-                  style={pos}
-                >
-                  <span className="mini-map-marker-icon">{getCategoryLabel(r.category)}</span>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* 底部统计条 */}
-          <div className="mini-map-footer">
-            <span>周边 {filteredRestaurants.length} 家好店 · 最近 {nearbyRestaurants[0]?.distance || 0}m</span>
-            <span className="mini-map-footer-action">去看看 →</span>
-          </div>
-        </div>
-      </section>
-
       {/* 特色榜单 */}
       <section className="section">
         <div className="section-header">
@@ -505,70 +435,6 @@ export default function HomePage({ university }: Props) {
               <div className="content">
                 <div className="title">{rank.title}</div>
                 <div className="desc">{rank.description}</div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* 同学圈 - 合并社交动态 + UGC 评论 */}
-      <section className="section">
-        <div className="section-header">
-          <h2 className="section-title">同学圈</h2>
-          <span className="section-tag">实时动态</span>
-        </div>
-        <div className="social-feed">
-          {unifiedFeed.map(item => (
-            <div
-              key={item.id}
-              className="social-feed-card"
-              onClick={() => navigate(`/restaurant/${item.restaurantId}`)}
-            >
-              <div className="social-feed-header">
-                <span className="social-feed-avatar">{item.user.avatar}</span>
-                <div className="social-feed-user">
-                  <span className="social-feed-name">{item.user.name}</span>
-                  <span className="social-feed-school">{item.user.university.replace('北京', '').replace('大学', '')} · {item.user.major}</span>
-                </div>
-                <span className="social-feed-time">{formatFeedTime(item.minutesAgo)}</span>
-              </div>
-              <div className="social-feed-body">
-                {item.source === 'social' && item.feedType === 'checkin' && (
-                  <div className="social-feed-text">
-                    在 <strong>{item.restaurantName}</strong> 吃了{item.dish}
-                    {item.rating && <span className="social-feed-rating">{'★'.repeat(item.rating)}</span>}
-                  </div>
-                )}
-                {item.source === 'social' && item.feedType === 'gift' && (
-                  <div className="social-feed-text">
-                    请 <span className="social-feed-gift-to">{item.giftToAvatar} {item.giftTo}</span> 喝了一杯 <strong>{item.giftDish}</strong>
-                    <span className="social-feed-gift-tag">请Ta吃</span>
-                  </div>
-                )}
-                {item.source === 'social' && item.feedType === 'spin' && (
-                  <div className="social-feed-text">
-                    转盘选中了 <strong>{item.restaurantName}</strong>
-                  </div>
-                )}
-                {item.source === 'review' && (
-                  <div className="social-feed-text">
-                    在 <strong>{item.restaurantName}</strong> 打卡
-                    {item.rating && <span className="social-feed-rating">{'★'.repeat(item.rating)}</span>}
-                  </div>
-                )}
-                {item.source === 'social' && item.comment && (
-                  <div className="social-feed-comment">"{item.comment}"</div>
-                )}
-                {item.source === 'review' && item.reviewContent && (
-                  <div className="social-feed-comment">"{item.reviewContent.slice(0, 50)}{(item.reviewContent.length || 0) > 50 ? '...' : ''}"</div>
-                )}
-              </div>
-              <div className="social-feed-footer">
-                <div className="social-feed-restaurant">
-                  {item.restaurantImage && <img className="social-feed-restaurant-img" src={item.restaurantImage} alt="" />}
-                  <span>{item.restaurantName}</span>
-                </div>
-                <span className="social-feed-likes">{item.likes} 赞</span>
               </div>
             </div>
           ))}

@@ -3638,9 +3638,42 @@ ul, ol {
   transform: scale(0.96);
 }
 
-/* 明日翻牌投票 */
+/* 明日翻牌投票 - 收起式入口 */
+.flip-vote-collapsed {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0 16px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #FFF8E1, #FFF3CD);
+  border-radius: 10px;
+  cursor: pointer;
+  margin-top: -6px;
+  margin-bottom: 14px;
+}
+.flip-vote-collapsed-text {
+  flex: 1;
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #333;
+}
+.flip-vote-collapsed-count {
+  font-size: 0.78rem;
+  color: #999;
+}
+.flip-vote-collapsed-arrow {
+  font-size: 1rem;
+  color: #999;
+  transition: transform 0.2s;
+  font-weight: 600;
+}
+.flip-vote-collapsed-arrow.expanded {
+  transform: rotate(90deg);
+}
+
+/* 明日翻牌投票 - 展开内容 */
 .flip-vote {
-  margin-top: 14px;
+  margin-top: 0;
   margin-bottom: 14px;
 }
 
@@ -4008,6 +4041,85 @@ ul, ol {
 }
 
 .group-order-tags-bar::-webkit-scrollbar { display: none; }
+
+/* 同学圈横滑动态条 */
+.group-social-strip {
+  margin: 0 16px 14px;
+}
+.group-social-strip-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+.group-social-strip-title {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #2D3748;
+}
+.group-social-strip-tag {
+  font-size: 0.7rem;
+  padding: 1px 6px;
+  background: #E8F5E9;
+  color: #06C167;
+  border-radius: 4px;
+  font-weight: 500;
+}
+.group-social-strip-scroll {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding-bottom: 4px;
+}
+.group-social-strip-scroll::-webkit-scrollbar { display: none; }
+.group-social-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 220px;
+  max-width: 260px;
+  padding: 8px 12px;
+  background: #F7FAFC;
+  border-radius: 10px;
+  border: 1px solid #EDF2F7;
+  cursor: pointer;
+  scroll-snap-align: start;
+  flex-shrink: 0;
+}
+.group-social-chip:active {
+  background: #EDF2F7;
+}
+.group-social-chip-avatar {
+  font-size: 1.3rem;
+  flex-shrink: 0;
+}
+.group-social-chip-content {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.group-social-chip-name {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #2D3748;
+}
+.group-social-chip-text {
+  font-size: 0.72rem;
+  color: #718096;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.group-social-chip-time {
+  font-size: 0.68rem;
+  color: #A0AEC0;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
 
 .group-tag-filter {
   padding: 6px 14px;

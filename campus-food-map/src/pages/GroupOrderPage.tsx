@@ -5,6 +5,7 @@ import { restaurants } from '../data/restaurants'
 import { getGroupOrders, GroupOrderPost, GroupOrderMode, GroupOrderUser, onlineTags, offlineTags } from '../data/groupOrders'
 import { getDefaultInitiator, getFriends, addFriend, isFriend } from '../services/profile'
 import { addGroupOrderHistory } from '../services/history'
+import { getUnifiedFeed, formatFeedTime } from '../data/socialFeed'
 
 interface Props {
   university: University | 'all'
@@ -59,6 +60,11 @@ export default function GroupOrderPage({ university }: Props) {
   }, [university, mode, activeTag, userPosts])
 
   const currentTags = mode === 'online' ? onlineTags : offlineTags
+
+  // 同学圈动态
+  const socialFeed = useMemo(() => {
+    return getUnifiedFeed(university === 'all' ? undefined : university, 6)
+  }, [university])
 
   const handleJoin = (post: GroupOrderPost) => {
     if (joinedIds.has(post.id)) return
@@ -248,6 +254,37 @@ export default function GroupOrderPage({ university }: Props) {
           </span>
         ))}
       </div>
+
+      {/* 同学圈 - 横滑动态条 */}
+      {socialFeed.length > 0 && (
+        <div className="group-social-strip">
+          <div className="group-social-strip-header">
+            <span className="group-social-strip-title">同学动态</span>
+            <span className="group-social-strip-tag">实时</span>
+          </div>
+          <div className="group-social-strip-scroll">
+            {socialFeed.map(item => (
+              <div
+                key={item.id}
+                className="group-social-chip"
+                onClick={() => navigate(`/restaurant/${item.restaurantId}`)}
+              >
+                <span className="group-social-chip-avatar">{item.user.avatar}</span>
+                <div className="group-social-chip-content">
+                  <span className="group-social-chip-name">{item.user.name}</span>
+                  <span className="group-social-chip-text">
+                    {item.source === 'social' && item.feedType === 'checkin' && `在${item.restaurantName}打卡`}
+                    {item.source === 'social' && item.feedType === 'gift' && `请${item.giftTo}吃${item.giftDish}`}
+                    {item.source === 'social' && item.feedType === 'spin' && `转盘选中${item.restaurantName}`}
+                    {item.source === 'review' && `评价了${item.restaurantName}`}
+                  </span>
+                </div>
+                <span className="group-social-chip-time">{formatFeedTime(item.minutesAgo)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* 拼单列表 */}
       <div className="group-order-list">
