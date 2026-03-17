@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { University, PriceRange, Category } from '../types'
 import { ChatMessage, APIMessage, GuideOption } from '../types/chat'
-import { sendMessageStream, getMealPeriod, getGuideRecommendation, getAvailableCategories, DiningMode } from '../services/ai'
+import { sendMessageStream, getMealPeriod, getGuideRecommendation, DiningMode } from '../services/ai'
 import RestaurantListItem from './RestaurantListItem'
 
 interface Props {
@@ -369,15 +369,14 @@ export default function ChatAgent({ university }: Props) {
       const newState: GuideState = { ...guideState, step: 'taste', budget }
       setGuideState(newState)
 
-      // 动态生成可选品类
-      const categories = getAvailableCategories({
-        mode: guideState.mode,
-        mealTime: guideState.mealTime,
-        scene: guideState.scene,
-        priceRange: budget,
-        university,
-      })
-      const tasteOptions: GuideOption[] = categories.map(cat => ({
+      // 展示所有品类选项，让用户自由选择
+      const allCategories: Category[] = [
+        '中餐', '西餐', '日料', '韩餐',
+        '火锅', '烧烤', '小吃', '快餐',
+        '饮品', '甜点', '面食', '粥店',
+        '东南亚', '其他',
+      ]
+      const tasteOptions: GuideOption[] = allCategories.map(cat => ({
         id: cat,
         emoji: getCategoryEmoji(cat),
         label: cat,
