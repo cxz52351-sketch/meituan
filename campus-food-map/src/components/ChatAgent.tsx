@@ -193,6 +193,16 @@ function nextMsgId(): string {
   return `guide-${Date.now()}-${_msgIdCounter++}`
 }
 
+// 简单的 markdown 渲染：支持 **粗体**
+function renderMarkdown(text: string) {
+  return text.split(/(\*\*[^*]+\*\*)/).map((part, i) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <strong key={i}>{part.slice(2, -2)}</strong>
+    }
+    return part
+  })
+}
+
 export default function ChatAgent({ university }: Props) {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
@@ -664,7 +674,7 @@ export default function ChatAgent({ university }: Props) {
 
                 {(msg.role === 'user' ? msg.content : displayText) && (
                   <div className={`chat-bubble chat-bubble-${msg.role}${msg.status === 'streaming' ? ' chat-bubble-streaming' : ''}`}>
-                    {msg.role === 'user' ? msg.content : displayText}
+                    {msg.role === 'user' ? msg.content : renderMarkdown(displayText)}
                   </div>
                 )}
 
