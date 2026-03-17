@@ -118,7 +118,6 @@ export default function RankPage({ university }: Props) {
       attributionControl: false,
       dragging: true,
       scrollWheelZoom: true,
-      pinchZoom: true,
       touchZoom: true,
       doubleClickZoom: true,
     })
