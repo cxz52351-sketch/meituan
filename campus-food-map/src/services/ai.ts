@@ -533,7 +533,6 @@ export function getGuideRecommendation(filters: GuideFilters): GuideRecommendati
     .slice(0, 20)
   const recentRestIds = new Set(recentHistory.map(h => h.restaurantId))
   const recentCats = recentHistory.map(h => h.category)
-  const recentCatsSet = new Set(recentCats)
 
   const profile = filters.personal?.profile
   const dna = filters.personal?.tasteDNA
