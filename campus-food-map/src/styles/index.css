@@ -2471,6 +2471,62 @@ ul, ol {
   font-size: 0.75rem;
 }
 
+/* ========== DetailPage AI 一句话点评 ========== */
+
+.detail-ai-comment {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #FFF8E1, #FFF3CD);
+  border-radius: var(--radius-lg);
+  margin-bottom: 14px;
+}
+
+.detail-ai-comment-badge {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #667EEA, #764BA2);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.detail-ai-comment-text {
+  font-size: 0.85rem;
+  color: var(--gray-700);
+  line-height: 1.5;
+}
+
+/* ========== RankPage AI 榜单洞察 ========== */
+
+.rank-ai-insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 10px 14px;
+  background: linear-gradient(135deg, #FFF8E1, #FFF3CD);
+  border-radius: var(--radius-lg);
+  margin-bottom: 14px;
+}
+
+.rank-ai-insight-badge {
+  flex-shrink: 0;
+  font-size: 0.6rem;
+  font-weight: 800;
+  color: #fff;
+  background: linear-gradient(135deg, #667EEA, #764BA2);
+  padding: 2px 8px;
+  border-radius: var(--radius-sm);
+}
+
+.rank-ai-insight-text {
+  font-size: 0.85rem;
+  color: var(--gray-700);
+  line-height: 1.5;
+}
+
 /* ========== AI 推荐理由（随机页/卡片通用） ========== */
 
 .ai-reason {
@@ -3645,7 +3701,7 @@ ul, ol {
   gap: 8px;
   margin: 0 16px;
   padding: 10px 14px;
-  background: linear-gradient(135deg, #FFF8E1, #FFF3CD);
+  background: transparent;
   border-radius: 10px;
   cursor: pointer;
   margin-top: -6px;
@@ -5709,6 +5765,106 @@ ul, ol {
   color: var(--green);
   font-weight: 500;
   flex-shrink: 0;
+}
+
+/* ==================== 口味DNA迷你卡片（首页） ==================== */
+
+.taste-dna-mini {
+  margin: 10px 0;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, #F3E8FF 0%, #EDE9FE 50%, #FFF7ED 100%);
+  border-radius: var(--radius-xl);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  cursor: pointer;
+  border: 1.5px solid #DDD6FE;
+  transition: box-shadow 0.2s;
+}
+
+.taste-dna-mini:active {
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.2);
+}
+
+.taste-dna-mini-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.taste-dna-mini-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, #8B5CF6, #A78BFA);
+  color: #fff;
+  font-size: 0.6rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.taste-dna-mini-title {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #4C1D95;
+}
+
+.taste-dna-mini-labels {
+  display: flex;
+  gap: 5px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.taste-dna-mini-chip {
+  padding: 2px 8px;
+  background: rgba(139, 92, 246, 0.12);
+  border-radius: var(--radius-full);
+  font-size: 0.7rem;
+  color: #6D28D9;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.taste-dna-mini-arrow {
+  margin-left: auto;
+  font-size: 0.72rem;
+  color: #7C3AED;
+  font-weight: 500;
+  flex-shrink: 0;
+  white-space: nowrap;
+}
+
+/* ==================== 美团券折叠按钮 ==================== */
+
+.profile-meituan-coupon-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 8px 0 2px;
+  font-size: 0.76rem;
+  color: #B8860B;
+  font-weight: 500;
+  cursor: pointer;
+  border-top: 1px solid rgba(255, 224, 130, 0.5);
+  margin-top: 10px;
+}
+
+.profile-meituan-coupon-arrow {
+  display: inline-block;
+  transition: transform 0.2s;
+  font-size: 0.82rem;
+}
+
+.profile-meituan-coupon-arrow.expanded {
+  transform: rotate(90deg);
 }
 
 /* ==================== 拼单页好友功能 ==================== */

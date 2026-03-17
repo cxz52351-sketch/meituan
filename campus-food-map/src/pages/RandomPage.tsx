@@ -621,7 +621,7 @@ export default function RandomPage({ university }: Props) {
         {mode === 'blind' ? '盲盒开箱' : mode === 'group' ? '聚餐决策' : '今天吃什么？'}
       </h1>
       <p style={{ color: '#718096', marginBottom: '20px', fontSize: '0.9rem' }}>
-        {mode === 'blind' ? `${greeting}，AI已为你精选，转一下试试运气！`
+        {mode === 'blind' ? `${greeting}，团子已为你精选，转一下试试运气！`
           : mode === 'group' ? '每人选一家，让转盘公平裁决！'
           : '让命运来决定！'}
       </p>
@@ -654,7 +654,7 @@ export default function RandomPage({ university }: Props) {
       {/* 盲盒模式提示 */}
       {mode === 'blind' && !result && (
         <div className="blind-hint">
-          <span>AI 已根据{greeting.includes('早') ? '早餐' : greeting.includes('午') ? '午餐' : greeting.includes('下午') ? '下午茶' : greeting.includes('晚') ? '晚餐' : '宵夜'}时段为你精选了 {blindPicks.length} 家餐厅</span>
+          <span>团子已根据{greeting.includes('早') ? '早餐' : greeting.includes('午') ? '午餐' : greeting.includes('下午') ? '下午茶' : greeting.includes('晚') ? '晚餐' : '宵夜'}时段为你精选了 {blindPicks.length} 家餐厅</span>
           <button className="blind-refresh" onClick={refreshBlindBox}>换一批</button>
         </div>
       )}
@@ -731,7 +731,7 @@ export default function RandomPage({ university }: Props) {
       {result && !isSpinning && (
         <div className="random-result">
           <div className="ai-reason">
-            <span className="ai-reason-icon">AI</span>
+            <span className="ai-reason-icon">团子</span>
             <span className="ai-reason-text">
               {mode === 'group' ? '命运之选！大家一起去：' : '选它是因为：'}{aiReason}
             </span>

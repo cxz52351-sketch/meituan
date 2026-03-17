@@ -6,6 +6,8 @@ import { getTodayFlip, getTomorrowCandidates } from '../data/deals'
 import { getMealPeriod } from '../services/ai'
 import RestaurantCard from '../components/RestaurantCard'
 import { addFlipHistory } from '../services/history'
+import { getProfile } from '../services/profile'
+import { computeTasteDNA } from '../services/tasteDNA'
 
 interface Props {
   university: University | 'all'
@@ -27,6 +29,12 @@ function isOpenNow(r: Restaurant): boolean {
 export default function HomePage({ university }: Props) {
   const navigate = useNavigate()
   const { period } = getMealPeriod()
+
+  // 口味DNA迷你卡片
+  const tasteDNA = useMemo(() => {
+    const profile = getProfile()
+    return computeTasteDNA(profile)
+  }, [])
 
   const filteredRestaurants = university === 'all'
     ? restaurants
@@ -203,7 +211,7 @@ export default function HomePage({ university }: Props) {
       {/* 明天翻牌投票 - 收起式入口 */}
       <div className="flip-vote-collapsed" onClick={() => setShowVoteExpand(!showVoteExpand)}>
         <span className="flip-vote-collapsed-text">
-          🗳️ 明天翻牌哪家？{votedId ? '已投票' : '去投票'}
+          明天翻牌哪家？{votedId ? '已投票' : '去投票'}
         </span>
         <span className="flip-vote-collapsed-count">
           {[...tomorrowCandidates, ...userCandidates].length}家候选
@@ -337,6 +345,32 @@ export default function HomePage({ university }: Props) {
           </div>
         </div>
         <span className="ai-search-card-btn">试一试</span>
+      </div>
+
+      {/* 口味DNA迷你卡片 */}
+      <div className="taste-dna-mini" onClick={() => navigate('/profile')}>
+        {tasteDNA ? (
+          <>
+            <div className="taste-dna-mini-left">
+              <span className="taste-dna-mini-badge">团子</span>
+              <span className="taste-dna-mini-title">你的口味基因</span>
+            </div>
+            <div className="taste-dna-mini-labels">
+              {tasteDNA.labels.slice(0, 3).map(label => (
+                <span key={label} className="taste-dna-mini-chip">{label}</span>
+              ))}
+            </div>
+            <span className="taste-dna-mini-arrow">查看完整DNA ›</span>
+          </>
+        ) : (
+          <>
+            <div className="taste-dna-mini-left">
+              <span className="taste-dna-mini-badge">团子</span>
+              <span className="taste-dna-mini-title">团子还不了解你</span>
+            </div>
+            <span className="taste-dna-mini-arrow">多逛逛解锁口味DNA ›</span>
+          </>
+        )}
       </div>
 
       {/* 同学在点 - 实时订单动态 */}

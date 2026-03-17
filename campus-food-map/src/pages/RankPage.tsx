@@ -2,6 +2,33 @@ import { useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { University, Restaurant } from '../types'
 import { restaurants, rankLists } from '../data/restaurants'
+import { getMealPeriod } from '../services/ai'
+
+// AI 榜单洞察（本地生成）
+function getAiRankInsight(rankId: string, list: Restaurant[]): string {
+  const { period } = getMealPeriod()
+  const top = list[0]
+  if (!top) return ''
+
+  switch (rankId) {
+    case 'rating':
+      return `口碑之王「${top.name}」${top.rating}分领跑，${top.weeklyStudentOrders}位同学本周下单验证`
+    case 'repurchase':
+      return `「${top.name}」复购率${Math.round(top.repurchaseRate * 100)}%，每10个吃过的同学有${Math.round(top.repurchaseRate * 10)}个回头`
+    case 'budget':
+      return `${period}省钱攻略：「${top.name}」实付仅¥${top.actualPayPrice}，${top.studentDiscount ? '叠加' + top.studentDiscount + '更划算' : '满减后超值'}`
+    case 'fast':
+      return `赶课赶DDL？「${top.name}」${top.avgDeliveryMinutes}分钟出餐，吃完不迟到`
+    case 'late':
+      return `深夜肚子咕咕叫？「${top.name}」营业到${top.closeTime}，${top.rating}分好评`
+    case 'date':
+      return `约会别踩雷，「${top.name}」环境氛围在线，${top.rating}分口碑有保障`
+    case 'group':
+      return `聚餐选「${top.name}」，人均¥${top.avgPrice}，${top.features.includes('有包间') ? '有包间不怕吵' : '适合多人聚餐'}`
+    default:
+      return `${period}推荐关注「${top.name}」，综合评分${top.rating}分`
+  }
+}
 
 interface Props {
   university: University | 'all'
@@ -94,6 +121,14 @@ export default function RankPage({ university }: Props) {
         <div className="title">{currentRank.title}</div>
         <div className="desc">{currentRank.description}</div>
       </div>
+
+      {/* AI 榜单洞察 */}
+      {filteredRestaurants.length > 0 && (
+        <div className="rank-ai-insight">
+          <span className="rank-ai-insight-badge">团子</span>
+          <span className="rank-ai-insight-text">{getAiRankInsight(currentRankId, filteredRestaurants)}</span>
+        </div>
+      )}
 
       {/* 榜单列表 */}
       {filteredRestaurants.length > 0 ? (
