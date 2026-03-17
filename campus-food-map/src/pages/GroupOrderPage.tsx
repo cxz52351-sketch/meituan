@@ -1,7 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { University } from '../types'
-import { restaurants } from '../data/restaurants'
+import { restaurants, universities } from '../data/restaurants'
 import { getGroupOrders, GroupOrderPost, GroupOrderMode, GroupOrderUser, onlineTags, offlineTags } from '../data/groupOrders'
 import { getDefaultInitiator, getFriends, addFriend, isFriend } from '../services/profile'
 import { addGroupOrderHistory } from '../services/history'
@@ -38,6 +38,13 @@ export default function GroupOrderPage({ university }: Props) {
   const [showPublishToast, setShowPublishToast] = useState(false)
   const [activeFeedItem, setActiveFeedItem] = useState<UnifiedFeedItem | null>(null)
 
+  // 加入线上拼单确认弹窗
+  const [joinConfirmPost, setJoinConfirmPost] = useState<GroupOrderPost | null>(null)
+  const [joinAddress, setJoinAddress] = useState('')
+  const [joinBuilding, setJoinBuilding] = useState('')
+  const [joinTimeSlot, setJoinTimeSlot] = useState('')
+  const [joinNote, setJoinNote] = useState('')
+
   const availableRestaurants = useMemo(() => {
     if (university === 'all') return restaurants
     return restaurants.filter(r => r.university === university)
@@ -69,7 +76,43 @@ export default function GroupOrderPage({ university }: Props) {
 
   const handleJoin = (post: GroupOrderPost) => {
     if (joinedIds.has(post.id)) return
-    setJoinedIds(prev => new Set(prev).add(post.id))
+    if (post.mode === 'online') {
+      // 线上拼单需要确认配送信息
+      setJoinConfirmPost(post)
+      setJoinAddress(university !== 'all' ? university : '')
+      setJoinBuilding('')
+      setJoinTimeSlot('')
+      setJoinNote('')
+    } else {
+      // 线下拼单直接加入
+      setJoinedIds(prev => new Set(prev).add(post.id))
+      addGroupOrderHistory({
+        id: `join-${post.id}-${Date.now()}`,
+        mode: post.mode,
+        restaurantName: post.restaurantName,
+        restaurantId: post.restaurantId,
+        targetPeople: post.targetPeople,
+        message: `加入了${post.initiator.name}的拼单`,
+        tags: post.tags,
+        timestamp: Date.now(),
+      })
+    }
+  }
+
+  const handleConfirmJoin = () => {
+    if (!joinConfirmPost || !joinAddress || !joinTimeSlot) return
+    setJoinedIds(prev => new Set(prev).add(joinConfirmPost.id))
+    addGroupOrderHistory({
+      id: `join-${joinConfirmPost.id}-${Date.now()}`,
+      mode: joinConfirmPost.mode,
+      restaurantName: joinConfirmPost.restaurantName,
+      restaurantId: joinConfirmPost.restaurantId,
+      targetPeople: joinConfirmPost.targetPeople,
+      message: `加入拼单 · 送至${joinAddress}${joinBuilding ? ' ' + joinBuilding : ''} · ${joinTimeSlot}`,
+      tags: joinConfirmPost.tags,
+      timestamp: Date.now(),
+    })
+    setJoinConfirmPost(null)
   }
 
   const currentPeople = (post: GroupOrderPost) => {
@@ -558,6 +601,83 @@ export default function GroupOrderPage({ university }: Props) {
       {/* 发布成功提示 */}
       {showPublishToast && (
         <div className="toast">拼单发布成功！同校同学已收到通知</div>
+      )}
+
+      {/* 线上拼单加入确认弹窗 */}
+      {joinConfirmPost && (
+        <div className="feed-detail-overlay" onClick={() => setJoinConfirmPost(null)}>
+          <div className="join-confirm-sheet" onClick={e => e.stopPropagation()}>
+            <div className="feed-detail-handle" />
+            <div className="join-confirm-title">
+              <h3>确认配送信息</h3>
+              <span className="join-confirm-restaurant">📦 {joinConfirmPost.restaurantName}</span>
+            </div>
+
+            <div className="join-confirm-fields">
+              {/* 配送地址 */}
+              <div className="join-confirm-field">
+                <label>配送到哪个学校</label>
+                <div className="join-confirm-uni-list">
+                  {universities.map(u => (
+                    <span
+                      key={u.name}
+                      className={`join-confirm-uni-chip ${joinAddress === u.name ? 'active' : ''}`}
+                      onClick={() => setJoinAddress(u.name)}
+                    >
+                      {u.shortName}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* 楼栋 */}
+              <div className="join-confirm-field">
+                <label>宿舍/楼栋号</label>
+                <input
+                  type="text"
+                  placeholder="如：学5楼203、知行公寓2号楼"
+                  value={joinBuilding}
+                  onChange={e => setJoinBuilding(e.target.value)}
+                />
+              </div>
+
+              {/* 期望时间 */}
+              <div className="join-confirm-field">
+                <label>期望送达时间</label>
+                <div className="join-confirm-time-list">
+                  {['尽快送达', '11:30-12:00', '12:00-12:30', '17:30-18:00', '18:00-18:30', '18:30-19:00'].map(slot => (
+                    <span
+                      key={slot}
+                      className={`join-confirm-time-chip ${joinTimeSlot === slot ? 'active' : ''}`}
+                      onClick={() => setJoinTimeSlot(slot)}
+                    >
+                      {slot}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* 备注 */}
+              <div className="join-confirm-field">
+                <label>备注 <span className="join-confirm-optional">选填</span></label>
+                <input
+                  type="text"
+                  placeholder="如：放门口、不要辣、加餐具"
+                  value={joinNote}
+                  onChange={e => setJoinNote(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <button
+              className={`join-confirm-btn ${!joinAddress || !joinTimeSlot ? 'btn-disabled' : ''}`}
+              onClick={handleConfirmJoin}
+              disabled={!joinAddress || !joinTimeSlot}
+            >
+              确认加入拼单
+            </button>
+          </div>
+        </div>
       )}
 
       {/* 动态详情弹窗 */}
