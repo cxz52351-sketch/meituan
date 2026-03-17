@@ -5,12 +5,188 @@ import { restaurants, rankLists } from '../data/restaurants'
 import { getTodayFlip, getTomorrowCandidates } from '../data/deals'
 import { getMealPeriod } from '../services/ai'
 import RestaurantCard from '../components/RestaurantCard'
-import { addFlipHistory } from '../services/history'
+import { addFlipHistory, getRandomHistory, getVisitHistory, getGiftHistory } from '../services/history'
+import { getLatestReviews } from '../data/reviews'
 import { getProfile } from '../services/profile'
 import { computeTasteDNA } from '../services/tasteDNA'
 
 interface Props {
   university: University | 'all'
+}
+
+interface SmartPickResult {
+  restaurant: Restaurant
+  reason: string
+}
+
+type ReasonType = 'base' | 'taste' | 'price' | 'platform' | 'dna' | 'social'
+
+function computeSmartPicks(pool: Restaurant[], university: University | 'all'): SmartPickResult[] {
+  const profile = getProfile()
+  const randomHistory = getRandomHistory()
+  const visitHistory = getVisitHistory()
+  const giftHistory = getGiftHistory()
+  const dna = computeTasteDNA(profile)
+
+  // 构建品类频率表（浏览+随机+礼物）
+  const categoryFreq: Record<string, number> = {}
+  const allHistory = [
+    ...visitHistory.map(h => ({ category: h.category, price: h.avgPrice, id: h.restaurantId, ts: h.timestamp })),
+    ...randomHistory.map(h => ({ category: h.category, price: h.avgPrice, id: h.restaurantId, ts: h.timestamp })),
+    ...giftHistory.map(h => ({ category: '', price: 0, id: h.restaurantId, ts: h.timestamp })),
+  ]
+  for (const h of allHistory) {
+    if (h.category) categoryFreq[h.category] = (categoryFreq[h.category] || 0) + 1
+  }
+  const totalCatCount = Object.values(categoryFreq).reduce((a, b) => a + b, 0)
+
+  // 历史平均消费
+  const historyPrices = allHistory.map(h => h.price).filter(p => p > 0)
+  const avgHistoryPrice = historyPrices.length > 0
+    ? historyPrices.reduce((a, b) => a + b, 0) / historyPrices.length
+    : 0
+
+  // 最近访问map（去重惩罚用）
+  const lastVisitMap: Record<string, number> = {}
+  for (const h of allHistory) {
+    if (!lastVisitMap[h.id] || h.ts > lastVisitMap[h.id]) {
+      lastVisitMap[h.id] = h.ts
+    }
+  }
+
+  // 同校评论活跃度
+  const recentReviews = getLatestReviews(50, university === 'all' ? undefined : university)
+  const reviewCountByRestaurant: Record<string, number> = {}
+  for (const r of recentReviews) {
+    reviewCountByRestaurant[r.restaurantId] = (reviewCountByRestaurant[r.restaurantId] || 0) + 1
+  }
+
+  const hour = new Date().getHours()
+  const hasHistory = allHistory.length > 0
+
+  const scored = pool.map(r => {
+    let bestSignal: ReasonType = 'base'
+    let bestSignalScore = 0
+
+    // 1. 基础分（25分满）: rating + 时段 + 营业状态
+    let base = r.rating * 2 // 8~10分 → 16~20
+    if (isOpenNow(r)) base += 3
+    if (hour >= 5 && hour < 10 && r.features.includes('快速出餐')) base += 2
+    if (hour >= 10 && hour < 14 && r.priceRange !== 'premium') base += 1.5
+    if (hour >= 14 && hour < 17 && (r.category === '饮品' || r.category === '甜点')) base += 3
+    if (hour >= 17 && hour < 21) base += 1
+    if ((hour >= 21 || hour < 5) && r.scenes.includes('深夜')) base += 4
+    base = Math.min(base, 25)
+
+    // 2. 口味匹配（25分满）: 品类频率 + diningTags
+    let taste = 0
+    if (totalCatCount > 0) {
+      const catScore = (categoryFreq[r.category] || 0) / totalCatCount
+      taste += catScore * 18
+    }
+    if (profile?.diningTags) {
+      const tagMatches = profile.diningTags.filter(tag =>
+        r.tags.some(rt => rt.includes(tag) || tag.includes(rt)) ||
+        r.category.includes(tag) || tag.includes(r.category)
+      ).length
+      taste += Math.min(tagMatches * 3, 7)
+    }
+    if (!hasHistory && !profile) taste = 12.5 // 中性分
+    taste = Math.min(taste, 25)
+    if (taste > bestSignalScore && taste > 12.5) { bestSignalScore = taste; bestSignal = 'taste' }
+
+    // 3. 价格匹配（15分满）: 历史消费 vs 实付价
+    let price = 0
+    if (avgHistoryPrice > 0) {
+      const priceDiff = Math.abs(r.actualPayPrice - avgHistoryPrice)
+      price = Math.max(15 - priceDiff * 0.5, 2)
+    } else {
+      price = 7.5 // 中性分
+    }
+    price = Math.min(price, 15)
+    if (price > bestSignalScore * (15 / 25) && avgHistoryPrice > 0) { bestSignalScore = price * (25 / 15); bestSignal = 'price' }
+
+    // 4. 美团数据（15分满）: repurchaseRate + weeklyStudentOrders
+    let platform = r.repurchaseRate * 10 + Math.min(r.weeklyStudentOrders / 100, 5)
+    platform = Math.min(platform, 15)
+    if (platform > bestSignalScore * (15 / 25)) { bestSignalScore = platform * (25 / 15); bestSignal = 'platform' }
+
+    // 5. DNA契合（10分满）: 5维度匹配
+    let dnaScore = 5 // 中性分
+    if (dna) {
+      const dims = dna.dimensions
+      const spice = dims.find(d => d.label === '辣味')?.score || 0
+      const budgetDim = dims.find(d => d.label === '省钱')?.score || 0
+      const socialDim = dims.find(d => d.label === '社牛')?.score || 0
+      const exploreDim = dims.find(d => d.label === '探店')?.score || 0
+
+      let match = 0
+      // 辣味DNA高 → 加分火锅/烧烤
+      if (spice >= 60 && ['火锅', '烧烤', '中餐'].includes(r.category)) match += 3
+      // 省钱DNA高 → 加分低价
+      if (budgetDim >= 60 && r.priceRange === 'budget') match += 2.5
+      // 社牛DNA高 → 加分聚餐场景
+      if (socialDim >= 50 && r.scenes.some(s => ['聚餐', '和室友'].includes(s))) match += 2
+      // 探店DNA高 → 未去过的加分
+      if (exploreDim >= 50 && !lastVisitMap[r.id]) match += 2.5
+      dnaScore = Math.min(match + 2, 10)
+    }
+    if (dnaScore > bestSignalScore * (10 / 25) && dna) { bestSignalScore = dnaScore * (25 / 10); bestSignal = 'dna' }
+
+    // 6. 社交热度（10分满）: 同校评论活跃度
+    const reviewCount = reviewCountByRestaurant[r.id] || 0
+    const social = Math.min(reviewCount * 4 + 1, 10)
+    if (social > bestSignalScore * (10 / 25)) { bestSignalScore = social * (25 / 10); bestSignal = 'social' }
+
+    // 去重惩罚（0~30）: 最近去过的降权
+    let penalty = 0
+    const lastVisit = lastVisitMap[r.id]
+    if (lastVisit) {
+      const hoursSince = (Date.now() - lastVisit) / (1000 * 60 * 60)
+      if (hoursSince < 6) penalty = 30
+      else if (hoursSince < 24) penalty = 20
+      else if (hoursSince < 72) penalty = 10
+      else penalty = 3
+    }
+
+    const total = base + taste + price + platform + dnaScore + social - penalty
+
+    // 生成推荐理由候选列表（按信号强度排序，用于去重降级）
+    const reasonMap: Record<ReasonType, string> = {
+      taste: `你爱吃的${r.category}类`,
+      price: `符合你¥${Math.round(avgHistoryPrice)}的日常`,
+      platform: `${Math.round(r.repurchaseRate * 100)}%同学回头客`,
+      dna: '口味DNA匹配',
+      social: '本校同学都在吃',
+      base: r.distance <= 200 ? `走路${r.walkTime}分钟就到`
+        : r.rating >= 4.5 ? `${r.rating}分口碑好评`
+        : r.actualPayPrice <= 15 ? `实付仅¥${r.actualPayPrice}`
+        : r.tags[0],
+    }
+
+    // 按维度得分排序，bestSignal优先
+    const signalOrder: ReasonType[] = [bestSignal, 'taste', 'platform', 'social', 'dna', 'price', 'base']
+      .filter((v, i, a) => a.indexOf(v) === i) as ReasonType[]
+
+    return { restaurant: r, score: total, reasonMap, signalOrder }
+  })
+
+  // 排序取 top3，理由去重降级
+  const top = scored.sort((a, b) => b.score - a.score).slice(0, 3)
+  const usedReasons = new Set<string>()
+  return top.map(s => {
+    let reason = ''
+    for (const signal of s.signalOrder) {
+      const candidate = s.reasonMap[signal]
+      if (!usedReasons.has(candidate)) {
+        reason = candidate
+        usedReasons.add(candidate)
+        break
+      }
+    }
+    if (!reason) reason = s.reasonMap.base // 最终兜底
+    return { restaurant: s.restaurant, reason }
+  })
 }
 
 function isOpenNow(r: Restaurant): boolean {
@@ -89,30 +265,12 @@ export default function HomePage({ university }: Props) {
     return () => clearInterval(timer)
   }, [])
 
-  // 智能推荐：基于当前时间 + 营业状态 + 评分加权
+  // 智能推荐：6维度加权（基础+口味+价格+美团数据+DNA+社交-去重惩罚）
   const smartPicks = useMemo(() => {
     const open = filteredRestaurants.filter(isOpenNow)
     const pool = open.length >= 3 ? open : filteredRestaurants
-
-    // 按场景加权
-    const scored = pool.map((r, index) => {
-      let score = r.rating * 10
-      if (isOpenNow(r)) score += 20
-      const hour = new Date().getHours()
-      if (hour >= 5 && hour < 10 && r.features.includes('快速出餐')) score += 15
-      if (hour >= 10 && hour < 14 && r.priceRange !== 'premium') score += 10
-      if (hour >= 14 && hour < 17 && (r.category === '饮品' || r.category === '甜点')) score += 20
-      if (hour >= 17 && hour < 21) score += 5
-      if ((hour >= 21 || hour < 5) && r.scenes.includes('深夜')) score += 25
-      score += (index % 7) // 稳定的微小区分度
-      return { restaurant: r, score }
-    })
-
-    return scored
-      .sort((a, b) => b.score - a.score)
-      .slice(0, 3)
-      .map(s => s.restaurant)
-  }, [filteredRestaurants])
+    return computeSmartPicks(pool, university)
+  }, [filteredRestaurants, university])
 
   // 今日翻牌餐厅的图片
   const flipRestaurant = useMemo(() => {
@@ -123,16 +281,6 @@ export default function HomePage({ university }: Props) {
     .sort((a, b) => a.distance - b.distance)
     .slice(0, 6)
 
-  // 推荐理由生成（基于美团交易数据）
-  function getRecommendReason(r: Restaurant): string {
-    if (r.repurchaseRate >= 0.65) return `${Math.round(r.repurchaseRate * 100)}%同学回头客`
-    if (r.weeklyStudentOrders >= 400) return `本周${r.weeklyStudentOrders}位同学下单`
-    if (r.actualPayPrice <= 15) return `实付仅¥${r.actualPayPrice}，满减后超值`
-    if (r.distance <= 200) return `走路${r.walkTime}分钟就到`
-    if (r.rating >= 4.5) return `${r.rating}分口碑好评`
-    if (r.studentDiscount) return `🎫 ${r.studentDiscount}`
-    return r.tags[0]
-  }
 
   return (
     <div className="page">
@@ -398,7 +546,7 @@ export default function HomePage({ university }: Props) {
           <span className="section-tag">{period}推荐</span>
         </div>
         <div className="smart-picks">
-          {smartPicks.map((r) => (
+          {smartPicks.map(({ restaurant: r, reason }) => (
             <div
               key={r.id}
               className="smart-pick-card"
@@ -411,7 +559,7 @@ export default function HomePage({ university }: Props) {
                   <span className="smart-pick-price">¥{r.avgPrice}/人</span>
                   <span className="smart-pick-rating">{r.rating}分</span>
                 </div>
-                <div className="smart-pick-reason">{getRecommendReason(r)}</div>
+                <div className="smart-pick-reason">{reason}</div>
               </div>
             </div>
           ))}
