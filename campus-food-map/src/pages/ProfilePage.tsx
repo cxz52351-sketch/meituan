@@ -180,10 +180,6 @@ export default function ProfilePage({ university }: Props) {
   }, []);
 
   // ===== AI 口味 DNA 分析 =====
-  const tasteDNA = useMemo(
-    () => computeTasteDNA(profile),
-    [randomHistory, visitHistory, groupHistory, flipHistory, friends, profile],
-  );
   const userInsights = useMemo(
     () => getUserInsights(),
     [randomHistory, visitHistory, groupHistory, flipHistory, friends],
