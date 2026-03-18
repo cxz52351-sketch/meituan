@@ -985,9 +985,6 @@ export default function ProfilePage({ university }: Props) {
                   src="/tuanzi.png"
                   alt="团子"
                 />
-                <p className="profile-tuanzi-hero-text">
-                  这是团子眼中的你，你愿意补充更多关于你的信息，让团子更懂你，成为你更得力的吃饭小助手嘛～
-                </p>
               </div>
             </div>
             <div className="profile-tuanzi-arrow">
