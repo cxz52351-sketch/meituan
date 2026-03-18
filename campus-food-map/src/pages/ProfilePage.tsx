@@ -18,7 +18,6 @@ import {
   getVisitHistory,
   VisitHistoryItem,
 } from "../services/history";
-import { computeTasteDNA } from "../services/tasteDNA";
 import { getUserInsights } from "../services/userInsights";
 
 interface Props {
