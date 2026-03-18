@@ -10,16 +10,20 @@ import RankPage from './pages/RankPage'
 import GroupOrderPage from './pages/GroupOrderPage'
 import DetailPage from './pages/DetailPage'
 import ProfilePage from './pages/ProfilePage'
+import InsightsPage from './pages/InsightsPage'
+import TuanziInsightsPage from './pages/TuanziInsightsPage'
 import ChatAgent from './components/ChatAgent'
 
 function App() {
   const [selectedUniversity, setSelectedUniversity] = useState<University | 'all'>('all')
   const location = useLocation()
   const isDetailPage = location.pathname.startsWith('/restaurant/')
+  const isInsightsPage = location.pathname === '/profile/insights'
+  const isTuanziInsightsPage = location.pathname === '/profile/tuanzi'
 
   return (
     <div className="app">
-      {!isDetailPage && (
+      {!isDetailPage && !isInsightsPage && !isTuanziInsightsPage && (
         <header className="header">
           <div className="header-content">
             <div className="logo">
@@ -59,10 +63,12 @@ function App() {
           <Route path="/list" element={<ListPage university={selectedUniversity} />} />
           <Route path="/restaurant/:id" element={<DetailPage />} />
           <Route path="/profile" element={<ProfilePage university={selectedUniversity} />} />
+          <Route path="/profile/insights" element={<InsightsPage />} />
+          <Route path="/profile/tuanzi" element={<TuanziInsightsPage />} />
         </Routes>
       </main>
 
-      {!isDetailPage && (
+      {!isDetailPage && !isInsightsPage && !isTuanziInsightsPage && (
         <nav className="nav">
           <ul className="nav-list">
             <li>
@@ -75,12 +81,7 @@ function App() {
             </li>
             <li>
               <NavLink to="/ai" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
-                <svg className="nav-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                  <circle cx="12" cy="12" r="8"/>
-                  <circle cx="9" cy="10" r="1.5" fill="#FFD100"/>
-                  <circle cx="15" cy="10" r="1.5" fill="#FFD100"/>
-                  <path d="M8 14c0 2 1.5 3 4 3s4-1 4-3" stroke="#FFD100" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
-                </svg>
+                <img src="/tuanzi.png" alt="团子" className="nav-icon" width="22" height="22" />
                 <span className="label">团子</span>
               </NavLink>
             </li>

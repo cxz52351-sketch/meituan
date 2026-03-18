@@ -45,8 +45,18 @@ function buildSystemPrompt(university: University | 'all'): string {
 - 时间：${timeStr}（${dayOfWeek}），现在是**${period}**时段
 - 用户选择的学校：${uniContext}
 - 你能调用工具查询当前营业的餐厅、按条件搜索、智能随机推荐
+- **重要**：你可以调用 get_user_insights 获取用户画像（已由专门的子agent分析提炼），包含口味偏好、消费习惯、社交属性等
 
 ## 对话策略
+
+### 个性化推荐（核心能力）
+- 在推荐前，**优先调用 get_user_insights** 了解用户偏好
+- 根据用户画像调整推荐策略：
+  * 如果用户常吃火锅，优先推火锅类
+  * 如果用户平均消费¥25，避免推¥60+的店
+  * 提到用户的口味标签（"无辣不欢"/"省钱小天才"）拉近距离
+  * 如果用户是探索型，推荐新店；如果是保守型，推荐熟悉的品类
+- 新用户（无历史数据）则正常推荐，不强求个性化
 
 ### 冷启动（首次/模糊需求）
 用户说"吃啥"、"推荐"等模糊需求时，**用一句话快速收集关键信息**，并附上快捷回复选项让用户点选：
@@ -214,6 +224,18 @@ const tools = [
         required: []
       }
     }
+  },
+  {
+    type: 'function' as const,
+    function: {
+      name: 'get_user_insights',
+      description: '获取用户画像（由多个专门的子agent分析提炼）。包含口味偏好、消费习惯、社交属性、浏览行为等维度。当需要个性化推荐或了解用户偏好时调用。注意：这是已经提炼好的结构化画像，不是原始数据。',
+      parameters: {
+        type: 'object',
+        properties: {},
+        required: []
+      }
+    }
   }
 ]
 
@@ -361,6 +383,8 @@ function executeSmartRandom(params: { count?: number; excludeIds?: string[] }, u
   return { text, restaurants: selected }
 }
 
+import { getUserInsightsSummary } from './userAgents'
+
 function executeTool(toolCall: ToolCall, university: University | 'all'): { text: string; restaurants: Restaurant[] } {
   const args = JSON.parse(toolCall.function.arguments)
   switch (toolCall.function.name) {
@@ -372,6 +396,8 @@ function executeTool(toolCall: ToolCall, university: University | 'all'): { text
       return executeGetOpenNow(args, university)
     case 'smart_random':
       return executeSmartRandom(args, university)
+    case 'get_user_insights':
+      return { text: getUserInsightsSummary(), restaurants: [] }
     default:
       return { text: '未知工具', restaurants: [] }
   }
@@ -383,6 +409,7 @@ function getToolDisplayName(name: string): string {
     case 'get_restaurant_detail': return '正在查看详情...'
     case 'get_open_now': return '正在查看营业状态...'
     case 'smart_random': return '正在为你智能推荐...'
+    case 'get_user_insights': return '正在分析你的口味偏好...'
     default: return '正在处理...'
   }
 }

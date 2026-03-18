@@ -1,7 +1,7 @@
 // 用户画像分析 — 多Agent架构（Demo版本）
 // 架构思路：专门的子agent对不同维度数据进行去重、提炼、总结，减少主agent上下文占用
 
-import { getRandomHistory, getVisitHistory, getGiftHistory, getGroupOrderHistory, getFlipHistory } from './history'
+import { getRandomHistory, getVisitHistory, getGroupOrderHistory, getFlipHistory } from './history'
 import { getProfile } from './profile'
 import { computeTasteDNA } from './tasteDNA'
 
@@ -51,8 +51,7 @@ function analyzeTastePreference(): TasteInsight {
   const history = [
     ...getVisitHistory().map(h => ({ category: h.category })),
     ...getRandomHistory().map(h => ({ category: h.category })),
-    ...getGiftHistory().map(h => ({ category: '' })), // 礼物历史没有category，忽略
-  ].filter(h => h.category)
+  ].filter(item => item.category)
 
   // 统计品类频率
   const categoryFreq: Record<string, number> = {}
