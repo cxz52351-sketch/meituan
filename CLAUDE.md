@@ -30,6 +30,7 @@ Vite dev proxy 仅开发环境生效，生产部署需额外处理 `/api/deepsee
 - React 19 + TypeScript (strict mode)
 - Vite 5 + @vitejs/plugin-react
 - React Router DOM 7 (BrowserRouter)
+- Leaflet 1.9.4 (地图组件，用于 MapPage)
 - 纯CSS样式，无UI框架，单文件 `src/styles/index.css`（~3300行）
 - 品牌色：美团黄 `#FFD100`、黑 `#111111`、绿 `#06C167`；CSS变量定义在 `:root`
 
@@ -48,6 +49,8 @@ Vite dev proxy 仅开发环境生效，生产部署需额外处理 `/api/deepsee
 - `/rank` 和 `/rank/:rankId` → RankPage
 - `/restaurant/:id` → DetailPage（无 `university` prop，无底部导航和顶部header）
 - `/profile` → ProfilePage（个人中心/我的）
+- `/insights` → InsightsPage（用户口味洞察）
+- `/tuanzi-insights` → TuanziInsightsPage（团子AI洞察）
 
 底部导航栏6个tab：首页、拼单、随机吃、团子（AI）、榜单、我的。
 
@@ -66,6 +69,9 @@ Vite dev proxy 仅开发环境生效，生产部署需额外处理 `/api/deepsee
 
 - `src/services/history.ts` — 干饭工具箱历史记录：随机吃历史、拼单参与记录、翻牌记录、到店打卡记录。各自独立 localStorage key，提供增删查函数
 - `src/services/profile.ts` — 用户资料、好友列表、干饭状态（"想吃"/"在吃"/"吃饱了"）。数据存 localStorage，导出 `getProfile`/`saveProfile`/`getFriends` 等函数
+- `src/services/tasteDNA.ts` — 用户口味DNA分析，基于用餐历史生成个性化口味标签和推荐
+- `src/services/userInsights.ts` — 用户行为洞察分析（消费习惯、时间偏好、社交特征等）
+- `src/services/userAgents.ts` — 用户代理人（User Agent）系统，AI驱动的个性化助手
 - `src/data/socialFeed.ts` — 校友圈社交动态（用餐打卡、请Ta吃、转盘结果），静态 mock 数据
 
 ### AI聊天功能
