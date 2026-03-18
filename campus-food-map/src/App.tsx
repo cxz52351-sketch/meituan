@@ -74,11 +74,14 @@ function App() {
               </NavLink>
             </li>
             <li>
-              <NavLink to="/group" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+              <NavLink to="/ai" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
                 <svg className="nav-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                  <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                  <circle cx="12" cy="12" r="8"/>
+                  <circle cx="9" cy="10" r="1.5" fill="#FFD100"/>
+                  <circle cx="15" cy="10" r="1.5" fill="#FFD100"/>
+                  <path d="M8 14c0 2 1.5 3 4 3s4-1 4-3" stroke="#FFD100" strokeWidth="1.5" fill="none" strokeLinecap="round"/>
                 </svg>
-                <span className="label">拼单</span>
+                <span className="label">团子</span>
               </NavLink>
             </li>
             <li>
@@ -90,11 +93,11 @@ function App() {
               </NavLink>
             </li>
             <li>
-              <NavLink to="/ai" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
+              <NavLink to="/group" className={({ isActive }) => `nav-item ${isActive ? 'active' : ''}`}>
                 <svg className="nav-icon" viewBox="0 0 24 24" width="22" height="22" fill="currentColor">
-                  <path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2zm-3 12H7v-2h10v2zm0-3H7V9h10v2zm0-3H7V6h10v2z"/>
+                  <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
                 </svg>
-                <span className="label">团子</span>
+                <span className="label">拼单</span>
               </NavLink>
             </li>
             <li>
