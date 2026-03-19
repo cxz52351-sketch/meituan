@@ -6,6 +6,7 @@ import { sendMessageStream, getMealPeriod, getGuideRecommendation, getAvailableC
 import { getProfile } from '../services/profile'
 import { computeTasteDNA } from '../services/tasteDNA'
 import RestaurantListItem from './RestaurantListItem'
+import { parseIntent } from '../services/intentParser'
 
 interface Props {
   university: University | 'all'
@@ -20,9 +21,10 @@ function parseQuickReplies(content: string): { text: string; quickReplies: strin
   return { text, quickReplies }
 }
 
-// ========== 引导流配置 ==========
+// ========== 模式配置 ==========
 
-type GuideStep = 'mode' | 'mealTime' | 'scene' | 'budget' | 'taste' | 'result' | 'chat'
+type AppMode = 'welcome' | 'guide' | 'chat'
+type GuideStep = 'mode' | 'mealTime' | 'scene' | 'budget' | 'taste' | 'result'
 
 interface GuideState {
   step: GuideStep
@@ -138,56 +140,6 @@ const exampleQueries = [
   '室友聚餐，想吃火锅，有包间吗',
 ]
 
-// 根据对话上下文生成动态 placeholder（自由聊天模式）
-function getSmartPlaceholder(messages: ChatMessage[]): string {
-  if (messages.length === 0) return '想吃点什么？'
-
-  // 取最近的 assistant 消息
-  const lastAi = [...messages].reverse().find(m => m.role === 'assistant' && m.status === 'done')
-  const lastUser = [...messages].reverse().find(m => m.role === 'user')
-  if (!lastAi) return '想吃点什么？'
-
-  const aiText = lastAi.content.toLowerCase()
-  const hasResults = lastAi.restaurantResults && lastAi.restaurantResults.length > 0
-  const userText = lastUser?.content || ''
-
-  // 推荐了餐厅后 → 引导深入或换方向
-  if (hasResults) {
-    const names = lastAi.restaurantResults!.map(r => r.name)
-    const suggestions = [
-      names[0] ? `${names[0]}排队要多久？` : null,
-      '有没有更便宜的选择？',
-      '换几家看看',
-      names[0] ? `${names[0]}有什么优惠吗？` : null,
-      '哪家最不用排队？',
-      '还有别的推荐吗？',
-    ].filter(Boolean) as string[]
-    return suggestions[Math.floor(Date.now() / 5000) % suggestions.length]
-  }
-
-  // AI 回复中提到了某些话题 → 顺着话题引导
-  if (aiText.includes('辣') || aiText.includes('口味')) return '不要太辣，微辣就行'
-  if (aiText.includes('外卖') || aiText.includes('配送')) return '送到哪个宿舍楼比较快？'
-  if (aiText.includes('优惠') || aiText.includes('省钱') || aiText.includes('满减')) return '还有别的省钱方法吗？'
-  if (aiText.includes('排队') || aiText.includes('等位')) return '有没有不用排队的？'
-  if (aiText.includes('宵夜') || aiText.includes('深夜')) return '现在还有哪家没关门？'
-  if (aiText.includes('约会') || aiText.includes('环境')) return '哪家拍照好看？'
-  if (aiText.includes('聚餐') || aiText.includes('包间')) return '能坐8个人的有吗？'
-
-  // 用户之前提过的关键词 → 换个角度追问
-  if (userText.includes('火锅')) return '有鸳鸯锅的吗？'
-  if (userText.includes('奶茶') || userText.includes('饮品')) return '哪家奶茶性价比最高？'
-  if (userText.includes('一个人')) return '有没有适合一个人的小馆子？'
-
-  // 兜底：根据时段给不同默认语
-  const hour = new Date().getHours()
-  if (hour < 10) return '早上吃点什么好？'
-  if (hour < 14) return '午饭有什么推荐？'
-  if (hour < 17) return '下午茶喝点什么？'
-  if (hour < 21) return '晚饭吃什么好？'
-  return '这么晚了吃点什么宵夜？'
-}
-
 let _msgIdCounter = 0
 function nextMsgId(): string {
   return `guide-${Date.now()}-${_msgIdCounter++}`
@@ -204,6 +156,7 @@ function renderMarkdown(text: string) {
 }
 
 export default function ChatAgent({ university }: Props) {
+  const [appMode, setAppMode] = useState<AppMode>('welcome')
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
@@ -211,7 +164,6 @@ export default function ChatAgent({ university }: Props) {
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
   const conversationRef = useRef<APIMessage[]>([])
-  const initialHandled = useRef(false)
   const location = useLocation()
   const navigate = useNavigate()
 
@@ -222,16 +174,14 @@ export default function ChatAgent({ university }: Props) {
     () => Math.floor(Math.random() * exampleQueries.length)
   )
   useEffect(() => {
-    if (guideState.step === 'chat') return
+    if (appMode !== 'guide') return
     const timer = setInterval(() => {
       setPlaceholderIdx(prev => (prev + 1) % exampleQueries.length)
     }, 4000)
     return () => clearInterval(timer)
-  }, [guideState.step])
+  }, [appMode])
 
-  const currentPlaceholder = guideState.step === 'chat'
-    ? getSmartPlaceholder(messages)
-    : `试试输入："${exampleQueries[placeholderIdx]}"   按Tab填充`
+  const currentPlaceholder = `试试输入："${exampleQueries[placeholderIdx]}"   按Tab填充`
 
   // 自动滚动到底部
   useEffect(() => {
@@ -243,30 +193,13 @@ export default function ChatAgent({ university }: Props) {
     setTimeout(() => inputRef.current?.focus(), 300)
   }, [])
 
-  // 初始化引导流第一步消息
-  useEffect(() => {
-    if (messages.length === 0 && guideState.step === 'mode') {
-      const welcomeMsg: ChatMessage = {
-        id: nextMsgId(),
-        role: 'assistant',
-        content: `${greeting} 不知道吃啥？我来帮你一步步选！\n\n今天怎么吃？`,
-        timestamp: Date.now(),
-        status: 'done',
-        guideOptions: modeOptions,
-      }
-      setMessages([welcomeMsg])
-    }
-  }, [])
-
   // 处理从首页传来的初始消息
   useEffect(() => {
-    if (initialHandled.current) return
     const state = location.state as { initialMessage?: string } | null
     if (state?.initialMessage) {
-      initialHandled.current = true
       navigate('/ai', { replace: true, state: null })
-      // 跳过引导流，直接进入聊天模式
-      setGuideState({ step: 'chat' })
+      // 直接进入聊天模式
+      setAppMode('chat')
       setTimeout(() => handleSend(state.initialMessage!), 100)
     }
   }, [location.state])
@@ -535,6 +468,7 @@ export default function ChatAgent({ university }: Props) {
           status: 'done',
           guideOptions: [
             { id: 'shuffle', emoji: '🔄', label: '换一批', description: '换几家看看' },
+            { id: 'guide', emoji: '📋', label: '按条件重选', description: '回到引导流' },
             { id: 'restart', emoji: '🔙', label: '重新选', description: '回到第一步' },
           ],
         }
@@ -560,6 +494,23 @@ export default function ChatAgent({ university }: Props) {
           guideOptions: modeOptions,
         }
         setMessages(prev => [...prev, userMsg, modeMsg])
+      } else if (optionId === 'guide') {
+        const userMsg: ChatMessage = {
+          id: nextMsgId(),
+          role: 'user',
+          content: '📋 按条件重选',
+          timestamp: Date.now(),
+        }
+        setGuideState({ step: 'mode' })
+        const modeMsg: ChatMessage = {
+          id: nextMsgId(),
+          role: 'assistant',
+          content: '好的，重新选条件！今天怎么吃？',
+          timestamp: Date.now(),
+          status: 'done',
+          guideOptions: modeOptions,
+        }
+        setMessages(prev => [...prev, userMsg, modeMsg])
       }
     }
   }, [guideState, university])
@@ -568,9 +519,73 @@ export default function ChatAgent({ university }: Props) {
     const messageText = text || input.trim()
     if (!messageText || isLoading) return
 
-    // 用户主动打字时，切到自由聊天模式
-    if (guideState.step !== 'chat') {
-      setGuideState({ step: 'chat' })
+    // 在 welcome 模式下输入文字 → 自动进入 chat 模式
+    if (appMode === 'welcome') {
+      setAppMode('chat')
+    }
+
+    // 在引导流中输入文字 → 尝试本地意图识别
+    if (appMode === 'guide') {
+      const intent = parseIntent(messageText, guideState.step)
+
+      if (intent.type === 'guide_option') {
+        handleGuideSelect(intent.step, intent.optionId)
+        setInput('')
+        return
+      }
+
+      if (intent.type === 'filter_inject') {
+        const userMsg: ChatMessage = {
+          id: nextMsgId(),
+          role: 'user',
+          content: messageText,
+          timestamp: Date.now(),
+        }
+        const filters = {
+          ...intent.filters,
+          university,
+          personal: getPersonalContext(),
+        }
+        const result = getGuideRecommendation(filters)
+        const resultMsg: ChatMessage = {
+          id: nextMsgId(),
+          role: 'assistant',
+          content: result.restaurants.length > 0
+            ? `🎯 根据「${intent.summary}」，推荐这${result.restaurants.length === 1 ? '' : '几'}家！\n\n${result.reason}`
+            : result.reason,
+          timestamp: Date.now(),
+          status: 'done',
+          restaurantResults: result.restaurants,
+        }
+        const actionMsg: ChatMessage = {
+          id: nextMsgId(),
+          role: 'assistant',
+          content: '',
+          timestamp: Date.now(),
+          status: 'done',
+          guideOptions: [
+            { id: 'shuffle', emoji: '🔄', label: '换一批', description: '换几家看看' },
+            { id: 'guide', emoji: '📋', label: '按条件重选', description: '回到引导流' },
+            { id: 'restart', emoji: '🔙', label: '重新选', description: '回到第一步' },
+          ],
+        }
+        setGuideState({
+          ...guideState,
+          step: 'result',
+          mode: intent.filters.mode,
+          mealTime: intent.filters.mealTime,
+          scene: intent.filters.scene,
+          budget: intent.filters.priceRange,
+          taste: intent.filters.category,
+          excludeIds: result.restaurants.map(r => r.id),
+        })
+        setMessages(prev => [...prev, userMsg, resultMsg, actionMsg])
+        setInput('')
+        return
+      }
+
+      // need_llm → 切到自由对话模式继续
+      setAppMode('chat')
     }
 
     const userMsg: ChatMessage = {
@@ -656,19 +671,13 @@ export default function ChatAgent({ university }: Props) {
     } finally {
       setIsLoading(false)
     }
-  }, [input, isLoading, university, guideState.step])
+  }, [input, isLoading, university, appMode, guideState])
 
   function handleKeyDown(e: React.KeyboardEvent) {
     if (e.key === 'Tab' && !input.trim()) {
       e.preventDefault()
-      if (guideState.step === 'chat') {
-        // 聊天模式：填充动态建议
-        setInput(getSmartPlaceholder(messages))
-      } else {
-        // 引导模式：填充示例查询
-        setInput(exampleQueries[placeholderIdx])
-        setPlaceholderIdx(prev => (prev + 1) % exampleQueries.length)
-      }
+      setInput(exampleQueries[placeholderIdx])
+      setPlaceholderIdx(prev => (prev + 1) % exampleQueries.length)
       return
     }
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -677,10 +686,102 @@ export default function ChatAgent({ university }: Props) {
     }
   }
 
+  // 进入引导推荐模式
+  function enterGuideMode() {
+    setAppMode('guide')
+    setGuideState({ step: 'mode' })
+    const welcomeMsg: ChatMessage = {
+      id: nextMsgId(),
+      role: 'assistant',
+      content: '好的，我来帮你一步步选！\n\n今天怎么吃？',
+      timestamp: Date.now(),
+      status: 'done',
+      guideOptions: modeOptions,
+    }
+    setMessages([welcomeMsg])
+  }
+
+  // 进入自由聊天模式
+  function enterChatMode() {
+    setAppMode('chat')
+    setMessages([])
+    conversationRef.current = []
+    setTimeout(() => inputRef.current?.focus(), 100)
+  }
+
+  // 返回欢迎页
+  function backToWelcome() {
+    setAppMode('welcome')
+    setMessages([])
+    setGuideState({ step: 'mode' })
+    conversationRef.current = []
+  }
+
   const lastAssistantId = [...messages].reverse().find(m => m.role === 'assistant')?.id
 
+  // ========== Welcome 模式 ==========
+  if (appMode === 'welcome') {
+    return (
+      <div className="ai-page">
+        <div className="ai-welcome">
+          <div className="ai-welcome-avatar">
+            <img src="/tuanzi.png" alt="团子" />
+          </div>
+          <h2 className="ai-welcome-title">{greeting}</h2>
+          <p className="ai-welcome-desc">我是团子，你的 AI 美食助手</p>
+          <div className="ai-welcome-cards">
+            <button className="ai-welcome-card" onClick={enterGuideMode}>
+              <span className="ai-welcome-card-emoji">🎯</span>
+              <span className="ai-welcome-card-title">引导推荐</span>
+              <span className="ai-welcome-card-desc">一步步帮你选，不用纠结</span>
+            </button>
+            <button className="ai-welcome-card" onClick={enterChatMode}>
+              <span className="ai-welcome-card-emoji">💬</span>
+              <span className="ai-welcome-card-title">自由聊天</span>
+              <span className="ai-welcome-card-desc">直接告诉我你想吃啥</span>
+            </button>
+          </div>
+          {/* 底部输入框：输入即进入聊天模式 */}
+          <div className="ai-input-area">
+            <input
+              ref={inputRef}
+              className="chat-input"
+              type="text"
+              placeholder={`试试输入："${exampleQueries[placeholderIdx]}"`}
+              value={input}
+              onChange={e => setInput(e.target.value)}
+              onKeyDown={handleKeyDown}
+            />
+            <button
+              className="chat-send"
+              onClick={() => handleSend()}
+              disabled={!input.trim()}
+            >
+              发送
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ========== Guide / Chat 模式共用消息列表 ==========
   return (
     <div className="ai-page">
+      {/* 顶部返回栏 */}
+      <div className="ai-mode-header">
+        <button className="ai-mode-back" onClick={backToWelcome}>
+          ← 返回
+        </button>
+        <span className="ai-mode-title">{appMode === 'guide' ? '🎯 引导推荐' : '💬 自由聊天'}</span>
+        <button
+          className="ai-mode-switch"
+          onClick={appMode === 'guide' ? enterChatMode : enterGuideMode}
+        >
+          {appMode === 'guide' ? '💬 聊天' : '🎯 引导'}
+        </button>
+      </div>
+
       {/* 消息列表 */}
       <div className="ai-messages">
         {messages.map(msg => {

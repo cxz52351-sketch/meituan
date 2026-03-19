@@ -2885,7 +2885,7 @@ ol {
 .ai-page {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 130px);
+  height: calc(100vh - 70px);
   background: #fff;
   margin: -16px;
 }
@@ -2901,13 +2901,26 @@ ol {
 
 /* 欢迎页 */
 .ai-welcome {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  padding: 40px 20px 0;
   text-align: center;
-  padding: 80px 20px 20px;
 }
 
 .ai-welcome-avatar {
-  font-size: 3rem;
-  margin-bottom: 12px;
+  width: 80px;
+  height: 80px;
+  margin-bottom: 16px;
+}
+
+.ai-welcome-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-full);
 }
 
 .ai-welcome-title {
@@ -2920,8 +2933,88 @@ ol {
 .ai-welcome-desc {
   font-size: 0.85rem;
   color: var(--gray-500);
-  margin-bottom: 24px;
+  margin-bottom: 32px;
   line-height: 1.5;
+}
+
+.ai-welcome-cards {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+  max-width: 340px;
+  margin-bottom: 32px;
+}
+
+.ai-welcome-card {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 20px 12px;
+  border: 1.5px solid var(--gray-100);
+  border-radius: var(--radius-lg);
+  background: #fff;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: var(--font-sans);
+}
+
+.ai-welcome-card:active {
+  transform: scale(0.97);
+  border-color: var(--meituan-yellow);
+  background: var(--meituan-yellow-light);
+}
+
+.ai-welcome-card-emoji {
+  font-size: 1.8rem;
+}
+
+.ai-welcome-card-title {
+  font-size: 0.95rem;
+  font-weight: 600;
+  color: var(--meituan-black);
+}
+
+.ai-welcome-card-desc {
+  font-size: 0.75rem;
+  color: var(--gray-500);
+}
+
+/* 模式顶部栏 */
+.ai-mode-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--gray-100);
+  background: #fff;
+  flex-shrink: 0;
+}
+
+.ai-mode-back,
+.ai-mode-switch {
+  padding: 6px 12px;
+  border: 1px solid var(--gray-200);
+  border-radius: var(--radius-full);
+  background: #fff;
+  font-size: 0.8rem;
+  color: var(--gray-600);
+  cursor: pointer;
+  font-family: var(--font-sans);
+  transition: all 0.15s;
+}
+
+.ai-mode-back:active,
+.ai-mode-switch:active {
+  background: var(--gray-50);
+  transform: scale(0.95);
+}
+
+.ai-mode-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--meituan-black);
 }
 
 .ai-welcome-suggestions {
@@ -2958,6 +3051,10 @@ ol {
   background: #fff;
   flex-shrink: 0;
   padding-bottom: max(12px, env(safe-area-inset-bottom));
+}
+
+.ai-welcome .ai-input-area {
+  width: 35%;
 }
 
 /* ========== 聊天消息通用样式 ========== */
@@ -5955,7 +6052,7 @@ ol {
   justify-content: space-between;
   padding: 12px 14px;
   background: #fff;
-  border: 1.5px solid #E2E8F0;
+  border: 1.5px solid #e2e8f0;
   border-radius: var(--radius-lg);
   margin-top: 16px;
   margin-bottom: 10px;
@@ -5965,7 +6062,7 @@ ol {
 
 .profile-ai-compact-card:hover {
   border-color: var(--meituan-yellow);
-  background: #FFFBF0;
+  background: #fffbf0;
   transform: translateX(2px);
 }
 
@@ -6065,7 +6162,7 @@ ol {
 
 .profile-tuanzi-hero {
   position: relative;
-  background: linear-gradient(135deg, #FFF9E6 0%, #FFF4D6 100%);
+  background: linear-gradient(135deg, #fff9e6 0%, #fff4d6 100%);
 }
 
 .profile-tuanzi-hero-bg {
@@ -6075,8 +6172,16 @@ ol {
   right: 0;
   bottom: 0;
   background:
-    radial-gradient(circle at 20% 30%, rgba(255, 209, 0, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(255, 209, 0, 0.1) 0%, transparent 50%);
+    radial-gradient(
+      circle at 20% 30%,
+      rgba(255, 209, 0, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 70%,
+      rgba(255, 209, 0, 0.1) 0%,
+      transparent 50%
+    );
 }
 
 .profile-tuanzi-hero-content {
@@ -6119,9 +6224,9 @@ ol {
   align-items: center;
   gap: 8px;
   padding: 12px;
-  background: #F8FAFC;
+  background: #f8fafc;
   border-radius: var(--radius-md);
-  border: 1px solid #E2E8F0;
+  border: 1px solid #e2e8f0;
 }
 
 .profile-tuanzi-preview-icon {
@@ -6140,7 +6245,7 @@ ol {
   justify-content: center;
   gap: 6px;
   padding: 14px;
-  background: linear-gradient(135deg, #FFF9E6, #FFFDF5);
+  background: linear-gradient(135deg, #fff9e6, #fffdf5);
   border-top: 1px solid rgba(255, 209, 0, 0.2);
   font-size: 0.9rem;
   font-weight: 600;
@@ -6156,7 +6261,7 @@ ol {
 
 .tuanzi-insights-page {
   min-height: 100vh;
-  background: #F8FAFC;
+  background: #f8fafc;
   padding-bottom: 20px;
 }
 
@@ -6169,7 +6274,7 @@ ol {
   gap: 12px;
   padding: 12px 16px;
   background: #fff;
-  border-bottom: 1px solid #E2E8F0;
+  border-bottom: 1px solid #e2e8f0;
 }
 
 .tuanzi-insights-back {
@@ -6186,7 +6291,7 @@ ol {
 }
 
 .tuanzi-insights-back:hover {
-  background: #F1F5F9;
+  background: #f1f5f9;
 }
 
 .tuanzi-insights-back:active {
@@ -6209,7 +6314,7 @@ ol {
   margin-bottom: 20px;
   border-radius: var(--radius-xl);
   overflow: hidden;
-  background: linear-gradient(135deg, #FFF9E6 0%, #FFF4D6 100%);
+  background: linear-gradient(135deg, #fff9e6 0%, #fff4d6 100%);
   border: 2px solid rgba(255, 209, 0, 0.3);
 }
 
@@ -6220,8 +6325,16 @@ ol {
   right: 0;
   bottom: 0;
   background:
-    radial-gradient(circle at 20% 30%, rgba(255, 209, 0, 0.15) 0%, transparent 50%),
-    radial-gradient(circle at 80% 70%, rgba(255, 209, 0, 0.1) 0%, transparent 50%);
+    radial-gradient(
+      circle at 20% 30%,
+      rgba(255, 209, 0, 0.15) 0%,
+      transparent 50%
+    ),
+    radial-gradient(
+      circle at 80% 70%,
+      rgba(255, 209, 0, 0.1) 0%,
+      transparent 50%
+    );
 }
 
 .tuanzi-insights-hero-content {
@@ -6256,7 +6369,7 @@ ol {
   border-radius: var(--radius-lg);
   padding: 16px;
   margin-bottom: 12px;
-  border: 1px solid #E2E8F0;
+  border: 1px solid #e2e8f0;
 }
 
 .tuanzi-insights-card-header {
@@ -6290,7 +6403,7 @@ ol {
   align-items: center;
   gap: 6px;
   padding: 12px 8px;
-  background: linear-gradient(135deg, #FFF9E6, #FFFDF5);
+  background: linear-gradient(135deg, #fff9e6, #fffdf5);
   border-radius: var(--radius-md);
   border: 1px solid rgba(255, 209, 0, 0.2);
 }
@@ -6311,7 +6424,7 @@ ol {
   justify-content: space-between;
   align-items: center;
   padding: 10px 0;
-  border-bottom: 1px solid #F1F5F9;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .tuanzi-insights-detail-row:last-of-type {
@@ -6347,39 +6460,39 @@ ol {
 }
 
 .tuanzi-insights-spice-badge {
-  background: linear-gradient(135deg, #FEE2E2, #FEF2F2);
-  color: #DC2626;
-  border: 1px solid #FCA5A5;
+  background: linear-gradient(135deg, #fee2e2, #fef2f2);
+  color: #dc2626;
+  border: 1px solid #fca5a5;
 }
 
 .tuanzi-insights-price-badge {
-  background: linear-gradient(135deg, #D1FAE5, #ECFDF5);
+  background: linear-gradient(135deg, #d1fae5, #ecfdf5);
   color: #059669;
-  border: 1px solid #6EE7B7;
+  border: 1px solid #6ee7b7;
 }
 
 .tuanzi-insights-sensitivity-badge {
-  background: linear-gradient(135deg, #DBEAFE, #EFF6FF);
-  color: #2563EB;
-  border: 1px solid #93C5FD;
+  background: linear-gradient(135deg, #dbeafe, #eff6ff);
+  color: #2563eb;
+  border: 1px solid #93c5fd;
 }
 
 .tuanzi-insights-social-badge {
-  background: linear-gradient(135deg, #E9D5FF, #F3E8FF);
-  color: #9333EA;
-  border: 1px solid #C084FC;
+  background: linear-gradient(135deg, #e9d5ff, #f3e8ff);
+  color: #9333ea;
+  border: 1px solid #c084fc;
 }
 
 .tuanzi-insights-explore-badge {
-  background: linear-gradient(135deg, #FED7AA, #FFEDD5);
-  color: #EA580C;
-  border: 1px solid #FDBA74;
+  background: linear-gradient(135deg, #fed7aa, #ffedd5);
+  color: #ea580c;
+  border: 1px solid #fdba74;
 }
 
 .tuanzi-insights-summary-box {
   margin-top: 12px;
   padding: 12px;
-  background: #F8FAFC;
+  background: #f8fafc;
   border-radius: var(--radius-md);
   border-left: 3px solid var(--meituan-yellow);
   display: flex;
@@ -6442,7 +6555,7 @@ ol {
 }
 
 .tuanzi-insights-empty-btn:hover {
-  background: #F5C700;
+  background: #f5c700;
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(255, 209, 0, 0.3);
 }
@@ -6813,7 +6926,7 @@ ol {
 /* ==================== ProfilePage 口味DNA卡片优化 ==================== */
 
 .profile-taste-dna-card {
-  background: linear-gradient(135deg, #FFFBF0 0%, #FFF 100%);
+  background: linear-gradient(135deg, #fffbf0 0%, #fff 100%);
   border: 2px solid var(--meituan-yellow);
   border-radius: var(--radius-xl);
   padding: 16px;
@@ -6862,7 +6975,11 @@ ol {
   justify-content: center;
   gap: 6px;
   padding: 10px 16px;
-  background: linear-gradient(135deg, var(--meituan-yellow) 0%, var(--meituan-yellow-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--meituan-yellow) 0%,
+    var(--meituan-yellow-dark) 100%
+  );
   border-radius: var(--radius-lg);
   font-size: 0.85rem;
   font-weight: 700;
@@ -6987,7 +7104,7 @@ ol {
 
 .insights-page {
   min-height: 100vh;
-  background: linear-gradient(180deg, #FAFAFA 0%, #F5F5F5 100%);
+  background: linear-gradient(180deg, #fafafa 0%, #f5f5f5 100%);
   display: flex;
   flex-direction: column;
 }
@@ -7074,7 +7191,11 @@ ol {
 }
 
 .insights-empty-btn {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    var(--primary-dark) 100%
+  );
   color: var(--gray-900);
   border: none;
   padding: 14px 36px;
@@ -7107,7 +7228,7 @@ ol {
   left: 0;
   right: 0;
   height: 120px;
-  background: linear-gradient(135deg, #FFD100 0%, #FFC700 50%, #FFB800 100%);
+  background: linear-gradient(135deg, #ffd100 0%, #ffc700 50%, #ffb800 100%);
   opacity: 0.15;
 }
 
@@ -7177,7 +7298,9 @@ ol {
 }
 
 @keyframes loading-bounce {
-  0%, 80%, 100% {
+  0%,
+  80%,
+  100% {
     transform: scale(0.8);
     opacity: 0.5;
   }
@@ -7206,7 +7329,7 @@ ol {
 
 /* 引导补充信息卡片 */
 .insights-guide-card {
-  background: linear-gradient(135deg, #FFF8E1 0%, #FFFDF5 100%);
+  background: linear-gradient(135deg, #fff8e1 0%, #fffdf5 100%);
   border: 2px dashed var(--meituan-yellow);
   border-radius: 16px;
   padding: 20px;
@@ -7242,7 +7365,11 @@ ol {
 }
 
 .insights-guide-btn {
-  background: linear-gradient(135deg, var(--meituan-yellow) 0%, var(--meituan-yellow-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--meituan-yellow) 0%,
+    var(--meituan-yellow-dark) 100%
+  );
   color: var(--gray-900);
   border: none;
   padding: 10px 24px;
@@ -7292,7 +7419,7 @@ ol {
 
 /* DNA 雷达图卡片 */
 .insights-dna-card {
-  background: linear-gradient(135deg, #FFFBF0 0%, #FFF 100%);
+  background: linear-gradient(135deg, #fffbf0 0%, #fff 100%);
   border: 2px solid var(--primary);
 }
 
@@ -7319,7 +7446,11 @@ ol {
 .insights-dna-label {
   display: inline-block;
   padding: 8px 16px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
+  background: linear-gradient(
+    135deg,
+    var(--primary) 0%,
+    var(--primary-dark) 100%
+  );
   color: var(--gray-900);
   border-radius: var(--radius-full);
   font-size: 0.85rem;
@@ -7348,7 +7479,7 @@ ol {
 }
 
 .insights-taste-item {
-  background: linear-gradient(135deg, var(--gray-50) 0%, #FFF 100%);
+  background: linear-gradient(135deg, var(--gray-50) 0%, #fff 100%);
   border: 2px solid var(--gray-200);
   border-radius: 12px;
   padding: 16px 12px;
@@ -7408,7 +7539,7 @@ ol {
 .insights-explore-badge {
   display: inline-block;
   padding: 6px 14px;
-  background: linear-gradient(135deg, var(--primary-light) 0%, #FFF 100%);
+  background: linear-gradient(135deg, var(--primary-light) 0%, #fff 100%);
   border: 1.5px solid var(--primary);
   border-radius: var(--radius-full);
   font-size: 0.85rem;
@@ -7423,7 +7554,7 @@ ol {
   gap: 16px;
   margin-bottom: 20px;
   padding: 20px;
-  background: linear-gradient(135deg, var(--gray-50) 0%, #FFF 100%);
+  background: linear-gradient(135deg, var(--gray-50) 0%, #fff 100%);
   border-radius: 12px;
   border: 2px solid var(--gray-100);
 }
@@ -7460,7 +7591,7 @@ ol {
   gap: 12px;
   margin-top: 20px;
   padding: 16px;
-  background: linear-gradient(135deg, #F8FAFC 0%, #FFF 100%);
+  background: linear-gradient(135deg, #f8fafc 0%, #fff 100%);
   border-left: 4px solid var(--primary);
   border-radius: var(--radius-md);
 }
@@ -7533,7 +7664,7 @@ ol {
   border: 2px solid var(--primary);
   font-size: 14px;
   width: 100%;
-  background: #FAFAFA;
+  background: #fafafa;
   transition: all 0.2s;
   font-family: var(--font-sans);
   color: var(--gray-900);
@@ -7565,7 +7696,7 @@ ol {
   font-size: 13px;
   font-weight: 600;
   color: white;
-  background: linear-gradient(135deg, var(--primary) 0%, #05A855 100%);
+  background: linear-gradient(135deg, var(--primary) 0%, #05a855 100%);
   border: none;
   border-radius: 10px;
   cursor: pointer;
@@ -7662,7 +7793,7 @@ ol {
   border: 2px solid var(--primary);
   font-size: 13px;
   width: 100%;
-  background: #FAFAFA;
+  background: #fafafa;
   transition: all 0.2s;
   font-family: var(--font-sans);
   color: var(--gray-900);
