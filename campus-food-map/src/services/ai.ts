@@ -600,6 +600,92 @@ export function getGuideRecommendation(filters: GuideFilters): GuideRecommendati
   return { restaurants: selected, reason: reasons.join('\n\n') }
 }
 
+// AI 增强推荐理由：结合用户画像 + 引导选择，生成个性化推荐文案
+export async function generateAIRecommendReason(
+  filters: GuideFilters,
+  selected: Restaurant[],
+  userInsights: {
+    taste?: { topCategories: string[]; spiceLevel: string }
+    consumption?: { avgSpending: number; priceSensitivity: string }
+    social?: { socialType: string; groupOrderCount: number }
+    explore?: { exploreType: string; exploreRate: number }
+  } | null,
+): Promise<string | null> {
+  const apiKey = import.meta.env.VITE_DEEPSEEK_API_KEY
+  if (!apiKey || apiKey === 'your_key_here') return null
+
+  const restaurantInfo = selected.map(r =>
+    `${r.name}（${r.category}，人均¥${r.avgPrice}，评分${r.rating}，复购率${Math.round(r.repurchaseRate * 100)}%）`
+  ).join('\n')
+
+  const selectionParts: string[] = []
+  if (filters.mode) selectionParts.push(`用餐方式：${filters.mode}`)
+  if (filters.mealTime) selectionParts.push(`时段：${filters.mealTime}`)
+  if (filters.scene) selectionParts.push(`场景：${filters.scene}`)
+  if (filters.priceRange) selectionParts.push(`预算：${JSON.stringify(filters.priceRange)}`)
+  if (filters.category) selectionParts.push(`口味：${filters.category}`)
+
+  let profilePart = '暂无画像数据'
+  if (userInsights) {
+    const parts: string[] = []
+    if (userInsights.taste) {
+      parts.push(`口味偏好：最爱${userInsights.taste.topCategories.join('、')}，辣度${userInsights.taste.spiceLevel}`)
+    }
+    if (userInsights.consumption) {
+      parts.push(`消费习惯：日均¥${userInsights.consumption.avgSpending}，价格敏感度${userInsights.consumption.priceSensitivity}`)
+    }
+    if (userInsights.social) {
+      parts.push(`社交属性：${userInsights.social.socialType}，拼单${userInsights.social.groupOrderCount}次`)
+    }
+    if (userInsights.explore) {
+      parts.push(`探店行为：${userInsights.explore.exploreType}，探索率${userInsights.explore.exploreRate}%`)
+    }
+    if (parts.length > 0) profilePart = parts.join('；')
+  }
+
+  const prompt = `你是"团子"，大学城美食地图的AI干饭顾问。请根据以下信息，为用户生成个性化的推荐理由。
+
+## 用户本次选择
+${selectionParts.join('，')}
+
+## 用户画像
+${profilePart}
+
+## 推荐的餐厅
+${restaurantInfo}
+
+## 要求
+1. 每家餐厅写1-2句推荐理由，要结合用户画像解释"为什么推荐这家给TA"
+2. 格式：📍 **餐厅名** + 换行 + 💡 个性化理由 + 换行 + 💰 价格信息
+3. 语气亲切接地气，像朋友推荐，可以用emoji
+4. 如果用户画像显示某些偏好与推荐餐厅匹配，要点出来
+5. 控制在每家餐厅3行以内，简洁有力
+6. 不要加开头语和结尾语，直接输出每家餐厅的推荐段落，餐厅之间用空行分隔`
+
+  try {
+    const response = await fetch('/api/deepseek/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'deepseek-chat',
+        messages: [{ role: 'user', content: prompt }],
+        temperature: 0.7,
+        max_tokens: 500,
+      }),
+    })
+
+    if (!response.ok) return null
+
+    const data = await response.json()
+    return data.choices?.[0]?.message?.content?.trim() || null
+  } catch {
+    return null
+  }
+}
+
 function buildPersonalReason(
   r: Restaurant,
   profile: UserProfile | null | undefined,

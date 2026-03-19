@@ -8,6 +8,7 @@ export interface TastePreference {
   spiceLevel: 'light' | 'mild' | 'medium' | 'heavy'
   spiceLevelText: string
   aiSummary: string
+  reasoning: string[]
 }
 
 // 消费习惯分析
@@ -18,6 +19,7 @@ export interface ConsumptionHabit {
   priceSensitivityText: string
   topRestaurants: Array<{ name: string; count: number; id: string }>
   aiSummary: string
+  reasoning: string[]
 }
 
 // 社交属性分析
@@ -28,6 +30,7 @@ export interface SocialAttribute {
   socialType: 'introvert' | 'balanced' | 'extrovert'
   socialTypeText: string
   aiSummary: string
+  reasoning: string[]
 }
 
 // 探店行为分析
@@ -39,6 +42,7 @@ export interface ExplorePattern {
   exploreTypeText: string
   recentVisits: Array<{ name: string; category: string; price: number; id: string; timestamp: number }>
   aiSummary: string
+  reasoning: string[]
 }
 
 export interface UserInsights {
@@ -216,12 +220,40 @@ export function getUserInsights(): UserInsights | null {
     ? `你是传说中的"${personalityLabels.join(' · ')}"，${tasteSummary.split('，')[0]}的硬核干饭人`
     : `你是一位${exploreTypeText}的干饭人，正在探索属于自己的美食之路`
 
+  // ===== 构建推理过程 =====
+  const tasteReasoning = [
+    `共 ${allDining.length} 次用餐记录`,
+    topCategories.map(c => `${c.category} ${c.count}次(${c.percentage}%)`).join('、'),
+    `辣度指数 = (火锅烧烤次数${spicyCount}×2 + 中餐小吃次数${mildCount}) ÷ 总次数${allDining.length} = ${spiceRatio.toFixed(2)}`,
+    `指数 ${spiceRatio.toFixed(2)} ${spiceRatio >= 1.5 ? '≥ 1.5 → 判定为重辣' : spiceRatio >= 0.8 ? '≥ 0.8 → 判定为中辣' : spiceRatio >= 0.3 ? '≥ 0.3 → 判定为微辣' : '< 0.3 → 判定为清淡'}`
+  ]
+
+  const consumptionReasoning = [
+    `${prices.length} 次消费记录，价格区间 ¥${minPrice} ~ ¥${maxPrice}`,
+    `平均消费 ¥${avgSpending}/人，标准差 ¥${Math.round(priceStdDev)}`,
+    `均价${avgSpending <= 25 ? ' ≤25' : avgSpending <= 35 ? ' ≤35' : ' >35'} 且标准差${priceStdDev <= 10 ? ' ≤10' : ' >10'} → 价格敏感度：${priceSensitivity === 'high' ? '高' : priceSensitivity === 'medium' ? '中' : '低'}`
+  ]
+
+  const socialReasoning = [
+    `拼单 ${groupOrderCount}次(×3) + 翻牌 ${flipCount}次(×1) + 好友 ${friendCount}人(×2)`,
+    `社交分 = ${groupOrderCount}×3 + ${flipCount}×1 + ${friendCount}×2 = ${socialScore}`,
+    `分数 ${socialScore} ${socialScore >= 15 ? '≥ 15 → 社交达人' : socialScore >= 5 ? '≥ 5 → 随缘型' : '< 5 → 独行侠'}`
+  ]
+
+  const exploreRatePercent = Math.round(exploreRate * 100)
+  const exploreReasoning = [
+    `共去过 ${uniqueRestaurants.size} 家不同餐厅，涉及 ${uniqueCategories.size} 种品类`,
+    `总用餐 ${allDining.length} 次，探索率 = ${uniqueRestaurants.size}/${allDining.length} = ${exploreRatePercent}%`,
+    `探索率 ${exploreRatePercent}% ${exploreRate >= 0.7 ? '≥ 70% → 冒险型探店家' : exploreRate >= 0.4 ? '≥ 40% → 平衡型选手' : '< 40% → 忠诚型食客'}`
+  ]
+
   return {
     taste: {
       topCategories,
       spiceLevel,
       spiceLevelText,
-      aiSummary: tasteSummary
+      aiSummary: tasteSummary,
+      reasoning: tasteReasoning
     },
     consumption: {
       avgSpending,
@@ -229,7 +261,8 @@ export function getUserInsights(): UserInsights | null {
       priceSensitivity,
       priceSensitivityText,
       topRestaurants,
-      aiSummary: consumptionSummary
+      aiSummary: consumptionSummary,
+      reasoning: consumptionReasoning
     },
     social: {
       groupOrderCount,
@@ -237,16 +270,18 @@ export function getUserInsights(): UserInsights | null {
       friendCount,
       socialType,
       socialTypeText,
-      aiSummary: socialSummary
+      aiSummary: socialSummary,
+      reasoning: socialReasoning
     },
     explore: {
       uniqueRestaurantCount: uniqueRestaurants.size,
       uniqueCategoryCount: uniqueCategories.size,
-      exploreRate: Math.round(exploreRate * 100),
+      exploreRate: exploreRatePercent,
       exploreType,
       exploreTypeText,
       recentVisits,
-      aiSummary: exploreSummary
+      aiSummary: exploreSummary,
+      reasoning: exploreReasoning
     },
     overallSummary
   }

@@ -6514,6 +6514,91 @@ ol {
   flex: 1;
 }
 
+/* 团子思考过程 */
+.tuanzi-thinking-wrapper {
+  margin-top: 10px;
+}
+
+.tuanzi-thinking-toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: none;
+  border: none;
+  padding: 6px 0;
+  font-size: 0.8rem;
+  color: var(--gray-500);
+  cursor: pointer;
+  transition: color 0.2s;
+}
+
+.tuanzi-thinking-toggle:active {
+  color: var(--gray-700);
+}
+
+.tuanzi-thinking-toggle-icon {
+  font-size: 0.9rem;
+}
+
+.tuanzi-thinking-arrow {
+  display: inline-block;
+  transition: transform 0.3s;
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.tuanzi-thinking-arrow.expanded {
+  transform: rotate(90deg);
+}
+
+.tuanzi-thinking-box {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.35s ease;
+}
+
+.tuanzi-thinking-box.expanded {
+  max-height: 300px;
+}
+
+.tuanzi-thinking-steps {
+  padding: 10px 0 4px 12px;
+  border-left: 2px solid var(--meituan-yellow);
+  margin-left: 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.tuanzi-thinking-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  color: var(--gray-600);
+}
+
+.tuanzi-thinking-step-num {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--meituan-yellow);
+  color: #111;
+  font-size: 0.7rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 1px;
+}
+
+.tuanzi-thinking-step-text {
+  flex: 1;
+  word-break: break-all;
+}
+
 .tuanzi-insights-empty {
   display: flex;
   flex-direction: column;

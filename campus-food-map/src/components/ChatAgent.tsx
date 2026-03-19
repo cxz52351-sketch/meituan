@@ -2,9 +2,10 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { useLocation, useNavigate } from 'react-router-dom'
 import { University, PriceRange, Category } from '../types'
 import { ChatMessage, APIMessage, GuideOption } from '../types/chat'
-import { sendMessageStream, getMealPeriod, getGuideRecommendation, getAvailableCategories, DiningMode, PersonalContext } from '../services/ai'
+import { sendMessageStream, getMealPeriod, getGuideRecommendation, getAvailableCategories, generateAIRecommendReason, DiningMode, PersonalContext } from '../services/ai'
 import { getProfile } from '../services/profile'
 import { computeTasteDNA } from '../services/tasteDNA'
+import { getUserInsights } from '../services/userInsights'
 import RestaurantListItem from './RestaurantListItem'
 import { parseIntent } from '../services/intentParser'
 
@@ -211,6 +212,92 @@ export default function ChatAgent({ university }: Props) {
     return { profile, tasteDNA: dna }
   }, [])
 
+  // 获取用户画像摘要（供 AI 推荐使用）
+  const getInsightsSummary = useCallback(() => {
+    const insights = getUserInsights()
+    if (!insights) return null
+    return {
+      taste: {
+        topCategories: insights.taste.topCategories.map(c => c.category),
+        spiceLevel: insights.taste.spiceLevelText,
+      },
+      consumption: {
+        avgSpending: insights.consumption.avgSpending,
+        priceSensitivity: insights.consumption.priceSensitivityText,
+      },
+      social: {
+        socialType: insights.social.socialTypeText,
+        groupOrderCount: insights.social.groupOrderCount,
+      },
+      explore: {
+        exploreType: insights.explore.exploreTypeText,
+        exploreRate: insights.explore.exploreRate,
+      },
+    }
+  }, [])
+
+  // AI 增强推荐：先显示 thinking，再异步获取 AI 理由
+  const showAIRecommendation = useCallback(async (
+    filters: Parameters<typeof getGuideRecommendation>[0],
+    userMsg: ChatMessage,
+    introText: string,
+  ) => {
+    const result = getGuideRecommendation(filters)
+
+    if (result.restaurants.length === 0) {
+      const noResultMsg: ChatMessage = {
+        id: nextMsgId(),
+        role: 'assistant',
+        content: result.reason,
+        timestamp: Date.now(),
+        status: 'done',
+      }
+      setMessages(prev => [...prev, userMsg, noResultMsg])
+      return result
+    }
+
+    // 先显示 thinking 状态
+    const thinkingMsgId = nextMsgId()
+    const thinkingMsg: ChatMessage = {
+      id: thinkingMsgId,
+      role: 'assistant',
+      content: '🧠 团子正在结合你的口味画像思考推荐理由...',
+      timestamp: Date.now(),
+      status: 'streaming',
+    }
+    setMessages(prev => [...prev, userMsg, thinkingMsg])
+
+    // 异步调用 AI 生成推荐理由
+    const aiReason = await generateAIRecommendReason(filters, result.restaurants, getInsightsSummary())
+
+    const finalReason = aiReason || result.reason
+    const resultMsg: ChatMessage = {
+      id: thinkingMsgId,
+      role: 'assistant',
+      content: `${introText}\n\n${finalReason}`,
+      timestamp: Date.now(),
+      status: 'done',
+      restaurantResults: result.restaurants,
+    }
+    const actionMsg: ChatMessage = {
+      id: nextMsgId(),
+      role: 'assistant',
+      content: '',
+      timestamp: Date.now(),
+      status: 'done',
+      guideOptions: [
+        { id: 'shuffle', emoji: '🔄', label: '换一批', description: '换几家看看' },
+        { id: 'restart', emoji: '🔙', label: '重新选', description: '回到第一步' },
+      ],
+    }
+    setMessages(prev => {
+      const updated = prev.filter(m => m.id !== thinkingMsgId)
+      return [...updated, resultMsg, actionMsg]
+    })
+
+    return result
+  }, [university, getInsightsSummary])
+
   // 处理引导选项点击
   const handleGuideSelect = useCallback((step: GuideStep, optionId: string) => {
     if (step === 'mode') {
@@ -262,38 +349,20 @@ export default function ChatAgent({ university }: Props) {
       }
 
       if (optionId === 'random') {
-        // 跳过后续步骤，直接出结果
-        const result = getGuideRecommendation({
+        // 跳过后续步骤，AI 增强推荐
+        const filters = {
           mode: guideState.mode,
           mealTime: guideState.mealTime,
           university,
           personal: getPersonalContext(),
+        }
+        showAIRecommendation(filters, userMsg, '🎲 好嘞！结合你的口味画像直接帮你选——').then(result => {
+          setGuideState(prev => ({
+            ...prev,
+            step: 'result',
+            excludeIds: result.restaurants.map(r => r.id),
+          }))
         })
-        const resultMsg: ChatMessage = {
-          id: nextMsgId(),
-          role: 'assistant',
-          content: `🎲 好嘞！直接帮你选——\n\n${result.reason}`,
-          timestamp: Date.now(),
-          status: 'done',
-          restaurantResults: result.restaurants,
-        }
-        const actionMsg: ChatMessage = {
-          id: nextMsgId(),
-          role: 'assistant',
-          content: '',
-          timestamp: Date.now(),
-          status: 'done',
-          guideOptions: [
-            { id: 'shuffle', emoji: '🔄', label: '换一批', description: '再随机推荐' },
-            { id: 'restart', emoji: '🔙', label: '重新选', description: '回到第一步' },
-          ],
-        }
-        setGuideState(prev => ({
-          ...prev,
-          step: 'result',
-          excludeIds: result.restaurants.map(r => r.id),
-        }))
-        setMessages(prev => [...prev, userMsg, resultMsg, actionMsg])
         return
       }
 
@@ -402,36 +471,16 @@ export default function ChatAgent({ university }: Props) {
         university,
         personal: getPersonalContext(),
       }
-      const result = getGuideRecommendation(filters)
 
-      const resultMsg: ChatMessage = {
-        id: nextMsgId(),
-        role: 'assistant',
-        content: result.restaurants.length > 0
-          ? `🎯 根据你的选择，推荐这${result.restaurants.length === 1 ? '' : '两'}家！\n\n${result.reason}`
-          : result.reason,
-        timestamp: Date.now(),
-        status: 'done',
-        restaurantResults: result.restaurants,
-      }
-      const actionMsg: ChatMessage = {
-        id: nextMsgId(),
-        role: 'assistant',
-        content: '',
-        timestamp: Date.now(),
-        status: 'done',
-        guideOptions: [
-          { id: 'shuffle', emoji: '🔄', label: '换一批', description: '换几家看看' },
-          { id: 'restart', emoji: '🔙', label: '重新选', description: '回到第一步' },
-        ],
-      }
-      setGuideState({
-        ...guideState,
-        step: 'result',
-        taste,
-        excludeIds: result.restaurants.map(r => r.id),
+      const introText = '🎯 根据你的选择和口味画像，团子推荐这几家！'
+      showAIRecommendation(filters, userMsg, introText).then(result => {
+        setGuideState({
+          ...guideState,
+          step: 'result',
+          taste,
+          excludeIds: result.restaurants.map(r => r.id),
+        })
       })
-      setMessages(prev => [...prev, userMsg, resultMsg, actionMsg])
     } else if (step === 'result') {
       if (optionId === 'shuffle') {
         const userMsg: ChatMessage = {
@@ -440,7 +489,7 @@ export default function ChatAgent({ university }: Props) {
           content: '🔄 换一批',
           timestamp: Date.now(),
         }
-        const result = getGuideRecommendation({
+        const filters = {
           mode: guideState.mode,
           mealTime: guideState.mealTime,
           scene: guideState.scene,
@@ -449,34 +498,13 @@ export default function ChatAgent({ university }: Props) {
           university,
           excludeIds: guideState.excludeIds,
           personal: getPersonalContext(),
+        }
+        showAIRecommendation(filters, userMsg, '🔄 再看看这些？').then(result => {
+          setGuideState(prev => ({
+            ...prev,
+            excludeIds: [...(prev.excludeIds || []), ...result.restaurants.map(r => r.id)],
+          }))
         })
-        const resultMsg: ChatMessage = {
-          id: nextMsgId(),
-          role: 'assistant',
-          content: result.restaurants.length > 0
-            ? `🔄 再看看这些？\n\n${result.reason}`
-            : '已经没有更多符合条件的餐厅了，试试重新选条件？',
-          timestamp: Date.now(),
-          status: 'done',
-          restaurantResults: result.restaurants,
-        }
-        const actionMsg: ChatMessage = {
-          id: nextMsgId(),
-          role: 'assistant',
-          content: '',
-          timestamp: Date.now(),
-          status: 'done',
-          guideOptions: [
-            { id: 'shuffle', emoji: '🔄', label: '换一批', description: '换几家看看' },
-            { id: 'guide', emoji: '📋', label: '按条件重选', description: '回到引导流' },
-            { id: 'restart', emoji: '🔙', label: '重新选', description: '回到第一步' },
-          ],
-        }
-        setGuideState(prev => ({
-          ...prev,
-          excludeIds: [...(prev.excludeIds || []), ...result.restaurants.map(r => r.id)],
-        }))
-        setMessages(prev => [...prev, userMsg, resultMsg, actionMsg])
       } else if (optionId === 'restart') {
         const userMsg: ChatMessage = {
           id: nextMsgId(),
@@ -546,40 +574,19 @@ export default function ChatAgent({ university }: Props) {
           university,
           personal: getPersonalContext(),
         }
-        const result = getGuideRecommendation(filters)
-        const resultMsg: ChatMessage = {
-          id: nextMsgId(),
-          role: 'assistant',
-          content: result.restaurants.length > 0
-            ? `🎯 根据「${intent.summary}」，推荐这${result.restaurants.length === 1 ? '' : '几'}家！\n\n${result.reason}`
-            : result.reason,
-          timestamp: Date.now(),
-          status: 'done',
-          restaurantResults: result.restaurants,
-        }
-        const actionMsg: ChatMessage = {
-          id: nextMsgId(),
-          role: 'assistant',
-          content: '',
-          timestamp: Date.now(),
-          status: 'done',
-          guideOptions: [
-            { id: 'shuffle', emoji: '🔄', label: '换一批', description: '换几家看看' },
-            { id: 'guide', emoji: '📋', label: '按条件重选', description: '回到引导流' },
-            { id: 'restart', emoji: '🔙', label: '重新选', description: '回到第一步' },
-          ],
-        }
-        setGuideState({
-          ...guideState,
-          step: 'result',
-          mode: intent.filters.mode,
-          mealTime: intent.filters.mealTime,
-          scene: intent.filters.scene,
-          budget: intent.filters.priceRange,
-          taste: intent.filters.category,
-          excludeIds: result.restaurants.map(r => r.id),
+        const introText = `🎯 根据「${intent.summary}」和你的口味画像，推荐这几家！`
+        showAIRecommendation(filters, userMsg, introText).then(result => {
+          setGuideState({
+            ...guideState,
+            step: 'result',
+            mode: intent.filters.mode,
+            mealTime: intent.filters.mealTime,
+            scene: intent.filters.scene,
+            budget: intent.filters.priceRange,
+            taste: intent.filters.category,
+            excludeIds: result.restaurants.map(r => r.id),
+          })
         })
-        setMessages(prev => [...prev, userMsg, resultMsg, actionMsg])
         setInput('')
         return
       }

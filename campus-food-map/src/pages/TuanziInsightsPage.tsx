@@ -1,9 +1,43 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { getUserInsights } from '../services/userInsights'
 
 export default function TuanziInsightsPage() {
   const navigate = useNavigate()
   const userInsights = getUserInsights()
+  const [expandedCards, setExpandedCards] = useState<Set<string>>(new Set())
+
+  const toggleCard = (key: string) => {
+    setExpandedCards(prev => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+  }
+
+  const ThinkingSection = ({ cardKey, reasoning }: { cardKey: string; reasoning: string[] }) => {
+    const isExpanded = expandedCards.has(cardKey)
+    return (
+      <div className="tuanzi-thinking-wrapper">
+        <button className="tuanzi-thinking-toggle" onClick={() => toggleCard(cardKey)}>
+          <span className="tuanzi-thinking-toggle-icon">🧠</span>
+          <span>团子的思考</span>
+          <span className={`tuanzi-thinking-arrow ${isExpanded ? 'expanded' : ''}`}>›</span>
+        </button>
+        <div className={`tuanzi-thinking-box ${isExpanded ? 'expanded' : ''}`}>
+          <div className="tuanzi-thinking-steps">
+            {reasoning.map((step, i) => (
+              <div key={i} className="tuanzi-thinking-step">
+                <span className="tuanzi-thinking-step-num">{i + 1}</span>
+                <span className="tuanzi-thinking-step-text">{step}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   // 如果没有数据，显示空状态
   if (!userInsights || userInsights.taste.topCategories.length === 0) {
@@ -87,6 +121,7 @@ export default function TuanziInsightsPage() {
             <div className="tuanzi-insights-summary-icon">💭</div>
             <p className="tuanzi-insights-summary-text">{userInsights.taste.aiSummary}</p>
           </div>
+          <ThinkingSection cardKey="taste" reasoning={userInsights.taste.reasoning} />
         </div>
 
         {/* 消费习惯 */}
@@ -113,6 +148,7 @@ export default function TuanziInsightsPage() {
             <div className="tuanzi-insights-summary-icon">💭</div>
             <p className="tuanzi-insights-summary-text">{userInsights.consumption.aiSummary}</p>
           </div>
+          <ThinkingSection cardKey="consumption" reasoning={userInsights.consumption.reasoning} />
         </div>
 
         {/* 社交属性 */}
@@ -139,6 +175,7 @@ export default function TuanziInsightsPage() {
             <div className="tuanzi-insights-summary-icon">💭</div>
             <p className="tuanzi-insights-summary-text">{userInsights.social.aiSummary}</p>
           </div>
+          <ThinkingSection cardKey="social" reasoning={userInsights.social.reasoning} />
         </div>
 
         {/* 探店行为 */}
@@ -163,6 +200,7 @@ export default function TuanziInsightsPage() {
             <div className="tuanzi-insights-summary-icon">💭</div>
             <p className="tuanzi-insights-summary-text">{userInsights.explore.aiSummary}</p>
           </div>
+          <ThinkingSection cardKey="explore" reasoning={userInsights.explore.reasoning} />
         </div>
       </div>
     </div>

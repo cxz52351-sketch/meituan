@@ -49,10 +49,10 @@ Vite dev proxy 仅开发环境生效，生产部署需额外处理 `/api/deepsee
 - `/rank` 和 `/rank/:rankId` → RankPage
 - `/restaurant/:id` → DetailPage（无 `university` prop，无底部导航和顶部header）
 - `/profile` → ProfilePage（个人中心/我的）
-- `/insights` → InsightsPage（用户口味洞察）
-- `/tuanzi-insights` → TuanziInsightsPage（团子AI洞察）
+- `/profile/insights` → InsightsPage（用户口味洞察）
+- `/profile/tuanzi` → TuanziInsightsPage（团子AI洞察）
 
-底部导航栏6个tab：首页、拼单、随机吃、团子（AI）、榜单、我的。
+底部导航栏6个tab：首页、团子（AI）、随机吃、拼单、榜单、我的。
 
 ### 数据层
 
@@ -72,6 +72,7 @@ Vite dev proxy 仅开发环境生效，生产部署需额外处理 `/api/deepsee
 - `src/services/tasteDNA.ts` — 用户口味DNA分析，基于用餐历史生成个性化口味标签和推荐
 - `src/services/userInsights.ts` — 用户行为洞察分析（消费习惯、时间偏好、社交特征等）
 - `src/services/userAgents.ts` — 用户代理人（User Agent）系统，AI驱动的个性化助手
+- `src/services/intentParser.ts` — 本地意图解析器，将用户自然语言输入匹配为引导式选项或筛选条件，减少不必要的LLM调用
 - `src/data/socialFeed.ts` — 校友圈社交动态（用餐打卡、请Ta吃、转盘结果），静态 mock 数据
 
 ### AI聊天功能
@@ -90,7 +91,7 @@ Vite dev proxy 仅开发环境生效，生产部署需额外处理 `/api/deepsee
 
 ### 布局模式
 
-`App.tsx` 控制全局布局：顶部header（含大学选择器）+ 底部5-tab导航栏。DetailPage（`/restaurant/:id`）隐藏header和导航栏，通过 `location.pathname.startsWith('/restaurant/')` 判断。
+`App.tsx` 控制全局布局：顶部header（含大学选择器）+ 底部6-tab导航栏（首页、团子、随机吃、拼单、榜单、我的）。以下页面隐藏header和导航栏：DetailPage（`/restaurant/:id`）、InsightsPage、TuanziInsightsPage。ChatPage（`/ai`）隐藏header但保留导航栏。
 
 ### 组件复用
 
@@ -102,7 +103,3 @@ Vite dev proxy 仅开发环境生效，生产部署需额外处理 `/api/deepsee
 ### 已知重复代码
 
 `isOpenNow()` 函数在 `HomePage.tsx`、`RandomPage.tsx`、`ai.ts` 三处重复定义，逻辑一致（解析 openTime/closeTime，处理跨午夜情况）。修改营业判断逻辑时需同步更新。
-
-## 参考文档
-
-`project-specification.md` 包含完整的项目规格说明（页面交互细节、CSS设计系统、数据结构等），适合需要了解具体实现细节时查阅。
