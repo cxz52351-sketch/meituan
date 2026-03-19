@@ -4,6 +4,7 @@ import { APIMessage, ToolCall, StreamDelta } from '../types/chat'
 import { getSavingsPlan } from '../data/deals'
 import { TasteDNAResult } from './tasteDNA'
 import { getRandomHistory, getVisitHistory } from './history'
+import { getFeedbackStats } from './feedback'
 
 // ========== Time Awareness ==========
 
@@ -527,16 +528,27 @@ export function getGuideRecommendation(filters: GuideFilters): GuideRecommendati
     candidates.sort((a, b) => a.distance - b.distance)
   }
 
-  // 加权随机选 2 家（排序靠前的权重更高）
+  // 加权随机选 2 家（排序靠前的权重更高）+ 反馈调权
   const count = Math.min(2, candidates.length)
   const selected: Restaurant[] = []
   const pool = [...candidates]
+  const fbStats = getFeedbackStats()
 
   for (let i = 0; i < count && pool.length > 0; i++) {
     const weights = pool.map((r, idx) => {
       let w = r.rating * r.rating * (1 + r.repurchaseRate)
       // mode 排序后，位置靠前的额外加权
       if (filters.mode) w *= (1 + 0.5 / (idx + 1))
+      // 反馈调权：被拒餐厅降权
+      if (fbStats.rejectedRestaurantIds.has(r.id)) w *= 0.3
+      // 被拒品类降权
+      if (fbStats.rejectedCategories[r.category]) {
+        w *= Math.max(0.4, 1 - fbStats.rejectedCategories[r.category] * 0.15)
+      }
+      // 被采纳品类加权
+      if (fbStats.acceptedCategories[r.category]) {
+        w *= Math.min(1.5, 1 + fbStats.acceptedCategories[r.category] * 0.1)
+      }
       return w
     })
     const totalWeight = weights.reduce((a, b) => a + b, 0)

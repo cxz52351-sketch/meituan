@@ -7931,3 +7931,95 @@ ol {
 .insights-correct-btn-small:active {
   transform: scale(0.98);
 }
+
+/* ================================ */
+/* 推荐反馈闭环                      */
+/* ================================ */
+
+.smart-pick-feedback {
+  display: flex;
+  gap: 6px;
+  padding: 6px 10px 10px;
+}
+
+.feedback-btn-reject {
+  flex: 1;
+  padding: 5px 0;
+  border: 1px solid #ddd;
+  border-radius: var(--radius-sm);
+  background: #fff;
+  color: #999;
+  font-size: 0.7rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.feedback-btn-reject:active {
+  background: #f5f5f5;
+}
+
+.feedback-reject-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 10px 10px;
+  animation: feedbackSlideIn 0.2s ease;
+}
+
+.feedback-reject-option {
+  padding: 4px 10px;
+  border: 1px solid #eee;
+  border-radius: 20px;
+  background: #fafafa;
+  color: #666;
+  font-size: 0.68rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.feedback-reject-option:active {
+  background: #fff3e0;
+  border-color: var(--meituan-yellow);
+  color: var(--meituan-yellow-dark);
+}
+
+.smart-pick-card.feedback-done {
+  opacity: 0.55;
+  transition: opacity 0.3s;
+}
+
+.chat-feedback-row {
+  display: flex;
+  gap: 8px;
+  padding: 6px 0 2px;
+}
+
+.chat-feedback-row .feedback-btn-reject {
+  padding: 5px 14px;
+  flex: unset;
+}
+
+.feedback-toast {
+  position: fixed;
+  bottom: 100px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 8px 20px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-size: 0.8rem;
+  border-radius: 20px;
+  z-index: 999;
+  animation: feedbackToastIn 0.25s ease;
+  pointer-events: none;
+}
+
+@keyframes feedbackSlideIn {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes feedbackToastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(10px); }
+  to { opacity: 1; transform: translateX(-50%) translateY(0); }
+}

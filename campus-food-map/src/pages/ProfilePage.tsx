@@ -679,7 +679,40 @@ export default function ProfilePage({ university }: Props) {
         )}
       </div>
 
-      {/* 干饭工具箱（优先级提升） */}
+      {/* ===== AI 功能区（团子眼中的你） ===== */}
+      {userInsights &&
+      userInsights.taste &&
+      userInsights.consumption &&
+      userInsights.social &&
+      userInsights.explore &&
+      userInsights.taste.topCategories.length > 0 ? (
+        <div className="profile-section">
+          <h3 className="profile-section-title">团子·干饭顾问</h3>
+
+          {/* 团子眼中的你 - 可点击卡片 */}
+          <div
+            className="profile-tuanzi-card"
+            onClick={() => navigate("/profile/tuanzi")}
+          >
+            <div className="profile-tuanzi-hero">
+              <div className="profile-tuanzi-hero-bg"></div>
+              <div className="profile-tuanzi-hero-content">
+                <img
+                  className="profile-tuanzi-hero-avatar"
+                  src="/tuanzi.png"
+                  alt="团子"
+                />
+              </div>
+            </div>
+            <div className="profile-tuanzi-arrow">
+              <span>团子眼中的你</span>
+              <span className="arrow-icon">›</span>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {/* 干饭工具箱 */}
       <div className="profile-section">
         <h3 className="profile-section-title">干饭工具箱</h3>
         <div className="profile-toolbox">
@@ -956,39 +989,6 @@ export default function ProfilePage({ university }: Props) {
           </div>
         </div>
       </div>
-
-      {/* ===== AI 功能区（团子眼中的你） ===== */}
-      {userInsights &&
-      userInsights.taste &&
-      userInsights.consumption &&
-      userInsights.social &&
-      userInsights.explore &&
-      userInsights.taste.topCategories.length > 0 ? (
-        <div className="profile-section">
-          <h3 className="profile-section-title">团子·干饭顾问</h3>
-
-          {/* 团子眼中的你 - 可点击卡片 */}
-          <div
-            className="profile-tuanzi-card"
-            onClick={() => navigate("/profile/tuanzi")}
-          >
-            <div className="profile-tuanzi-hero">
-              <div className="profile-tuanzi-hero-bg"></div>
-              <div className="profile-tuanzi-hero-content">
-                <img
-                  className="profile-tuanzi-hero-avatar"
-                  src="/tuanzi.png"
-                  alt="团子"
-                />
-              </div>
-            </div>
-            <div className="profile-tuanzi-arrow">
-              <span>团子眼中的你</span>
-              <span className="arrow-icon">›</span>
-            </div>
-          </div>
-        </div>
-      ) : null}
 
       {/* 饭搭子列表 */}
       <div className="profile-section">
